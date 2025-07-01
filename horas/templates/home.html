@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="main" >
+    
+    <!-- Body Principal -->
+    <div class="body-principal">
+      <!-- Imagen principal -->
+      <div class="imagen-campaña"></div>
+      
+
+      <!-- Descripción -->
+      <div class="descripcion">
+        <div class="titulo-descripcion">Título de la Descripción</div>
+        <div class="contenido">Este es el contenido descriptivo de la sección, aquí va la explicación central del propósito de la imagen o mensaje principal de la empresa.</div>
+
+        <a href="{% url 'login' %}"><div class="boton-verde">
+          <div class="texto">Iniciar Sesión</div>
+          <div class="vector"></div>
+        </div>
+        </a>
+        <div class="boton-negro">
+          <div class="texto">Contáctanos</div>
+          <div class="vector"></div>
+        </div>
+      </div>
+    </div>
+
+    
+
+
+  </div>
+{% endblock %}

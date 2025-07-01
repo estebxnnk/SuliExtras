@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SuliExtras{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="shotcut icon" href="{% static 'img/Sulicono.png' %}" type="icon">
+</head>
+
+<body>
+  <div class="main">
+
+    <!-- Barra de Navegación -->
+    <div class="barra-nav">
+      <div class="navegacion">
+        <a href="{% url 'principal' %}"><img class="logo-suli" src="{% static 'img/NuevoLogo.png' %}" alt="Logo"></a>
+        <div class="nosotros">Nosotros</div>
+        <div class="objetivos">Objetivos</div>
+        <div class="manual">Manual de Usuario</div>
+      </div>
+      <div class="botones-superiores">
+        <a href="{% url 'login' %}"><div class="contactanos-verde">
+          <div class="texto">Iniciar Sesión</div>
+          <div class="vector"></div>
+        </div></a>
+        <a href="{% url 'contactanos' %}"><div class="contactanos-negro">
+          <div class="texto">Contáctanos</div>
+          <div class="vector"></div>
+        </div></a>
+      </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="contenido-pagina">
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer con logos -->
+    <footer class="footer-container">
+  <div class="footer-logos">
+    <img src="{% static 'img/RonMedellin.png' %}" alt="Logo 1">
+    <img src="{% static 'img/antioqueño.png' %}" alt="Logo 2">
+    <img src="{% static 'img/NuevoLogo.png' %}" alt="Logo 3">
+  </div>
+</footer>
+
+  </div>
+</body>
+</html>
