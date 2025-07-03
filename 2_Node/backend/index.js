@@ -43,6 +43,8 @@ app.use('/api/auth/register', registerRoutes);
 app.use('/api/horas', horaRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/horas', horaRoutes);
+app.use('/api/registros', registroRoutes);
 
 // Iniciar el servidor
 
