@@ -301,9 +301,11 @@ function PanelUsuarios() {
                 onChange={e => setEditData({ ...editData, rolId: e.target.value })}
                 fullWidth
               >
-                {roles.map(rol => (
-                  <MenuItem key={rol.id} value={rol.id}>{rol.nombre}</MenuItem>
-                ))}
+                {roles
+                  .filter(rol => rol.nombre !== 'Administrador' && rol.nombre !== 'SubAdministrador')
+                  .map(rol => (
+                    <MenuItem key={rol.id} value={rol.id}>{rol.nombre}</MenuItem>
+                  ))}
               </TextField>
             </Box>
           )}
@@ -316,9 +318,11 @@ function PanelUsuarios() {
                 onChange={e => setNuevoRolId(e.target.value)}
                 fullWidth
               >
-                {roles.map(rol => (
-                  <MenuItem key={rol.id} value={rol.id}>{rol.nombre}</MenuItem>
-                ))}
+                {roles
+                  .filter(rol => rol.nombre !== 'Administrador' && rol.nombre !== 'SubAdministrador')
+                  .map(rol => (
+                    <MenuItem key={rol.id} value={rol.id}>{rol.nombre}</MenuItem>
+                  ))}
               </TextField>
             </Box>
           )}
