@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Persona = require('./models/Persona');
 const Rol = require('./models/Roles');
+const horaRoutes = require('./routes/hora');
+const registroRoutes = require('./routes/registro');
 
 const { sequelize, testConnection } = require('./configDb/db');
 const swaggerSetup = require('./swagger/swagger');
@@ -37,7 +39,10 @@ const registerRoutes = require('./routes/register');
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', rolRoutes);
 app.use('/api/auth/register', registerRoutes);
+app.use('/api/horas', horaRoutes);
+app.use('/api/registros', registroRoutes);
 
+// Iniciar el servidor
 
 const PORT = process.env.PORT || 3000;
 
@@ -54,3 +59,4 @@ const PORT = process.env.PORT || 3000;
       console.error('Error al sincronizar la base de datos:', err);
     });
 })();
+
