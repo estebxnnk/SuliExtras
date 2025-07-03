@@ -11,6 +11,9 @@ import RegistrarUsuarioSubAdmin from './pages/SubAdministrador/RegistrarUsuarioS
 import PanelUsuariosSubAdmin from './pages/SubAdministrador/PanelUsuariosSubAdmin';
 
 //Rol Administrador
+import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
+import PanelUsuariosAdministrativo from './pages/Administrador/PanelUsuariosAdministrativo';
+import RegistrarUsuario from './pages/Administrador/RegistrarUsuario';
 
 function App() {
   return (
@@ -22,6 +25,10 @@ function App() {
         <Route path="/panel-sub-admin" element={<PanelSubAdmin />} />
         <Route path="/registrar-usuario" element={<RegistrarUsuarioSubAdmin />} />
         <Route path="/usuarios" element={<PanelUsuariosSubAdmin />} />
+        <Route path="/usuarios-administrativo" element={<PanelUsuariosAdministrativo />} />
+        <Route path="/registrar-usuario-administrativo" element={<RegistrarUsuario />} />
+        <Route path='//panel-admin-administrativo' element={<PanelAdministrativo/>} />
+
       </Routes>
     </Router>
   );

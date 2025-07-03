@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction, Divider, MenuItem, Select, InputLabel, FormControl, Alert } from '@mui/material';
+import { Box, Paper, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction, Divider, MenuItem, Select, InputLabel, FormControl, Alert, Avatar, Menu } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GroupIcon from '@mui/icons-material/Group';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 function NavbarAdmin({ onFiltrarPorRol }) {
   const navigate = useNavigate();
@@ -14,6 +15,14 @@ function NavbarAdmin({ onFiltrarPorRol }) {
   const [nuevoRol, setNuevoRol] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [rolFiltro, setRolFiltro] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  // Simulación de datos de usuario (puedes reemplazar por datos reales)
+  const user = {
+    nombre: 'Administrador',
+    email: localStorage.getItem('userEmail') || 'admin@ejemplo.com',
+    rol: 'Administrador',
+  };
 
   useEffect(() => {
     if (openRoles) fetchRoles();
@@ -71,6 +80,12 @@ function NavbarAdmin({ onFiltrarPorRol }) {
     setOpenRoles(false);
   };
 
+  const handleProfileClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userRol');
@@ -103,10 +118,10 @@ function NavbarAdmin({ onFiltrarPorRol }) {
         <Link to="/panel-admin">
           <Box component="img" src="/img/NuevoLogo.png" alt="Logo" sx={{ height: 72 }} />
         </Link>
-        <Link to="/usuarios" style={{ textDecoration: 'none' }}>
+        <Link to="/usuarios-administrativo" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Usuarios</Typography>
         </Link>
-        <Link to="/registrar-usuario" style={{ textDecoration: 'none' }}>
+        <Link to="/registrar-usuario-administrativo" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Crear Usuario</Typography>
         </Link>
         <Link to="/panel-admin?tab=solicitudes" style={{ textDecoration: 'none' }}>
@@ -122,14 +137,34 @@ function NavbarAdmin({ onFiltrarPorRol }) {
           Gestión de Roles
         </Button>
       </Box>
-      <Button
-        variant="contained"
-        color="error"
-        onClick={handleLogout}
-        sx={{ fontWeight: 700, borderRadius: 2, px: 3, height: 48, fontSize: 15 }}
-      >
-        Cerrar sesión
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <IconButton onClick={handleProfileClick} size="large" sx={{ ml: 2 }}>
+          <Avatar sx={{ bgcolor: '#1976d2', width: 48, height: 48 }}>
+            <AccountCircleIcon sx={{ fontSize: 36, color: '#fff' }} />
+          </Avatar>
+        </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleCloseMenu}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{ sx: { p: 2, minWidth: 240, borderRadius: 3 } }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mt: 1 }}>
+            <Avatar sx={{ bgcolor: '#1976d2', width: 64, height: 64, mb: 1 }}>
+              <AccountCircleIcon sx={{ fontSize: 40, color: '#fff' }} />
+            </Avatar>
+            <Typography variant="h6" fontWeight={700}>{user.nombre}</Typography>
+            <Typography variant="body2" color="text.secondary">{user.email}</Typography>
+            <Typography variant="body2" color="#1976d2" fontWeight={700}>{user.rol}</Typography>
+            <Divider sx={{ width: '100%', my: 1 }} />
+            <Button onClick={handleLogout} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: 2, px: 3, width: '100%' }}>
+              Cerrar sesión
+            </Button>
+          </Box>
+        </Menu>
+      </Box>
 
       {/* Diálogo de gestión de roles */}
       <Dialog open={openRoles} onClose={() => setOpenRoles(false)} maxWidth="xs" fullWidth>
