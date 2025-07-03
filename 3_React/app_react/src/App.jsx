@@ -3,8 +3,8 @@ import Home from './pages/Home';
 import Contactanos from './pages/Contactanos';
 import Login from './pages/Login';
 import PanelAdmin from './pages/Administrador/PanelAdmin';
-import RegistrarUsuario from './pages/RegistrarUsuario';
-import PanelUsuarios from './pages/PanelUsuarios';
+import RegistrarUsuario from './pages/SubAdministrador/RegistrarUsuario';
+import PanelUsuarios from './pages/SubAdministrador/PanelUsuarios';
 
 function App() {
   return (
