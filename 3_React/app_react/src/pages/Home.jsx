@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import LoginModal from './LoginModal';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -10,8 +8,7 @@ import {
 } from '@mui/material';
 
 function Home() {
-  const [showLogin, setShowLogin] = useState(false);
-
+  const navigate = useNavigate();
   return (
     <Box
       sx={{
@@ -58,7 +55,7 @@ function Home() {
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
-            onClick={() => setShowLogin(true)}
+            onClick={() => navigate('/login')}
             sx={{
               background: '#52AB41',
               color: '#fff',
@@ -158,7 +155,7 @@ function Home() {
             </Typography>
             <Button
               variant="contained"
-              onClick={() => setShowLogin(true)}
+              onClick={() => navigate('/login')}
               sx={{
                 width: '100%',
                 height: 56,
@@ -228,9 +225,6 @@ function Home() {
           <Box component="img" src="/img/NuevoLogo.png" alt="Logo 3" sx={{ height: 60, objectFit: 'contain', filter: 'grayscale(0.2) drop-shadow(0 2px 4px #0002)', transition: 'filter 0.2s, transform 0.2s', '&:hover': { filter: 'grayscale(0) drop-shadow(0 4px 12px #52AB41AA)', transform: 'scale(1.08)' } }} />
         </Box>
       </Box>
-
-      {/* Modal de Login */}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </Box>
   );
 }
