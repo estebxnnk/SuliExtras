@@ -2,69 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Box, Paper, Typography, TextField, Button, Alert, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
-function AdminNavbar({ onOpenRolDialog }) {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRol');
-    navigate('/');
-  };
-  return (
-    <Paper
-      elevation={8}
-      sx={{
-        position: 'fixed',
-        top: 20,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: { xs: '98vw', md: '98vw' },
-        maxWidth: 1400,
-        height: 90,
-        background: 'rgba(255,255,255,0.92)',
-        borderRadius: 2,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        px: 5,
-        zIndex: 1000,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-        <Link to="/panel-admin">
-          <Box component="img" src="/img/NuevoLogo.png" alt="Logo" sx={{ height: 72 }} />
-        </Link>
-        <Link to="/panel-admin" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Usuarios</Typography>
-        </Link>
-        <Link to="/registrar-usuario" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Crear Usuario</Typography>
-        </Link>
-        <Link to="/panel-admin?tab=solicitudes" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Solicitudes</Typography>
-        </Link>
-        <Button
-          variant="outlined"
-          color="primary"
-          sx={{ height: 48, fontWeight: 700, ml: 2 }}
-          onClick={onOpenRolDialog}
-        >
-          + Rol
-        </Button>
-      </Box>
-      <Button
-        variant="contained"
-        color="error"
-        onClick={handleLogout}
-        sx={{ fontWeight: 700, borderRadius: 2, px: 3, height: 48, fontSize: 15 }}
-      >
-        Cerrar sesión
-      </Button>
-    </Paper>
-  );
-}
+import NavbarSubAdmin from './NavbarSubAdmin';
 
 const tiposDocumento = [
   { value: 'CC', label: 'Cédula de Ciudadanía' },
@@ -189,7 +127,7 @@ function RegistrarUsuario() {
         backgroundSize: 'cover',
       }}
     >
-      <AdminNavbar onOpenRolDialog={() => setOpenRolDialog(true)} />
+      <NavbarSubAdmin />
       <Box sx={{ flex: 1, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', mt: { xs: 14, sm: 16 } }}>
         <Paper
           elevation={6}

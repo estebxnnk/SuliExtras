@@ -1,66 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment } from '@mui/material';
+import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import SearchIcon from '@mui/icons-material/Search';
-
-function AdminNavbar() {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRol');
-    navigate('/');
-  };
-  return (
-    <Paper
-      elevation={8}
-      sx={{
-        position: 'fixed',
-        top: 20,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: { xs: '98vw', md: '98vw' },
-        maxWidth: 1400,
-        height: 90,
-        background: 'rgba(255,255,255,0.92)',
-        borderRadius: 2,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        px: 5,
-        zIndex: 1000,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-        <Link to="/panel-admin">
-          <Box component="img" src="/img/NuevoLogo.png" alt="Logo" sx={{ height: 72 }} />
-        </Link>
-        <Link to="/usuarios" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Usuarios</Typography>
-        </Link>
-        <Link to="/registrar-usuario" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Crear Usuario</Typography>
-        </Link>
-        <Link to="/panel-admin?tab=solicitudes" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Solicitudes</Typography>
-        </Link>
-      </Box>
-      <Button
-        variant="contained"
-        color="error"
-        onClick={handleLogout}
-        sx={{ fontWeight: 700, borderRadius: 2, px: 3, height: 48, fontSize: 15 }}
-      >
-        Cerrar sesión
-      </Button>
-    </Paper>
-  );
-}
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import PersonIcon from '@mui/icons-material/Person';
+import NavbarSubAdmin from './NavbarSubAdmin';
 
 function PanelUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -195,11 +143,20 @@ function PanelUsuarios() {
 
   return (
     <Box minHeight="100vh" width="100vw" sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
-      <AdminNavbar />
-      <Paper elevation={6} sx={{ borderRadius: 3, p: 4, maxWidth: 1400, margin: '120px auto 40px auto', background: 'rgba(255,255,255,0.95)' }}>
+      <NavbarSubAdmin />
+      <Paper elevation={6} sx={{ borderRadius: 3, p: 4, maxWidth: 1400, margin: '120px auto 40px auto', background: 'rgba(255,255,255,0.95)', position: 'relative' }}>
         <Typography variant="h4" fontWeight={700} mb={2} color="#222">
           Usuarios
         </Typography>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<AddCircleIcon />}
+          sx={{ position: 'absolute', right: 32, top: 32, fontWeight: 700, borderRadius: 2, fontSize: 16, zIndex: 10 }}
+          onClick={() => navigate('/registrar-usuario')}
+        >
+          Agregar Nuevo Usuario
+        </Button>
         <TextField
           placeholder="Buscar por email, nombre o apellido"
           value={search}
@@ -242,16 +199,16 @@ function PanelUsuarios() {
                   <TableCell>{usuario.persona?.fechaNacimiento ? usuario.persona.fechaNacimiento.substring(0, 10) : ''}</TableCell>
                   <TableCell>{usuario.rol?.nombre}</TableCell>
                   <TableCell align="center">
-                    <IconButton onClick={() => handleVer(usuario)} title="Ver detalles">
+                    <IconButton onClick={() => handleVer(usuario)} title="Ver detalles" sx={{ color: 'green' }}>
                       <VisibilityIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleEditar(usuario)} title="Editar">
+                    <IconButton onClick={() => handleEditar(usuario)} title="Editar" sx={{ color: '#1976d2' }}>
                       <EditIcon />
                     </IconButton>
                     <IconButton onClick={() => handleEliminar(usuario)} title="Eliminar" color="error">
                       <DeleteIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleCambiarRol(usuario)} title="Cambiar Rol" color="primary">
+                    <IconButton onClick={() => handleCambiarRol(usuario)} title="Cambiar Rol" sx={{ color: '#ff9800' }}>
                       <SwapHorizIcon />
                     </IconButton>
                   </TableCell>
@@ -269,17 +226,23 @@ function PanelUsuarios() {
 
       {/* Dialogo para ver/editar/cambiar rol usuario */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {modo === 'ver' && <PersonIcon sx={{ fontSize: 36, color: '#52AB41' }} />}
           {modo === 'ver' ? 'Detalles del Usuario' : modo === 'editar' ? 'Editar Usuario' : 'Cambiar Rol del Usuario'}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ background: modo === 'ver' ? '#f7faf7' : 'inherit', borderRadius: 2 }}>
           {usuarioSeleccionado && modo === 'ver' && (
-            <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <Avatar sx={{ width: 72, height: 72, bgcolor: '#52AB41', mb: 2 }}>
+                <PersonIcon sx={{ fontSize: 48, color: '#fff' }} />
+              </Avatar>
+              <Typography variant="h6" fontWeight={700} color="#222" mb={1}>
+                {usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}
+              </Typography>
+              <Divider sx={{ width: '100%', mb: 1 }} />
               <Typography><b>Email:</b> {usuarioSeleccionado.email}</Typography>
               <Typography><b>Tipo de Documento:</b> {usuarioSeleccionado.persona?.tipoDocumento}</Typography>
               <Typography><b>Número de Documento:</b> {usuarioSeleccionado.persona?.numeroDocumento}</Typography>
-              <Typography><b>Nombres:</b> {usuarioSeleccionado.persona?.nombres}</Typography>
-              <Typography><b>Apellidos:</b> {usuarioSeleccionado.persona?.apellidos}</Typography>
               <Typography><b>Correo:</b> {usuarioSeleccionado.persona?.correo}</Typography>
               <Typography><b>Fecha de Nacimiento:</b> {usuarioSeleccionado.persona?.fechaNacimiento ? usuarioSeleccionado.persona.fechaNacimiento.substring(0, 10) : ''}</Typography>
               <Typography><b>Rol:</b> {usuarioSeleccionado.rol?.nombre}</Typography>
@@ -378,4 +341,4 @@ function PanelUsuarios() {
   );
 }
 
-export default PanelUsuarios; 
+export default PanelUsuarios;
