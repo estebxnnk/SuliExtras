@@ -33,7 +33,7 @@ function Login() {
       setMensaje('');
       // Redirección según el rol
       if (data.rol === 'SubAdministrador') {
-        navigate('/panel-admin');
+        navigate('/panel-sub-admin');
       } else {
         navigate('/');
       }

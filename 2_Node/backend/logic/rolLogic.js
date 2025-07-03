@@ -11,6 +11,14 @@ class RolLogic {
   async listarRoles() {
     return await Rol.findAll();
   }
+
+  // Eliminar un rol por ID
+  async eliminarRol(id) {
+    const rol = await Rol.findByPk(id);
+    if (!rol) throw new Error('Rol no encontrado');
+    await rol.destroy();
+    return { mensaje: 'Rol eliminado correctamente' };
+  }
 }
 
 module.exports = new RolLogic(); 
