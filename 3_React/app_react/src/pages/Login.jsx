@@ -1,131 +1,133 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [mensaje, setMensaje] = useState('');
-  const [usuario, setUsuario] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!usuario || !password) {
+    if (!email || !password) {
       setMensaje('Por favor, completa todos los campos.');
-    } else {
+      return;
+    }
+    setMensaje('');
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {}
+      if (!response.ok) {
+        setMensaje(data.message || 'Credenciales incorrectas');
+        return;
+      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userRol', data.rol);
       setMensaje('');
-      // Aquí iría la lógica real de login
+      // Redirección según el rol
+      if (data.rol === 'SubAdministrador') {
+        navigate('/panel-admin');
+      } else {
+        navigate('/');
+      }
+    } catch (error) {
+      setMensaje('No se pudo conectar con el servidor.');
     }
   };
 
   return (
-    <div className="login-bg">
-      <style>{`
-        .login-bg {
-          min-height: 100vh;
-          width: 100vw;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: url('/img/Recepcion.jpg') no-repeat center center;
-          background-size: cover;
-        }
-        .login-card {
-          background: rgba(255,255,255,0.92);
-          border-radius: 20px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-          padding: 40px 32px 32px 32px;
-          min-width: 340px;
-          max-width: 95vw;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          transition: box-shadow 0.3s, transform 0.3s;
-        }
-        .login-card:hover {
-          box-shadow: 0 16px 48px rgba(82,171,65,0.10), 0 0 0 2px #52AB4144;
-          transform: scale(1.01);
-        }
-        .login-title {
-          font-size: 2rem;
-          font-weight: 700;
-          color: #222;
-          margin-bottom: 18px;
-          text-align: center;
-        }
-        .login-error {
-          color: #d32f2f;
-          margin-bottom: 10px;
-          font-weight: 500;
-        }
-        .login-form {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .login-input {
-          width: 100%;
-          max-width: 300px;
-          margin: 10px 0;
-          padding: 12px 14px;
-          border-radius: 12px;
-          border: 1.5px solid #bbb;
-          font-size: 1rem;
-          transition: border 0.2s, box-shadow 0.2s;
-          outline: none;
-        }
-        .login-input:focus {
-          border: 1.5px solid #52AB41;
-          box-shadow: 0 2px 8px #52AB4133;
-        }
-        .login-btn {
-          width: 100%;
-          max-width: 300px;
-          margin: 18px 0 0 0;
-          padding: 14px 0;
-          border-radius: 16px;
-          background: #52AB41;
-          color: #fff;
-          font-weight: 700;
-          font-size: 1.1rem;
-          border: none;
-          cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-          transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-        }
-        .login-btn:hover {
-          background: #3fa32c;
-          transform: translateY(-2px) scale(1.03);
-          box-shadow: 0 6px 16px rgba(82,171,65,0.18);
-        }
-        @media (max-width: 600px) {
-          .login-card {
-            padding: 24px 8px 16px 8px;
-            min-width: 90vw;
-          }
-        }
-      `}</style>
-      <div className="login-card">
-        <div className="login-title">Iniciar sesión</div>
-        {mensaje && <div className="login-error">{mensaje}</div>}
-        <form className="login-form" onSubmit={handleSubmit} autoComplete="off">
+    <div style={{
+      minHeight: '100vh',
+      width: '100vw',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: "url('/img/Recepcion.jpg') no-repeat center center",
+      backgroundSize: 'cover',
+    }}>
+      <div style={{
+        background: 'rgba(255,255,255,0.92)',
+        borderRadius: 20,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+        padding: '40px 32px 32px 32px',
+        minWidth: 340,
+        maxWidth: '95vw',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        <div style={{ fontSize: '2rem', fontWeight: 700, color: '#222', marginBottom: 18, textAlign: 'center' }}>
+          Iniciar sesión
+        </div>
+        {mensaje && <div style={{ color: '#d32f2f', marginBottom: 10, fontWeight: 500 }}>{mensaje}</div>}
+        <form style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onSubmit={handleSubmit} autoComplete="off">
           <input
-            className="login-input"
-            type="text"
-            placeholder="Usuario"
-            value={usuario}
-            onChange={e => setUsuario(e.target.value)}
+            style={{
+              width: '100%',
+              maxWidth: 300,
+              margin: '10px 0',
+              padding: '12px 14px',
+              borderRadius: 12,
+              border: '1.5px solid #bbb',
+              fontSize: '1rem',
+              outline: 'none',
+              transition: 'border 0.2s, box-shadow 0.2s',
+            }}
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
           />
           <input
-            className="login-input"
+            style={{
+              width: '100%',
+              maxWidth: 300,
+              margin: '10px 0',
+              padding: '12px 14px',
+              borderRadius: 12,
+              border: '1.5px solid #bbb',
+              fontSize: '1rem',
+              outline: 'none',
+              transition: 'border 0.2s, box-shadow 0.2s',
+            }}
             type="password"
             placeholder="Contraseña"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            required
           />
-          <button className="login-btn" type="submit">Ingresar</button>
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              maxWidth: 300,
+              margin: '18px 0 0 0',
+              padding: '14px 0',
+              borderRadius: 16,
+              background: '#52AB41',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              transition: 'background 0.2s, transform 0.2s, box-shadow 0.2s',
+            }}
+          >
+            Ingresar
+          </button>
         </form>
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Login; 
