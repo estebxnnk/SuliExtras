@@ -1,10 +1,14 @@
 const User = require('../models/User');
 const Persona = require('../models/Persona');
+const Rol = require('../models/Roles');
 
-// Obtener todos los usuarios incluyendo los datos de Persona (usando alias 'persona')
+// Obtener todos los usuarios incluyendo los datos de Persona y Rol
 async function obtenerUsuarios() {
   return await User.findAll({
-    include: [{ model: Persona, as: 'persona' }]
+    include: [
+      { model: Persona, as: 'persona' },
+      { model: Rol, as: 'rol' }
+    ]
   });
 }
 
