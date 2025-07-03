@@ -34,6 +34,8 @@ function Login() {
       // Redirección según el rol
       if (data.rol === 'SubAdministrador') {
         navigate('/panel-sub-admin');
+      } else if (data.rol === 'Administrador') {
+        navigate('/panel-admin-administrativo');
       } else {
         navigate('/');
       }
