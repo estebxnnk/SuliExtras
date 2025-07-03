@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 
 //Home
 import Home from './pages/Home';
@@ -22,13 +23,36 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/contactanos" element={<Contactanos />} />
-        <Route path="/panel-sub-admin" element={<PanelSubAdmin />} />
-        <Route path="/registrar-usuario" element={<RegistrarUsuarioSubAdmin />} />
-        <Route path="/usuarios" element={<PanelUsuariosSubAdmin />} />
-        <Route path="/usuarios-administrativo" element={<PanelUsuariosAdministrativo />} />
-        <Route path="/registrar-usuario-administrativo" element={<RegistrarUsuario />} />
-        <Route path='//panel-admin-administrativo' element={<PanelAdministrativo/>} />
-
+        <Route path="/panel-sub-admin" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <PanelSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/registrar-usuario" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <RegistrarUsuarioSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/usuarios" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <PanelUsuariosSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/panel-admin-administrativo" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <PanelAdministrativo />
+          </ProtectedRoute>
+        } />
+        <Route path="/usuarios-administrativo" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <PanelUsuariosAdministrativo />
+          </ProtectedRoute>
+        } />
+        <Route path="/registrar-usuario-administrativo" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <RegistrarUsuario />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   );

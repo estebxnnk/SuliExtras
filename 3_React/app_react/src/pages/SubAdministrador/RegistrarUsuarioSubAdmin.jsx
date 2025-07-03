@@ -187,11 +187,13 @@ function RegistrarUsuario() {
               fullWidth
               required
             >
-              {roles.map(rol => (
-                <MenuItem key={rol.id} value={rol.id}>
-                  {rol.nombre}
-                </MenuItem>
-              ))}
+              {roles
+                .filter(rol => rol.nombre !== 'Administrador' && rol.nombre !== 'SubAdministrador')
+                .map(rol => (
+                  <MenuItem key={rol.id} value={rol.id}>
+                    {rol.nombre}
+                  </MenuItem>
+                ))}
             </TextField>
             {/* Persona */}
             <TextField
