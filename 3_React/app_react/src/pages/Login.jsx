@@ -36,6 +36,8 @@ function Login() {
         navigate('/panel-sub-admin');
       } else if (data.rol === 'Administrador') {
         navigate('/panel-admin-administrativo');
+      } else if (data.rol === 'JefeDirecto') {
+        navigate('/panel-jefe-directo');
       } else {
         navigate('/');
       }
