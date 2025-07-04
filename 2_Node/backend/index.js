@@ -36,11 +36,13 @@ swaggerSetup(app);
 const authRoutes = require('./routes/auth');
 const rolRoutes = require('./routes/rol');
 const registerRoutes = require('./routes/register');
+const usuariosRoutes = require('./routes/usuarios');
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', rolRoutes);
 app.use('/api/auth/register', registerRoutes);
 app.use('/api/horas', horaRoutes);
 app.use('/api/registros', registroRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 
 // Iniciar el servidor
 
