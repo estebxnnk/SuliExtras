@@ -16,6 +16,9 @@ import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
 import PanelUsuariosAdministrativo from './pages/Administrador/PanelUsuariosAdministrativo';
 import RegistrarUsuario from './pages/Administrador/RegistrarUsuario';
 
+//Rol JefeDirecto
+import PanelJefeDirecto from './pages/JefeDirecto/PanelJefeDirecto';
+
 function App() {
   return (
     <Router>
@@ -51,6 +54,21 @@ function App() {
         <Route path="/registrar-usuario-administrativo" element={
           <ProtectedRoute allowedRoles={['Administrador']}>
             <RegistrarUsuario />
+          </ProtectedRoute>
+        } />
+        <Route path="/panel-jefe-directo" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <PanelJefeDirecto />
+          </ProtectedRoute>
+        } />
+        <Route path="/registros-jefe-directo" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <div>Gestionar Registros (Jefe Directo)</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/usuarios-jefe-directo" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <div>Gestionar Usuarios (Empleado)</div>
           </ProtectedRoute>
         } />
       </Routes>
