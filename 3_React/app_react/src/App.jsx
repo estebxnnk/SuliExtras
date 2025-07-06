@@ -18,6 +18,10 @@ import RegistrarUsuario from './pages/Administrador/RegistrarUsuario';
 
 //Rol JefeDirecto
 import PanelJefeDirecto from './pages/JefeDirecto/PanelJefeDirecto';
+import PanelRegistrosHorasExtra from './pages/JefeDirecto/PanelRegistrosHorasExtra';
+import CrearRegistroHorasExtra from './pages/JefeDirecto/CrearRegistroHorasExtra';
+import GestionarTiposHora from './pages/JefeDirecto/GestionarTiposHora';
+import PanelUsuarios from './pages/JefeDirecto/PanelUsuarios';
 
 function App() {
   return (
@@ -61,14 +65,24 @@ function App() {
             <PanelJefeDirecto />
           </ProtectedRoute>
         } />
-        <Route path="/registros-jefe-directo" element={
+        <Route path="/registros-horas-extra" element={
           <ProtectedRoute allowedRoles={['JefeDirecto']}>
-            <div>Gestionar Registros (Jefe Directo)</div>
+            <PanelRegistrosHorasExtra />
+          </ProtectedRoute>
+        } />
+        <Route path="/crear-registro-horas" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <CrearRegistroHorasExtra />
+          </ProtectedRoute>
+        } />
+        <Route path="/tipos-hora" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <GestionarTiposHora />
           </ProtectedRoute>
         } />
         <Route path="/usuarios-jefe-directo" element={
           <ProtectedRoute allowedRoles={['JefeDirecto']}>
-            <div>Gestionar Usuarios (Empleado)</div>
+            <PanelUsuarios />
           </ProtectedRoute>
         } />
       </Routes>
