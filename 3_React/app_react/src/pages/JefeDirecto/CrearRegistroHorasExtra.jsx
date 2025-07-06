@@ -19,6 +19,7 @@ function CrearRegistroHorasExtra() {
     horaSalida: '',
     ubicacion: '',
     usuario: '',
+    usuarioSeleccionado: null,
     cantidadHorasExtra: '',
     justificacionHoraExtra: '',
     tipoHoraId: ''
@@ -33,6 +34,15 @@ function CrearRegistroHorasExtra() {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleUsuarioChange = (usuarioId) => {
+    const usuario = usuarios.find(u => u.id === usuarioId);
+    setFormData(prev => ({
+      ...prev,
+      usuario: usuario?.email || '',
+      usuarioSeleccionado: usuario || null
     }));
   };
 
@@ -63,8 +73,6 @@ function CrearRegistroHorasExtra() {
     fetchUsuarios();
   }, []);
 
-
-
   const fetchTiposHora = async () => {
     try {
       const response = await fetch('http://localhost:3000/api/horas');
@@ -88,25 +96,36 @@ function CrearRegistroHorasExtra() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
       // Validar que se ingresen las horas extra
-      if (!formData.cantidadHorasExtra || parseFloat(formData.cantidadHorasExtra) <= 0) {
-        setMensaje('Error: Debes ingresar una cantidad válida de horas extra (mayor a 0).');
+      if (!formData.cantidadHorasExtra || parseInt(formData.cantidadHorasExtra) < 1) {
+        setMensaje('Error: Debes ingresar una cantidad válida de horas extra (mínimo 1 hora).');
         setLoading(false);
         return;
       }
-
+      // Validar que todos los campos requeridos estén completos
+      if (!formData.fecha || !formData.usuario || !formData.horaIngreso || !formData.horaSalida || !formData.ubicacion || !formData.tipoHoraId) {
+        setMensaje('Error: Debes completar todos los campos requeridos.');
+        setLoading(false);
+        return;
+      }
       // Generar número de registro único
       const numRegistro = `REG-${Date.now()}`;
-      
+      // Enviar el array 'horas' al backend
       const registroData = {
         ...formData,
         numRegistro,
-        cantidadHorasExtra: parseFloat(formData.cantidadHorasExtra),
-        estado: 'pendiente'
+        estado: 'pendiente',
+        horas: [
+          {
+            id: formData.tipoHoraId,
+            cantidad: parseInt(formData.cantidadHorasExtra)
+          }
+        ]
       };
-
+      // Eliminar campos innecesarios
+      delete registroData.tipoHoraId;
+      delete registroData.usuarioSeleccionado;
       const response = await fetch('http://localhost:3000/api/registros', {
         method: 'POST',
         headers: {
@@ -114,12 +133,10 @@ function CrearRegistroHorasExtra() {
         },
         body: JSON.stringify(registroData),
       });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Error al crear el registro');
       }
-
       setMensaje('¡Registro creado exitosamente! Redirigiendo al panel de registros...');
       setTimeout(() => {
         navigate('/registros-horas-extra');
@@ -163,8 +180,6 @@ function CrearRegistroHorasExtra() {
           </Alert>
         )}
 
-
-
         <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           
           {/* Sección 1: Información Básica */}
@@ -197,8 +212,8 @@ function CrearRegistroHorasExtra() {
                 <FormControl fullWidth required>
                   <InputLabel>Empleado</InputLabel>
                   <Select
-                    value={formData.usuario}
-                    onChange={(e) => handleInputChange('usuario', e.target.value)}
+                    value={formData.usuarioSeleccionado?.id || ''}
+                    onChange={(e) => handleUsuarioChange(e.target.value)}
                     label="Empleado"
                     startAdornment={
                       <InputAdornment position="start">
@@ -207,14 +222,43 @@ function CrearRegistroHorasExtra() {
                     }
                   >
                     {usuarios.map(usuario => (
-                      <MenuItem key={usuario.id} value={usuario.email}>
-                        {usuario.persona?.nombres} {usuario.persona?.apellidos} ({usuario.email})
+                      <MenuItem key={usuario.id} value={usuario.id}>
+                        {usuario.persona?.nombres} {usuario.persona?.apellidos} - {usuario.persona?.tipoDocumento}: {usuario.persona?.numeroDocumento}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
+            
+            {/* Mostrar detalles del empleado seleccionado */}
+            {formData.usuarioSeleccionado && (
+              <Box sx={{ mt: 2, p: 2, background: '#e3f2fd', borderRadius: 2, border: '1px solid #bbdefb' }}>
+                <Typography variant="subtitle1" fontWeight={600} color="#1976d2" sx={{ mb: 1 }}>
+                  Empleado Seleccionado:
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Nombres y Apellidos:</Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.usuarioSeleccionado.persona?.nombres} {formData.usuarioSeleccionado.persona?.apellidos}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Documento:</Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.usuarioSeleccionado.persona?.tipoDocumento}: {formData.usuarioSeleccionado.persona?.numeroDocumento}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">Email:</Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.usuarioSeleccionado.email}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
           </Card>
 
           {/* Sección 2: Horarios de Trabajo */}
@@ -297,7 +341,7 @@ function CrearRegistroHorasExtra() {
                   onChange={(e) => handleInputChange('cantidadHorasExtra', e.target.value)}
                   fullWidth
                   required
-                  inputProps={{ min: 0.01, step: 0.01 }}
+                  inputProps={{ min: 1, step: 1 }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -306,7 +350,7 @@ function CrearRegistroHorasExtra() {
                     ),
                     endAdornment: <InputAdornment position="end">horas</InputAdornment>,
                   }}
-                  helperText="Ingresa manualmente la cantidad de horas extra trabajadas"
+                  helperText="Ingresa la cantidad de horas extra trabajadas (números enteros)"
                 />
               </Grid>
               <Grid item xs={12} md={6}>

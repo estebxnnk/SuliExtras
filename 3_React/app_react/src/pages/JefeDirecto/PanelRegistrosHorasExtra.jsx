@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider, Chip, Badge } from '@mui/material';
+import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider, Chip, Badge, Card, CardContent } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -12,24 +12,31 @@ import PendingIcon from '@mui/icons-material/Pending';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import SettingsIcon from '@mui/icons-material/Settings';
+import WarningIcon from '@mui/icons-material/Warning';
+import InfoIcon from '@mui/icons-material/Info';
 import NavbarJefeDirecto from './NavbarJefeDirecto';
 
 function PanelRegistrosHorasExtra() {
   const [registros, setRegistros] = useState([]);
   const [tiposHora, setTiposHora] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
-  const [modo, setModo] = useState('ver'); // 'ver', 'editar', 'crear'
+  const [modo, setModo] = useState('ver'); // 'ver', 'editar', 'estado'
   const [editData, setEditData] = useState({});
+  const [nuevoEstado, setNuevoEstado] = useState('');
   const [search, setSearch] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, action: '', registro: null });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchRegistros();
     fetchTiposHora();
+    fetchUsuarios();
   }, []);
 
   const fetchRegistros = async () => {
@@ -54,6 +61,16 @@ function PanelRegistrosHorasExtra() {
     }
   };
 
+  const fetchUsuarios = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/usuarios');
+      const data = await response.json();
+      setUsuarios(data);
+    } catch (error) {
+      setMensaje('No se pudieron cargar los usuarios.');
+    }
+  };
+
   const handleVer = async (registro) => {
     setModo('ver');
     setRegistroSeleccionado(registro);
@@ -61,70 +78,38 @@ function PanelRegistrosHorasExtra() {
   };
 
   const handleEditar = (registro) => {
-    setModo('editar');
-    setRegistroSeleccionado(registro);
-    setEditData({
-      fecha: registro.fecha,
-      horaIngreso: registro.horaIngreso,
-      horaSalida: registro.horaSalida,
-      ubicacion: registro.ubicacion,
-      cantidadHorasExtra: registro.cantidadHorasExtra,
-      justificacionHoraExtra: registro.justificacionHoraExtra || '',
-    });
-    setOpenDialog(true);
-  };
-
-  const handleEliminar = async (registro) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este registro?')) return;
-    try {
-      const response = await fetch(`http://localhost:3000/api/registros/${registro.id}`, {
-        method: 'DELETE',
+    // Si el estado ya fue modificado (no es pendiente), mostrar solo edición de estado
+    if (registro.estado !== 'pendiente') {
+      setModo('estado');
+      setRegistroSeleccionado(registro);
+      setNuevoEstado(registro.estado);
+      setOpenDialog(true);
+    } else {
+      // Si es pendiente, mostrar edición completa
+      setModo('editar');
+      setRegistroSeleccionado(registro);
+      setEditData({
+        fecha: registro.fecha,
+        horaIngreso: registro.horaIngreso,
+        horaSalida: registro.horaSalida,
+        ubicacion: registro.ubicacion,
+        cantidadHorasExtra: registro.cantidadHorasExtra,
+        justificacionHoraExtra: registro.justificacionHoraExtra || '',
       });
-      if (!response.ok) {
-        setMensaje('No se pudo eliminar el registro.');
-        return;
-      }
-      setMensaje('Registro eliminado exitosamente.');
-      fetchRegistros();
-    } catch (error) {
-      setMensaje('No se pudo conectar con el servidor.');
+      setOpenDialog(true);
     }
   };
 
-  const handleAprobar = async (registro) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/registros/${registro.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: 'aprobado' }),
-      });
-      if (!response.ok) {
-        setMensaje('No se pudo aprobar el registro.');
-        return;
-      }
-      setMensaje('Registro aprobado exitosamente.');
-      fetchRegistros();
-    } catch (error) {
-      setMensaje('No se pudo conectar con el servidor.');
-    }
+  const handleAprobar = (registro) => {
+    showConfirmDialog('aprobar', registro);
   };
 
-  const handleRechazar = async (registro) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/registros/${registro.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: 'rechazado' }),
-      });
-      if (!response.ok) {
-        setMensaje('No se pudo rechazar el registro.');
-        return;
-      }
-      setMensaje('Registro rechazado exitosamente.');
-      fetchRegistros();
-    } catch (error) {
-      setMensaje('No se pudo conectar con el servidor.');
-    }
+  const handleRechazar = (registro) => {
+    showConfirmDialog('rechazar', registro);
+  };
+
+  const handleEliminar = (registro) => {
+    showConfirmDialog('eliminar', registro);
   };
 
   const handleGuardarEdicion = async () => {
@@ -139,6 +124,25 @@ function PanelRegistrosHorasExtra() {
         return;
       }
       setMensaje('Registro actualizado exitosamente.');
+      setOpenDialog(false);
+      fetchRegistros();
+    } catch (error) {
+      setMensaje('No se pudo conectar con el servidor.');
+    }
+  };
+
+  const handleGuardarEstado = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/registros/${registroSeleccionado.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
+      if (!response.ok) {
+        setMensaje('No se pudo actualizar el estado del registro.');
+        return;
+      }
+      setMensaje('Estado del registro actualizado exitosamente.');
       setOpenDialog(false);
       fetchRegistros();
     } catch (error) {
@@ -175,6 +179,58 @@ function PanelRegistrosHorasExtra() {
     
     return cumpleBusqueda && cumpleEstado;
   });
+
+  const showConfirmDialog = (action, registro) => {
+    setConfirmDialog({ open: true, action, registro });
+  };
+
+  const handleConfirmAction = async () => {
+    const { action, registro } = confirmDialog;
+    
+    try {
+      let response;
+      let message = '';
+      
+      switch (action) {
+        case 'aprobar':
+          response = await fetch(`http://localhost:3000/api/registros/${registro.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: 'aprobado' }),
+          });
+          message = 'Registro aprobado exitosamente.';
+          break;
+          
+        case 'rechazar':
+          response = await fetch(`http://localhost:3000/api/registros/${registro.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: 'rechazado' }),
+          });
+          message = 'Registro rechazado exitosamente.';
+          break;
+          
+        case 'eliminar':
+          response = await fetch(`http://localhost:3000/api/registros/${registro.id}`, {
+            method: 'DELETE',
+          });
+          message = 'Registro eliminado exitosamente.';
+          break;
+      }
+      
+      if (!response.ok) {
+        setMensaje(`No se pudo ${action} el registro.`);
+        return;
+      }
+      
+      setMensaje(message);
+      fetchRegistros();
+    } catch (error) {
+      setMensaje('No se pudo conectar con el servidor.');
+    } finally {
+      setConfirmDialog({ open: false, action: '', registro: null });
+    }
+  };
 
   return (
     <Box minHeight="100vh" width="100vw" sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
@@ -227,29 +283,51 @@ function PanelRegistrosHorasExtra() {
           <Table>
             <TableHead>
               <TableRow sx={{ background: '#e3f2fd' }}>
-                <TableCell>Número Registro</TableCell>
-                <TableCell>Usuario</TableCell>
+                <TableCell>Nombres</TableCell>
+                <TableCell>Apellidos</TableCell>
+                <TableCell>Número de Documento</TableCell>
                 <TableCell>Fecha</TableCell>
-                <TableCell>Horario</TableCell>
-                <TableCell>Ubicación</TableCell>
                 <TableCell>Horas Extra</TableCell>
+                <TableCell>Tipo de Hora</TableCell>
                 <TableCell>Estado</TableCell>
                 <TableCell align="center">Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {registrosFiltrados.map(registro => (
-                <TableRow key={registro.id} hover sx={{ transition: 'background 0.2s', '&:hover': { background: '#e3f2fd' } }}>
-                  <TableCell>{registro.numRegistro}</TableCell>
-                  <TableCell>{registro.usuario}</TableCell>
-                  <TableCell>{registro.fecha}</TableCell>
-                  <TableCell>
-                    {registro.horaIngreso} - {registro.horaSalida}
-                  </TableCell>
-                  <TableCell>{registro.ubicacion}</TableCell>
-                  <TableCell>{registro.cantidadHorasExtra} hrs</TableCell>
-                  <TableCell>{getEstadoChip(registro.estado)}</TableCell>
-                  <TableCell align="center">
+              {registrosFiltrados.map(registro => {
+                // Buscar el tipo de hora correspondiente
+                const tipoHora = tiposHora.find(tipo => tipo.id === registro.tipoHora);
+                // Buscar el usuario correspondiente
+                const usuario = usuarios.find(u => u.email === registro.usuario);
+                
+                // Debug: verificar datos
+                console.log('Registro:', registro);
+                console.log('Tipos de hora:', tiposHora);
+                console.log('Tipo de hora encontrado:', tipoHora);
+                console.log('tipoHoraId del registro:', registro.tipoHoraId);
+                
+                return (
+                  <TableRow key={registro.id} hover sx={{ transition: 'background 0.2s', '&:hover': { background: '#e3f2fd' } }}>
+                    <TableCell>{usuario?.persona?.nombres || registro.nombres || 'N/A'}</TableCell>
+                    <TableCell>{usuario?.persona?.apellidos || registro.apellidos || 'N/A'}</TableCell>
+                    <TableCell>{usuario?.persona?.numeroDocumento || registro.numeroDocumento || 'N/A'}</TableCell>
+                    <TableCell>{registro.fecha}</TableCell>
+                    <TableCell>{registro.cantidadHorasExtra} hrs</TableCell>
+                    <TableCell>
+                      {registro.Horas && registro.Horas.length > 0 ? (
+                        registro.Horas.map(hora => (
+                          <Box key={hora.id}>
+                            <Typography variant="body2" fontWeight={600}>{hora.tipo}</Typography>
+                            <Typography variant="caption" color="text.secondary">{hora.denominacion}</Typography>
+                            <Typography variant="caption" color="text.secondary">Cantidad: {hora.RegistroHora.cantidad}</Typography>
+                          </Box>
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">No asignado</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>{getEstadoChip(registro.estado)}</TableCell>
+                    <TableCell align="center">
                     <IconButton onClick={() => handleVer(registro)} title="Ver detalles" sx={{ color: 'green' }}>
                       <VisibilityIcon />
                     </IconButton>
@@ -271,7 +349,8 @@ function PanelRegistrosHorasExtra() {
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
               {registrosFiltrados.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={8} align="center">No hay registros de horas extra.</TableCell>
@@ -286,7 +365,7 @@ function PanelRegistrosHorasExtra() {
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {modo === 'ver' && <AccessTimeIcon sx={{ fontSize: 36, color: '#1976d2' }} />}
-          {modo === 'ver' ? 'Detalles del Registro' : 'Editar Registro'}
+          {modo === 'ver' ? 'Detalles del Registro' : modo === 'editar' ? 'Editar Registro' : 'Cambiar Estado del Registro'}
         </DialogTitle>
         <DialogContent sx={{ background: modo === 'ver' ? '#f3f7fa' : 'inherit', borderRadius: 2 }}>
           {registroSeleccionado && modo === 'ver' && (
@@ -299,36 +378,64 @@ function PanelRegistrosHorasExtra() {
               </Typography>
               <Divider sx={{ width: '100%', mb: 2 }} />
               
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, width: '100%' }}>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Usuario</Typography>
-                  <Typography variant="body1" fontWeight={600}>{registroSeleccionado.usuario}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Fecha</Typography>
-                  <Typography variant="body1" fontWeight={600}>{registroSeleccionado.fecha}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Hora de Ingreso</Typography>
-                  <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horaIngreso}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Hora de Salida</Typography>
-                  <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horaSalida}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Ubicación</Typography>
-                  <Typography variant="body1" fontWeight={600}>{registroSeleccionado.ubicacion}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Horas Extra</Typography>
-                  <Typography variant="body1" fontWeight={600}>{registroSeleccionado.cantidadHorasExtra} horas</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">Estado</Typography>
-                  {getEstadoChip(registroSeleccionado.estado)}
-                </Box>
-              </Box>
+              {/* Buscar el usuario correspondiente */}
+              {(() => {
+                const usuario = usuarios.find(u => u.email === registroSeleccionado.usuario);
+                return (
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, width: '100%' }}>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Empleado</Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {usuario?.persona?.nombres || registroSeleccionado.nombres || 'N/A'} {usuario?.persona?.apellidos || registroSeleccionado.apellidos || 'N/A'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {usuario?.persona?.tipoDocumento || registroSeleccionado.tipoDocumento || 'N/A'}: {usuario?.persona?.numeroDocumento || registroSeleccionado.numeroDocumento || 'N/A'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {registroSeleccionado.usuario}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Fecha</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.fecha}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Hora de Ingreso</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horaIngreso}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Hora de Salida</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horaSalida}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Ubicación</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.ubicacion}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Horas Extra</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.cantidadHorasExtra} horas</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Tipo(s) de Hora</Typography>
+                      {registroSeleccionado.Horas && registroSeleccionado.Horas.length > 0 ? (
+                        registroSeleccionado.Horas.map(hora => (
+                          <Box key={hora.id}>
+                            <Typography variant="body1" fontWeight={600}>{hora.tipo}</Typography>
+                            <Typography variant="caption" color="text.secondary">{hora.denominacion} ({(hora.valor - 1) * 100}% recargo)</Typography>
+                            <Typography variant="caption" color="text.secondary">Cantidad: {hora.RegistroHora.cantidad}</Typography>
+                          </Box>
+                        ))
+                      ) : (
+                        <Typography variant="body1" fontWeight={600} color="text.secondary">No asignado</Typography>
+                      )}
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Estado</Typography>
+                      {getEstadoChip(registroSeleccionado.estado)}
+                    </Box>
+                  </Box>
+                );
+              })()}
               
               {registroSeleccionado.justificacionHoraExtra && (
                 <Box sx={{ width: '100%', mt: 2 }}>
@@ -338,6 +445,47 @@ function PanelRegistrosHorasExtra() {
                   </Typography>
                 </Box>
               )}
+            </Box>
+          )}
+          
+          {registroSeleccionado && modo === 'estado' && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <Typography variant="h6" fontWeight={600} color="#1976d2" mb={2}>
+                Registro #{registroSeleccionado.numRegistro}
+              </Typography>
+              {(() => {
+                const usuario = usuarios.find(u => u.email === registroSeleccionado.usuario);
+                return (
+                  <>
+                    <Typography variant="body1" mb={2}>
+                      <strong>Empleado:</strong> {usuario?.persona?.nombres || registroSeleccionado.nombres || 'N/A'} {usuario?.persona?.apellidos || registroSeleccionado.apellidos || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" mb={1} color="text.secondary">
+                      <strong>Documento:</strong> {usuario?.persona?.tipoDocumento || registroSeleccionado.tipoDocumento || 'N/A'}: {usuario?.persona?.numeroDocumento || registroSeleccionado.numeroDocumento || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" mb={2} color="text.secondary">
+                      <strong>Email:</strong> {registroSeleccionado.usuario}
+                    </Typography>
+                  </>
+                );
+              })()}
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  Este registro ya ha sido procesado. Solo puedes cambiar su estado.
+                </Typography>
+              </Alert>
+              <TextField
+                select
+                label="Nuevo Estado"
+                value={nuevoEstado}
+                onChange={e => setNuevoEstado(e.target.value)}
+                fullWidth
+                required
+              >
+                <MenuItem value="pendiente">Pendiente</MenuItem>
+                <MenuItem value="aprobado">Aprobado</MenuItem>
+                <MenuItem value="rechazado">Rechazado</MenuItem>
+              </TextField>
             </Box>
           )}
           
@@ -398,7 +546,106 @@ function PanelRegistrosHorasExtra() {
               Guardar
             </Button>
           )}
+          {modo === 'estado' && (
+            <Button onClick={handleGuardarEstado} variant="contained" color="primary">
+              Cambiar Estado
+            </Button>
+          )}
         </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de Confirmación Personalizado */}
+      <Dialog 
+        open={confirmDialog.open} 
+        onClose={() => setConfirmDialog({ open: false, action: '', registro: null })}
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0 }}>
+          <Card sx={{ 
+            background: confirmDialog.action === 'eliminar' 
+              ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' 
+              : confirmDialog.action === 'aprobar'
+              ? 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)'
+              : 'linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%)',
+            border: confirmDialog.action === 'eliminar' 
+              ? '2px solid #f44336' 
+              : confirmDialog.action === 'aprobar'
+              ? '2px solid #4caf50'
+              : '2px solid #ff9800'
+          }}>
+            <CardContent sx={{ p: 4, textAlign: 'center' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                {confirmDialog.action === 'eliminar' ? (
+                  <WarningIcon sx={{ fontSize: 64, color: '#f44336' }} />
+                ) : confirmDialog.action === 'aprobar' ? (
+                  <CheckCircleIcon sx={{ fontSize: 64, color: '#4caf50' }} />
+                ) : (
+                  <CancelIcon sx={{ fontSize: 64, color: '#ff9800' }} />
+                )}
+              </Box>
+              
+              <Typography variant="h5" fontWeight={700} mb={2} color="#333">
+                {confirmDialog.action === 'eliminar' ? 'Confirmar Eliminación' :
+                 confirmDialog.action === 'aprobar' ? 'Confirmar Aprobación' : 'Confirmar Rechazo'}
+              </Typography>
+              
+              <Typography variant="body1" mb={3} color="#666">
+                ¿Estás seguro que deseas{' '}
+                <strong>
+                  {confirmDialog.action === 'eliminar' ? 'ELIMINAR' :
+                   confirmDialog.action === 'aprobar' ? 'APROBAR' : 'RECHAZAR'}
+                </strong>{' '}
+                el registro del empleado{' '}
+                <strong>
+                  {confirmDialog.registro?.persona?.nombres} {confirmDialog.registro?.persona?.apellidos}
+                </strong>?
+              </Typography>
+              
+              {confirmDialog.action === 'eliminar' && (
+                <Alert severity="warning" sx={{ mb: 3 }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    ⚠️ Esta acción no se puede deshacer
+                  </Typography>
+                </Alert>
+              )}
+              
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setConfirmDialog({ open: false, action: '', registro: null })}
+                  sx={{ px: 4, py: 1.5, fontWeight: 600 }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleConfirmAction}
+                  sx={{ 
+                    px: 4, 
+                    py: 1.5, 
+                    fontWeight: 600,
+                    background: confirmDialog.action === 'eliminar' 
+                      ? '#f44336' 
+                      : confirmDialog.action === 'aprobar'
+                      ? '#4caf50'
+                      : '#ff9800',
+                    '&:hover': {
+                      background: confirmDialog.action === 'eliminar' 
+                        ? '#d32f2f' 
+                        : confirmDialog.action === 'aprobar'
+                        ? '#388e3c'
+                        : '#f57c00'
+                    }
+                  }}
+                >
+                  {confirmDialog.action === 'eliminar' ? 'Eliminar' :
+                   confirmDialog.action === 'aprobar' ? 'Aprobar' : 'Rechazar'}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </DialogContent>
       </Dialog>
     </Box>
   );
