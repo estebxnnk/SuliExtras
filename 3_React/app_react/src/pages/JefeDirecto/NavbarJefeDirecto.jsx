@@ -52,8 +52,11 @@ function NavbarJefeDirecto() {
         <Link to="/panel-jefe-directo">
           <Box component="img" src="/img/NuevoLogo.png" alt="Logo" sx={{ height: 72 }} />
         </Link>
-        <Link to="/registros-jefe-directo" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#0d47a1', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#1976d2' } }}>Gestionar Registros</Typography>
+        <Link to="/registros-horas-extra" style={{ textDecoration: 'none' }}>
+          <Typography sx={{ fontSize: 15, color: '#0d47a1', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#1976d2' } }}>Registros Horas Extra</Typography>
+        </Link>
+        <Link to="/tipos-hora" style={{ textDecoration: 'none' }}>
+          <Typography sx={{ fontSize: 15, color: '#0d47a1', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#1976d2' } }}>Tipos de Hora</Typography>
         </Link>
         <Link to="/usuarios-jefe-directo" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontSize: 15, color: '#0d47a1', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#1976d2' } }}>Gestionar Usuarios (Empleado)</Typography>
