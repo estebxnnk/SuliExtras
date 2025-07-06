@@ -17,6 +17,26 @@ router.get('/', usuariosController.obtenerUsuarios);
 /**
  * @swagger
  * /api/usuarios/{id}:
+ *   get:
+ *     summary: Obtener un usuario por ID (incluye datos de persona y rol)
+ *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado correctamente
+ *       404:
+ *         description: Usuario no encontrado
+ */
+router.get('/:id', usuariosController.obtenerUsuarioPorId);
+
+/**
+ * @swagger
+ * /api/usuarios/{id}:
  *   put:
  *     summary: Editar un usuario por ID (y su persona asociada)
  *     tags: [Usuarios]

@@ -164,9 +164,9 @@ function DashboardAdmin() {
   const handleCloseUsuario = () => setModalUsuario({ open: false, usuario: null, registros: [] });
 
   return (
-    <Box sx={{ minHeight: '100vh', width: '100vw', background: `url('/img/Recepcion.jpg') no-repeat center center`, backgroundSize: 'cover', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: '100vh', width: '100vw', overflow: 'hidden', background: `url('/img/Recepcion.jpg') no-repeat center center fixed`, backgroundSize: 'cover', display: 'flex', flexDirection: 'column' }}>
       <NavbarAdminstrativo />
-      <Box sx={{ flex: 1, width: '100%', maxWidth: 1400, mx: 'auto', mt: 16, mb: 6, px: 2 }}>
+      <Box sx={{ flex: 1, width: '100%', maxWidth: 1400, mx: 'auto', mt: 10, mb: 4, px: { xs: 1, sm: 2 }, overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
           <Typography variant="h3" fontWeight={900} color="#1976d2" sx={{ textShadow: '0 2px 8px #b6d0f7' }}>
             Dashboard Administrativo
@@ -175,9 +175,9 @@ function DashboardAdmin() {
             Refrescar
           </Button>
         </Box>
-        <Grid container spacing={4} alignItems="flex-end">
+        <Grid container spacing={3} alignItems="stretch" sx={{ mb: 2, flexWrap: 'wrap' }}>
           {/* Tarjeta especial de pendientes */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={4} lg={3}>
             <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #fbc02d', p: 2, background: 'linear-gradient(90deg,#fffde7 60%,#fff9c4 100%)', display: 'flex', alignItems: 'center', gap: 2, minHeight: 140 }}>
               <Badge badgeContent={registrosPendientes.length} color="warning" max={99} sx={{ mr: 2 }}>
                 <WarningIcon sx={{ fontSize: 40, color: '#fbc02d' }} />
@@ -189,60 +189,44 @@ function DashboardAdmin() {
               </Box>
             </Card>
           </Grid>
-          {/* Métricas de horas por estado */}
-          <Grid item xs={12} md={3}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #43a047', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 140 }}>
-              <Avatar sx={{ bgcolor: '#43a047', width: 48, height: 48, mb: 1 }}><AccessTimeIcon /></Avatar>
-              <Typography variant="h6" fontWeight={700} color="#43a047">Horas Aprobadas</Typography>
-              <Typography variant="h4" fontWeight={900} color="#222">{horasAprobadas}</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #fbc02d', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 140 }}>
-              <Avatar sx={{ bgcolor: '#fbc02d', width: 48, height: 48, mb: 1 }}><AccessTimeIcon /></Avatar>
-              <Typography variant="h6" fontWeight={700} color="#b28704">Horas Pendientes</Typography>
-              <Typography variant="h4" fontWeight={900} color="#222">{horasPendientes}</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #e53935', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 140 }}>
-              <Avatar sx={{ bgcolor: '#e53935', width: 48, height: 48, mb: 1 }}><AccessTimeIcon /></Avatar>
-              <Typography variant="h6" fontWeight={700} color="#e53935">Horas Rechazadas</Typography>
-              <Typography variant="h4" fontWeight={900} color="#222">{horasRechazadas}</Typography>
-            </Card>
-          </Grid>
           {/* Filtros como tarjeta */}
-          <Grid item xs={12} md={4}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, minHeight: 140 }}>
-              <CardContent>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel id="rol-filtro-label">Filtrar por Rol</InputLabel>
-                  <Select
-                    labelId="rol-filtro-label"
-                    value={rolFiltro}
-                    label="Filtrar por Rol"
-                    onChange={handleFiltroRol}
-                  >
-                    <MenuItem value="">Todos</MenuItem>
-                    {roles.map(rol => (
-                      <MenuItem key={rol.id} value={rol.id}>{rol.nombre}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel id="date-preset-label">Rango de Fechas</InputLabel>
-                  <Select
-                    labelId="date-preset-label"
-                    value={datePreset}
-                    label="Rango de Fechas"
-                    onChange={e => setDatePreset(e.target.value)}
-                  >
-                    <MenuItem value="today">Hoy</MenuItem>
-                    <MenuItem value="7d">Últimos 7 días</MenuItem>
-                    <MenuItem value="1m">Último mes</MenuItem>
-                    <MenuItem value="all">Todo</MenuItem>
-                  </Select>
-                </FormControl>
+          <Grid item xs={12} md={8} lg={5}>
+            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, minHeight: 140, display: 'flex', alignItems: 'center' }}>
+              <CardContent sx={{ width: '100%' }}>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel id="rol-filtro-label">Filtrar por Rol</InputLabel>
+                      <Select
+                        labelId="rol-filtro-label"
+                        value={rolFiltro}
+                        label="Filtrar por Rol"
+                        onChange={handleFiltroRol}
+                      >
+                        <MenuItem value="">Todos</MenuItem>
+                        {roles.map(rol => (
+                          <MenuItem key={rol.id} value={rol.id}>{rol.nombre}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel id="date-preset-label">Rango de Fechas</InputLabel>
+                      <Select
+                        labelId="date-preset-label"
+                        value={datePreset}
+                        label="Rango de Fechas"
+                        onChange={e => setDatePreset(e.target.value)}
+                      >
+                        <MenuItem value="today">Hoy</MenuItem>
+                        <MenuItem value="7d">Últimos 7 días</MenuItem>
+                        <MenuItem value="1m">Último mes</MenuItem>
+                        <MenuItem value="all">Todo</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                   Mostrando usuarios nuevos y registros en el rango seleccionado.
                 </Typography>
@@ -250,8 +234,8 @@ function DashboardAdmin() {
             </Card>
           </Grid>
           {/* Usuarios por rol con numeración */}
-          <Grid item xs={12} md={6}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, minHeight: 260 }}>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, minHeight: 260, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Typography variant="h6" fontWeight={700} color="#1976d2">Usuarios por Rol</Typography>
@@ -265,8 +249,8 @@ function DashboardAdmin() {
                       arcLabelMinAngle: 10,
                       color: d => d.color,
                     }]}
-                    width={260}
-                    height={200}
+                    width={220}
+                    height={180}
                     legend={{ hidden: false }}
                     sx={{ [`& .${pieArcLabelClasses.root}`]: { fill: '#fff', fontWeight: 700 } }}
                   />
@@ -282,8 +266,41 @@ function DashboardAdmin() {
               </CardContent>
             </Card>
           </Grid>
+          {/* Registros por estado con numeración */}
+          <Grid item xs={12} md={6} lg={4}>
+            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, minHeight: 260, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="h6" fontWeight={700} color="#1976d2">Registros por Estado</Typography>
+                  <Typography variant="body2" color="#1976d2" fontWeight={700}>Total: {totalRegistros}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <PieChart
+                    series={[{
+                      data: registrosPorEstado,
+                      arcLabel: d => d.value,
+                      arcLabelMinAngle: 10,
+                      color: d => d.color,
+                    }]}
+                    width={220}
+                    height={180}
+                    legend={{ hidden: false }}
+                    sx={{ [`& .${pieArcLabelClasses.root}`]: { fill: '#fff', fontWeight: 700 } }}
+                  />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
+                    {registrosPorEstado.map((r, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 16, height: 16, borderRadius: '50%', background: r.color, mr: 1 }} />
+                        <Typography variant="body2" fontWeight={700}>{r.label}: {r.value}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
           {/* Total horas extra */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} lg={4}>
             <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 140 }}>
               <Avatar sx={{ bgcolor: '#1976d2', width: 56, height: 56, mb: 2 }}>
                 <AccessTimeIcon fontSize="large" />
@@ -294,8 +311,8 @@ function DashboardAdmin() {
             </Card>
           </Grid>
           {/* Nuevos usuarios */}
-          <Grid item xs={12} md={8}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, mb: 3 }}>
+          <Grid item xs={12} md={8} lg={8}>
+            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, mb: 3, minHeight: 140 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Avatar sx={{ bgcolor: '#43a047', width: 40, height: 40, mr: 1 }}>
@@ -359,39 +376,6 @@ function DashboardAdmin() {
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                   Última actualización: {new Date(lastUpdate).toLocaleTimeString()}
                 </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          {/* Registros por estado con numeración */}
-          <Grid item xs={12} md={6}>
-            <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px #b6d0f7', p: 2, minHeight: 260 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="h6" fontWeight={700} color="#1976d2">Registros por Estado</Typography>
-                  <Typography variant="body2" color="#1976d2" fontWeight={700}>Total: {totalRegistros}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <PieChart
-                    series={[{
-                      data: registrosPorEstado,
-                      arcLabel: d => d.value,
-                      arcLabelMinAngle: 10,
-                      color: d => d.color,
-                    }]}
-                    width={260}
-                    height={200}
-                    legend={{ hidden: false }}
-                    sx={{ [`& .${pieArcLabelClasses.root}`]: { fill: '#fff', fontWeight: 700 } }}
-                  />
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
-                    {registrosPorEstado.map((r, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 16, height: 16, borderRadius: '50%', background: r.color, mr: 1 }} />
-                        <Typography variant="body2" fontWeight={700}>{r.label}: {r.value}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
               </CardContent>
             </Card>
           </Grid>

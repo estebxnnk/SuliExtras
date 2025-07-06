@@ -43,8 +43,21 @@ async function eliminarUsuario(id) {
   return { mensaje: 'Usuario eliminado correctamente' };
 }
 
+// Obtener un usuario por ID incluyendo Persona y Rol
+async function obtenerUsuarioPorId(id) {
+  const usuario = await User.findByPk(id, {
+    include: [
+      { model: Persona, as: 'persona' },
+      { model: Rol, as: 'rol' }
+    ]
+  });
+  if (!usuario) throw new Error('Usuario no encontrado');
+  return usuario;
+}
+
 module.exports = {
   obtenerUsuarios,
   editarUsuario,
-  eliminarUsuario
+  eliminarUsuario,
+  obtenerUsuarioPorId
 }; 

@@ -30,6 +30,9 @@ function Login() {
       }
       localStorage.setItem('token', data.token);
       localStorage.setItem('userRol', data.rol);
+      if (data.usuario && data.usuario.id) {
+        localStorage.setItem('userId', data.usuario.id);
+      }
       setMensaje('');
       // Redirección según el rol
       if (data.rol === 'SubAdministrador') {
