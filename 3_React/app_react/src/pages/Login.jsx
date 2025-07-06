@@ -38,7 +38,7 @@ function Login() {
       if (data.rol === 'SubAdministrador') {
         navigate('/panel-sub-admin');
       } else if (data.rol === 'Administrador') {
-        navigate('/panel-admin-administrativo');
+        navigate('/panel-admin');
       } else if (data.rol === 'JefeDirecto') {
         navigate('/panel-jefe-directo');
       } else {
