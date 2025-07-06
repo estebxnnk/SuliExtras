@@ -3,6 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Box, Paper, Typography, TextField, Button, Alert, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import NavbarAdminstrativo from './NavbarAdminstrativo';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import BadgeIcon from '@mui/icons-material/Badge';
+import PersonIcon from '@mui/icons-material/Person';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const tiposDocumento = [
   { value: 'CC', label: 'Cédula de Ciudadanía' },
@@ -130,19 +136,36 @@ function RegistrarUsuarioAdministrativo() {
       <NavbarAdminstrativo />
       <Box sx={{ flex: 1, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', mt: { xs: 14, sm: 16 } }}>
         <Paper
-          elevation={6}
+          elevation={8}
           sx={{
-            borderRadius: 3,
+            borderRadius: 4,
             p: { xs: 2, sm: 4 },
-            minWidth: { xs: '90vw', sm: 340 },
-            maxWidth: { xs: '98vw', sm: 500 },
-            width: { xs: '98vw', sm: 500 },
+            minWidth: { xs: '95vw', sm: 370 },
+            maxWidth: { xs: '99vw', sm: 500 },
+            width: { xs: '99vw', sm: 500 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            background: 'rgba(255,255,255,0.92)',
+            background: 'rgba(255,255,255,0.97)',
+            boxShadow: '0 8px 24px rgba(25, 118, 210, 0.10)',
+            position: 'relative',
           }}
         >
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/usuarios-administrativo')}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: 16,
+              color: '#1976d2',
+              fontWeight: 700,
+              borderRadius: 2,
+              textTransform: 'none',
+            }}
+          >
+            Volver
+          </Button>
           <Typography variant="h4" fontWeight={700} mb={2} color="#1976d2" textAlign="center">
             Registrar Usuario
           </Typography>
@@ -154,7 +177,7 @@ function RegistrarUsuarioAdministrativo() {
           <Box
             component="form"
             onSubmit={handleSubmit}
-            sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+            sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mt: 1 }}
             autoComplete="off"
           >
             <TextField
@@ -166,6 +189,11 @@ function RegistrarUsuarioAdministrativo() {
               margin="normal"
               fullWidth
               required
+              InputProps={{
+                startAdornment: (
+                  <EmailIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <TextField
               label="Contraseña"
@@ -176,6 +204,11 @@ function RegistrarUsuarioAdministrativo() {
               margin="normal"
               fullWidth
               required
+              InputProps={{
+                startAdornment: (
+                  <LockIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <TextField
               select
@@ -193,7 +226,6 @@ function RegistrarUsuarioAdministrativo() {
                 </MenuItem>
               ))}
             </TextField>
-            {/* Persona */}
             <TextField
               select
               label="Tipo de Documento"
@@ -218,6 +250,11 @@ function RegistrarUsuarioAdministrativo() {
               margin="normal"
               fullWidth
               required
+              InputProps={{
+                startAdornment: (
+                  <BadgeIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <TextField
               label="Nombres"
@@ -227,6 +264,11 @@ function RegistrarUsuarioAdministrativo() {
               margin="normal"
               fullWidth
               required
+              InputProps={{
+                startAdornment: (
+                  <PersonIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <TextField
               label="Apellidos"
@@ -236,6 +278,11 @@ function RegistrarUsuarioAdministrativo() {
               margin="normal"
               fullWidth
               required
+              InputProps={{
+                startAdornment: (
+                  <PersonIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <TextField
               label="Correo de la persona"
@@ -246,6 +293,11 @@ function RegistrarUsuarioAdministrativo() {
               margin="normal"
               fullWidth
               required
+              InputProps={{
+                startAdornment: (
+                  <EmailIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <TextField
               label="Fecha de Nacimiento"
@@ -257,18 +309,23 @@ function RegistrarUsuarioAdministrativo() {
               fullWidth
               InputLabelProps={{ shrink: true }}
               required
+              InputProps={{
+                startAdornment: (
+                  <CalendarMonthIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
             />
             <Button
               type="submit"
               variant="contained"
               color="primary"
-              sx={{ mt: 2, borderRadius: 2, fontWeight: 700, fontSize: '1.1rem', width: '100%' }}
+              sx={{ mt: 2, borderRadius: 3, fontWeight: 700, fontSize: '1.1rem', width: '100%', boxShadow: '0 4px 16px rgba(25, 118, 210, 0.10)' }}
             >
               Registrar
             </Button>
           </Box>
           <Dialog open={openRolDialog} onClose={() => setOpenRolDialog(false)}>
-            <DialogTitle>Crear nuevo rol</DialogTitle>
+            <DialogTitle sx={{ color: '#1976d2', fontWeight: 700 }}>Crear nuevo rol</DialogTitle>
             <DialogContent>
               <TextField
                 label="Nombre del rol"
@@ -276,12 +333,17 @@ function RegistrarUsuarioAdministrativo() {
                 onChange={e => setNuevoRol(e.target.value)}
                 fullWidth
                 margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <BadgeIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               {mensajeRol && <Alert severity={mensajeRol.includes('exitosamente') ? 'success' : 'error'} sx={{ mt: 2 }}>{mensajeRol}</Alert>}
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setOpenRolDialog(false)}>Cancelar</Button>
-              <Button onClick={handleCrearRol} variant="contained" color="primary">Crear</Button>
+              <Button onClick={() => setOpenRolDialog(false)} sx={{ color: '#1976d2', fontWeight: 700 }}>Cancelar</Button>
+              <Button onClick={handleCrearRol} variant="contained" color="primary" sx={{ borderRadius: 2, fontWeight: 700 }}>Crear</Button>
             </DialogActions>
           </Dialog>
         </Paper>

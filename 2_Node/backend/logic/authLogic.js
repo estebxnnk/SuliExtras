@@ -14,10 +14,7 @@ class AuthLogic {
         { model: Rol, as: 'rol' }
       ]
     });
-    console.log('Usuario encontrado:', user ? user.toJSON() : user);
     if (!user) throw new Error('Usuario o contraseña incorrectos');
-    console.log('Rol relacionado:', user.rol);
-    console.log('Persona relacionada:', user.persona);
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) throw new Error('Usuario o contraseña incorrectos');
     const payload = {

@@ -18,7 +18,7 @@ router.get('/', usuariosController.obtenerUsuarios);
  * @swagger
  * /api/usuarios/{id}:
  *   put:
- *     summary: Editar un usuario por ID
+ *     summary: Editar un usuario por ID (y su persona asociada)
  *     tags: [Usuarios]
  *     parameters:
  *       - in: path
@@ -32,9 +32,47 @@ router.get('/', usuariosController.obtenerUsuarios);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "nuevo@email.com"
+ *               password:
+ *                 type: string
+ *                 example: "nuevaPassword"
+ *               rolId:
+ *                 type: integer
+ *                 example: 2
+ *               persona:
+ *                 type: object
+ *                 properties:
+ *                   tipoDocumento:
+ *                     type: string
+ *                     example: "DNI"
+ *                   numeroDocumento:
+ *                     type: string
+ *                     example: "12345678"
+ *                   nombres:
+ *                     type: string
+ *                     example: "Juan"
+ *                   apellidos:
+ *                     type: string
+ *                     example: "Pérez"
+ *                   correo:
+ *                     type: string
+ *                     example: "juan@email.com"
+ *                   fechaNacimiento:
+ *                     type: string
+ *                     format: date
+ *                     example: "1990-01-01"
+ *           example:
+ *             email: "nuevo@email.com"
+ *             rolId: 2
+ *             persona:
+ *               nombres: "NuevoNombre"
+ *               apellidos: "NuevoApellido"
  *     responses:
  *       200:
- *         description: Usuario editado correctamente
+ *         description: Usuario y persona editados correctamente
  *       400:
  *         description: Error en la solicitud
  */
