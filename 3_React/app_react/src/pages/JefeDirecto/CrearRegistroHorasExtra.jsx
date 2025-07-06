@@ -116,6 +116,7 @@ function CrearRegistroHorasExtra() {
         ...formData,
         numRegistro,
         estado: 'pendiente',
+        usuarioId: formData.usuarioSeleccionado?.id,
         horas: [
           {
             id: formData.tipoHoraId,

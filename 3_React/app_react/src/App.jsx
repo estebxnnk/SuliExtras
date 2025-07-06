@@ -21,6 +21,7 @@ import PanelJefeDirecto from './pages/JefeDirecto/PanelJefeDirecto';
 import PanelRegistrosHorasExtra from './pages/JefeDirecto/PanelRegistrosHorasExtra';
 import CrearRegistroHorasExtra from './pages/JefeDirecto/CrearRegistroHorasExtra';
 import GestionarTiposHora from './pages/JefeDirecto/GestionarTiposHora';
+import PanelUsuarios from './pages/JefeDirecto/PanelUsuarios';
 
 function App() {
   return (
@@ -81,7 +82,7 @@ function App() {
         } />
         <Route path="/usuarios-jefe-directo" element={
           <ProtectedRoute allowedRoles={['JefeDirecto']}>
-            <div>Gestionar Usuarios (Empleado)</div>
+            <PanelUsuarios />
           </ProtectedRoute>
         } />
       </Routes>

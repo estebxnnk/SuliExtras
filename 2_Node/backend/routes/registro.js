@@ -25,6 +25,89 @@ router.get('/', registroController.getAllRegistros);
 
 /**
  * @swagger
+ * /api/registros/con-usuario:
+ *   get:
+ *     summary: Obtener todos los registros con información del usuario
+ *     tags: [Registros]
+ *     responses:
+ *       200:
+ *         description: Lista de registros con información del usuario
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/con-usuario', registroController.getRegistrosConUsuario);
+
+/**
+ * @swagger
+ * /api/registros/usuario/{usuario}:
+ *   get:
+ *     summary: Obtener registros por usuario
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuario
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Nombre de usuario para filtrar registros
+ *     responses:
+ *       200:
+ *         description: Registros del usuario encontrados
+ *       404:
+ *         description: No se encontraron registros para el usuario
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/usuario/:usuario', registroController.getRegistrosByUsuario);
+
+/**
+ * @swagger
+ * /api/registros/usuario-id/{usuarioId}:
+ *   get:
+ *     summary: Obtener registros por ID de usuario
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario para filtrar registros
+ *     responses:
+ *       200:
+ *         description: Registros del usuario encontrados
+ *       404:
+ *         description: No se encontraron registros para el usuario
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/usuario-id/:usuarioId', registroController.getRegistrosByUsuarioId);
+
+/**
+ * @swagger
+ * /api/registros/usuario-completo/{usuarioId}:
+ *   get:
+ *     summary: Obtener registros por ID de usuario con información completa
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario para filtrar registros
+ *     responses:
+ *       200:
+ *         description: Registros del usuario con información completa
+ *       404:
+ *         description: No se encontraron registros para el usuario
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/usuario-completo/:usuarioId', registroController.getRegistrosPorUsuarioConInfo);
+
+/**
+ * @swagger
  * /api/registros/{id}:
  *   get:
  *     summary: Obtener un registro por ID
@@ -53,11 +136,10 @@ router.get('/:id', registroController.getRegistroById);
  *         - horaIngreso
  *         - horaSalida
  *         - ubicacion
- *         - usuario
+ *         - usuarioId
  *         - numRegistro
  *         - cantidadHorasExtra
  *         - estado
- *         - horas
  *       properties:
  *         fecha:
  *           type: string
@@ -72,9 +154,10 @@ router.get('/:id', registroController.getRegistroById);
  *         ubicacion:
  *           type: string
  *           example: "Oficina Principal"
- *         usuario:
- *           type: string
- *           example: "juan.perez"
+ *         usuarioId:
+ *           type: integer
+ *           description: ID del usuario que crea el registro
+ *           example: 1
  *         numRegistro:
  *           type: string
  *           example: "RG123456"
@@ -174,5 +257,17 @@ router.put('/:id', registroController.updateRegistro);
  *         description: Registro no encontrado
  */
 router.delete('/:id', registroController.deleteRegistro);
+
+/**
+ * @swagger
+ * /api/registros/debug:
+ *   get:
+ *     summary: Debug - Ver todos los registros (solo para desarrollo)
+ *     tags: [Registros]
+ *     responses:
+ *       200:
+ *         description: Lista de registros con información básica
+ */
+router.get('/debug', registroController.debugRegistros);
 
 module.exports = router;

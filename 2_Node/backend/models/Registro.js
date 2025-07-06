@@ -3,6 +3,7 @@ const sequelize = require('../configDb/db').sequelize;
 
 // Importar modelo Hora
 const Hora = require('./Hora');
+const User = require('./User');
 
 // Tabla principal
 const Registro = sequelize.define('Registro', {
@@ -25,6 +26,14 @@ const Registro = sequelize.define('Registro', {
   usuario: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  usuarioId: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Temporalmente opcional para permitir migración
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
   numRegistro: {
     type: DataTypes.STRING,
@@ -64,5 +73,9 @@ Hora.belongsToMany(Registro, {
   through: RegistroHora,
   foreignKey: 'horaId',
 });
+
+// Relación con User
+Registro.belongsTo(User, { foreignKey: 'usuarioId', as: 'user' });
+User.hasMany(Registro, { foreignKey: 'usuarioId', as: 'registros' });
 
 module.exports = Registro;

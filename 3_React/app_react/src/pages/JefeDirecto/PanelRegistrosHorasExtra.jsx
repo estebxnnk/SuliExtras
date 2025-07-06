@@ -297,14 +297,7 @@ function PanelRegistrosHorasExtra() {
               {registrosFiltrados.map(registro => {
                 // Buscar el tipo de hora correspondiente
                 const tipoHora = tiposHora.find(tipo => tipo.id === registro.tipoHora);
-                // Buscar el usuario correspondiente
                 const usuario = usuarios.find(u => u.email === registro.usuario);
-                
-                // Debug: verificar datos
-                console.log('Registro:', registro);
-                console.log('Tipos de hora:', tiposHora);
-                console.log('Tipo de hora encontrado:', tipoHora);
-                console.log('tipoHoraId del registro:', registro.tipoHoraId);
                 
                 return (
                   <TableRow key={registro.id} hover sx={{ transition: 'background 0.2s', '&:hover': { background: '#e3f2fd' } }}>
