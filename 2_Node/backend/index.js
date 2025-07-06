@@ -4,12 +4,20 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
+const swaggerSetup = require('./swagger/swagger');
+
+const { sequelize, testConnection } = require('./configDb/db');
+
+// Importar todos los modelos
 const User = require('./models/User');
 const Persona = require('./models/Persona');
 const Rol = require('./models/Roles');
-
-const { sequelize, testConnection } = require('./configDb/db');
-const swaggerSetup = require('./swagger/swagger');
+const Hora = require('./models/Hora');
+const Registro = require('./models/Registro');
+const Administrador = require('./models/Administrador');
+const Empleado = require('./models/Empleado');
+const JefeDirecto = require('./models/JefeDirecto');
+const SuperAdministrador = require('./models/SuperAdministrador');
 
 // Inicializar la aplicación Express
 const app = express();
@@ -35,24 +43,33 @@ const authRoutes = require('./routes/auth');
 const rolRoutes = require('./routes/rol');
 const registerRoutes = require('./routes/register');
 const usuariosRoutes = require('./routes/usuarios');
+const horaRoutes = require('./routes/hora');
+const registroRoutes = require('./routes/registro');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', rolRoutes);
 app.use('/api/auth/register', registerRoutes);
+app.use('/api/horas', horaRoutes);
+app.use('/api/registros', registroRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 
 
 const PORT = process.env.PORT || 3000;
 
 (async () => {
-  await testConnection();
-  sequelize.sync({ alter: true })
-    .then(() => {
-      app.listen(PORT, () => {
-        console.log(`Servidor corriendo en http://localhost:${PORT}`);
-        console.log('API REST ejecutándose correctamente...');
-      });
-    })
-    .catch(err => {
-      console.error('Error al sincronizar la base de datos:', err);
+  try {
+    await testConnection();
+    
+    // Sincronizar todos los modelos con la base de datos
+    await sequelize.sync({ alter: true });
+    console.log('✅ Todas las tablas han sido sincronizadas correctamente');
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+      console.log('📚 API REST ejecutándose correctamente...');
     });
+  } catch (error) {
+    console.error('❌ Error al inicializar la aplicación:', error);
+    process.exit(1);
+  }
 })();
