@@ -33,8 +33,20 @@ const eliminarUsuario = async (req, res) => {
   }
 };
 
+// Obtener usuario por ID
+const obtenerUsuarioPorId = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const usuario = await UsuariosLogic.obtenerUsuarioPorId(id);
+    res.status(200).json(usuario);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+};
+
 module.exports = {
   obtenerUsuarios,
   editarUsuario,
-  eliminarUsuario
+  eliminarUsuario,
+  obtenerUsuarioPorId
 }; 

@@ -7,15 +7,16 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningIcon from '@mui/icons-material/Warning';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import NavbarSubAdmin from './NavbarSubAdmin';
+import NavbarAdminstrativo from './NavbarAdminstrativo';
+import ModernFooter from '../components/ModernFooter';
 
-function PanelSubAdmin() {
+function DashboardAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [registros, setRegistros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rolFiltro, setRolFiltro] = useState('');
-  const [datePreset, setDatePreset] = useState('7d');
+  const [datePreset, setDatePreset] = useState('7d'); // 'today', '7d', '1m', 'all'
   const [lastUpdate, setLastUpdate] = useState(Date.now());
   const [modalUsuario, setModalUsuario] = useState({ open: false, usuario: null, registros: [] });
 
@@ -35,13 +36,15 @@ function PanelSubAdmin() {
       setRoles(Array.isArray(rolesData) ? rolesData : []);
       setRegistros(Array.isArray(registrosData) ? registrosData : []);
       setLastUpdate(Date.now());
-    } catch (e) {}
+    } catch (e) {
+      // Manejo simple de error
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 30000); // refresco cada 30s
     return () => clearInterval(interval);
   }, []);
 
@@ -95,7 +98,7 @@ function PanelSubAdmin() {
       id: i,
       value: cantidad,
       label: rol,
-      color: i === 0 ? '#1976d2' : i === 1 ? '#ffb300' : '#43a047',
+      color: i === 0 ? '#1976d2' : i === 1 ? '#ffb300' : '#43a047', // azul, naranja, verde, etc.
     }));
   }, [usuarios]);
   const totalUsuarios = useMemo(() => usuarios.length, [usuarios]);
@@ -126,6 +129,7 @@ function PanelSubAdmin() {
         return fecha >= dateRange.from && fecha <= dateRange.to;
       });
     }
+    // Ordenar por fecha descendente
     return filtrados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 10);
   }, [registros, dateRange]);
 
@@ -161,13 +165,13 @@ function PanelSubAdmin() {
 
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', overflow: 'hidden', background: `url('/img/Recepcion.jpg') no-repeat center center fixed`, backgroundSize: 'cover', display: 'flex', flexDirection: 'column' }}>
-      <NavbarSubAdmin />
+      <NavbarAdminstrativo />
       <Box sx={{ flex: 1, width: '100%', maxWidth: 1400, mx: 'auto', mt: 10, mb: 4, px: { xs: 1, sm: 2 }, overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h3" fontWeight={900} color="#52AB41" sx={{ textShadow: '0 2px 8px #b6e7b0' }}>
-            Dashboard SubAdministrador
+          <Typography variant="h3" fontWeight={900} color="#1976d2" sx={{ textShadow: '0 2px 8px #b6d0f7' }}>
+            Dashboard Administrativo
           </Typography>
-          <Button onClick={fetchData} startIcon={<RefreshIcon />} variant="outlined" color="success" sx={{ fontWeight: 700 }} disabled={loading}>
+          <Button onClick={fetchData} startIcon={<RefreshIcon />} variant="outlined" color="primary" sx={{ fontWeight: 700 }} disabled={loading}>
             Refrescar
           </Button>
         </Box>
@@ -421,8 +425,9 @@ function PanelSubAdmin() {
           <Button onClick={handleCloseUsuario} color="primary" variant="contained">Cerrar</Button>
         </DialogActions>
       </Dialog>
+      <ModernFooter />
     </Box>
   );
 }
 
-export default PanelSubAdmin; 
+export default DashboardAdmin; 

@@ -8,6 +8,10 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import SearchIcon from '@mui/icons-material/Search';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import BadgeIcon from '@mui/icons-material/Badge';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import WarningIcon from '@mui/icons-material/Warning';
 import NavbarAdminstrativo from './NavbarAdminstrativo';
 
 function PanelUsuariosAdministrativo() {
@@ -22,6 +26,8 @@ function PanelUsuariosAdministrativo() {
   const [nuevoRolId, setNuevoRolId] = useState('');
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const [alerta, setAlerta] = useState({ tipo: '', mensaje: '' });
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, action: '', usuario: null });
 
   useEffect(() => {
     fetchUsuarios();
@@ -72,39 +78,59 @@ function PanelUsuariosAdministrativo() {
     setOpenDialog(true);
   };
 
-  const handleEliminar = async (usuario) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este usuario?')) return;
+  const handleEliminar = (usuario) => {
+    setConfirmDialog({ open: true, action: 'eliminar', usuario });
+  };
+
+  const confirmarEliminar = async () => {
+    const usuario = confirmDialog.usuario;
     try {
       const response = await fetch(`http://localhost:3000/api/usuarios/${usuario.id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
-        setMensaje('No se pudo eliminar el usuario.');
+        setAlerta({ tipo: 'error', mensaje: 'No se pudo eliminar el usuario.' });
+        setConfirmDialog({ open: false, action: '', usuario: null });
         return;
       }
-      setMensaje('Usuario eliminado exitosamente.');
+      setAlerta({ tipo: 'success', mensaje: 'Usuario eliminado exitosamente.' });
+      setConfirmDialog({ open: false, action: '', usuario: null });
       fetchUsuarios();
     } catch (error) {
-      setMensaje('No se pudo conectar con el servidor.');
+      setAlerta({ tipo: 'error', mensaje: 'No se pudo conectar con el servidor.' });
+      setConfirmDialog({ open: false, action: '', usuario: null });
     }
   };
 
   const handleGuardarEdicion = async () => {
+    // Construir el objeto con la estructura recomendada
+    const dataToSend = {
+      email: editData.email,
+      rolId: editData.rolId,
+      persona: {
+        tipoDocumento: editData.tipoDocumento,
+        numeroDocumento: editData.numeroDocumento,
+        nombres: editData.nombres,
+        apellidos: editData.apellidos,
+        correo: editData.correo,
+        fechaNacimiento: editData.fechaNacimiento,
+      },
+    };
     try {
       const response = await fetch(`http://localhost:3000/api/usuarios/${usuarioSeleccionado.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editData),
+        body: JSON.stringify(dataToSend),
       });
       if (!response.ok) {
-        setMensaje('No se pudo actualizar el usuario.');
+        setAlerta({ tipo: 'error', mensaje: 'No se pudo actualizar el usuario.' });
         return;
       }
-      setMensaje('Usuario actualizado exitosamente.');
+      setAlerta({ tipo: 'success', mensaje: 'Usuario actualizado exitosamente.' });
       setOpenDialog(false);
       fetchUsuarios();
     } catch (error) {
-      setMensaje('No se pudo conectar con el servidor.');
+      setAlerta({ tipo: 'error', mensaje: 'No se pudo conectar con el servidor.' });
     }
   };
 
@@ -115,7 +141,7 @@ function PanelUsuariosAdministrativo() {
     setOpenDialog(true);
   };
 
-  const handleGuardarRol = async () => {
+  const confirmarCambiarRol = async () => {
     try {
       const response = await fetch(`http://localhost:3000/api/usuarios/${usuarioSeleccionado.id}`, {
         method: 'PUT',
@@ -123,14 +149,17 @@ function PanelUsuariosAdministrativo() {
         body: JSON.stringify({ rolId: nuevoRolId }),
       });
       if (!response.ok) {
-        setMensaje('No se pudo actualizar el rol del usuario.');
+        setAlerta({ tipo: 'error', mensaje: 'No se pudo actualizar el rol del usuario.' });
+        setConfirmDialog({ open: false, action: '', usuario: null });
         return;
       }
-      setMensaje('Rol actualizado exitosamente.');
+      setAlerta({ tipo: 'success', mensaje: 'Rol actualizado exitosamente.' });
+      setConfirmDialog({ open: false, action: '', usuario: null });
       setOpenDialog(false);
       fetchUsuarios();
     } catch (error) {
-      setMensaje('No se pudo conectar con el servidor.');
+      setAlerta({ tipo: 'error', mensaje: 'No se pudo conectar con el servidor.' });
+      setConfirmDialog({ open: false, action: '', usuario: null });
     }
   };
 
@@ -226,17 +255,17 @@ function PanelUsuariosAdministrativo() {
 
       {/* Dialogo para ver/editar/cambiar rol usuario */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2, color: '#1976d2', fontWeight: 700 }}>
           {modo === 'ver' && <PersonIcon sx={{ fontSize: 36, color: '#1976d2' }} />}
           {modo === 'ver' ? 'Detalles del Usuario' : modo === 'editar' ? 'Editar Usuario' : 'Cambiar Rol del Usuario'}
         </DialogTitle>
-        <DialogContent sx={{ background: modo === 'ver' ? '#f3f7fa' : 'inherit', borderRadius: 2 }}>
+        <DialogContent sx={{ background: modo === 'ver' ? '#f3f7fa' : 'inherit', borderRadius: 3, p: { xs: 1, sm: 3 } }}>
           {usuarioSeleccionado && modo === 'ver' && (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
               <Avatar sx={{ width: 72, height: 72, bgcolor: '#1976d2', mb: 2 }}>
                 <PersonIcon sx={{ fontSize: 48, color: '#fff' }} />
               </Avatar>
-              <Typography variant="h6" fontWeight={700} color="#222" mb={1}>
+              <Typography variant="h6" fontWeight={700} color="#1976d2" mb={1}>
                 {usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}
               </Typography>
               <Divider sx={{ width: '100%', mb: 1 }} />
@@ -255,6 +284,11 @@ function PanelUsuariosAdministrativo() {
                 value={editData.email}
                 onChange={e => setEditData({ ...editData, email: e.target.value })}
                 fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <EmailIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               <TextField
                 label="Tipo de Documento"
@@ -267,24 +301,44 @@ function PanelUsuariosAdministrativo() {
                 value={editData.numeroDocumento}
                 onChange={e => setEditData({ ...editData, numeroDocumento: e.target.value })}
                 fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <BadgeIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               <TextField
                 label="Nombres"
                 value={editData.nombres}
                 onChange={e => setEditData({ ...editData, nombres: e.target.value })}
                 fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <PersonIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               <TextField
                 label="Apellidos"
                 value={editData.apellidos}
                 onChange={e => setEditData({ ...editData, apellidos: e.target.value })}
                 fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <PersonIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               <TextField
                 label="Correo"
                 value={editData.correo}
                 onChange={e => setEditData({ ...editData, correo: e.target.value })}
                 fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <EmailIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               <TextField
                 label="Fecha de Nacimiento"
@@ -293,6 +347,11 @@ function PanelUsuariosAdministrativo() {
                 onChange={e => setEditData({ ...editData, fechaNacimiento: e.target.value })}
                 InputLabelProps={{ shrink: true }}
                 fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <CalendarMonthIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
               />
               <TextField
                 select
@@ -324,19 +383,88 @@ function PanelUsuariosAdministrativo() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cerrar</Button>
+          <Button onClick={() => setOpenDialog(false)} sx={{ color: '#1976d2', fontWeight: 700 }}>Cerrar</Button>
           {modo === 'editar' && (
-            <Button onClick={handleGuardarEdicion} variant="contained" color="success">
+            <Button onClick={handleGuardarEdicion} variant="contained" color="primary" sx={{ borderRadius: 2, fontWeight: 700 }}>
               Guardar
             </Button>
           )}
           {modo === 'rol' && (
-            <Button onClick={handleGuardarRol} variant="contained" color="primary">
+            <Button
+              onClick={() => setConfirmDialog({ open: true, action: 'cambiarRol', usuario: usuarioSeleccionado })}
+              variant="contained"
+              color="primary"
+              sx={{ borderRadius: 2, fontWeight: 700 }}
+            >
               Cambiar Rol
             </Button>
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Diálogo de confirmación para eliminar o cambiar rol */}
+      <Dialog 
+        open={confirmDialog.open} 
+        onClose={() => setConfirmDialog({ open: false, action: '', usuario: null })}
+        maxWidth="xs" 
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0 }}>
+          <Box sx={{
+            background: confirmDialog.action === 'eliminar'
+              ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)'
+              : 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+            border: confirmDialog.action === 'eliminar'
+              ? '2px solid #f44336'
+              : '2px solid #1976d2',
+            borderRadius: 3,
+            p: 4,
+            textAlign: 'center',
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <WarningIcon sx={{ fontSize: 48, color: confirmDialog.action === 'eliminar' ? '#f44336' : '#1976d2' }} />
+            </Box>
+            <Typography variant="h6" fontWeight={700} mb={2} color={confirmDialog.action === 'eliminar' ? '#f44336' : '#1976d2'}>
+              {confirmDialog.action === 'eliminar' ? 'Confirmar Eliminación' : 'Confirmar Cambio de Rol'}
+            </Typography>
+            <Typography variant="body1" mb={3} color="#333">
+              {confirmDialog.action === 'eliminar'
+                ? `¿Estás seguro que deseas ELIMINAR el usuario ${confirmDialog.usuario?.email}?`
+                : `¿Estás seguro que deseas CAMBIAR el rol del usuario ${confirmDialog.usuario?.email}?`}
+            </Typography>
+            {confirmDialog.action === 'eliminar' && (
+              <Alert severity="warning" sx={{ mb: 3 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  ⚠️ Esta acción no se puede deshacer
+                </Typography>
+              </Alert>
+            )}
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => setConfirmDialog({ open: false, action: '', usuario: null })}
+                sx={{ px: 4, py: 1.5, fontWeight: 600 }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="contained"
+                onClick={confirmDialog.action === 'eliminar' ? confirmarEliminar : confirmarCambiarRol}
+                sx={{ px: 4, py: 1.5, fontWeight: 600, background: confirmDialog.action === 'eliminar' ? '#f44336' : '#1976d2', '&:hover': { background: confirmDialog.action === 'eliminar' ? '#d32f2f' : '#1565c0' } }}
+              >
+                {confirmDialog.action === 'eliminar' ? 'Eliminar' : 'Cambiar Rol'}
+              </Button>
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Alertas de éxito y error */}
+      {alerta.mensaje && (
+        <Alert severity={alerta.tipo} sx={{ position: 'fixed', top: 100, right: 32, zIndex: 2000, minWidth: 320, fontWeight: 600 }} onClose={() => setAlerta({ tipo: '', mensaje: '' })}>
+          {alerta.mensaje}
+        </Alert>
+      )}
     </Box>
   );
 }

@@ -1,18 +1,22 @@
 import { Box, Paper, Typography, Button, Avatar, IconButton, Menu, Divider } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 function NavbarSubAdmin() {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [userData, setUserData] = useState(null);
 
-  // Simulación de datos de usuario (puedes reemplazar por datos reales)
-  const user = {
-    nombre: 'Sub Administrador',
-    email: localStorage.getItem('userEmail') || 'subadmin@ejemplo.com',
-    rol: 'SubAdministrador',
-  };
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      fetch(`http://localhost:3000/api/usuarios/${userId}`)
+        .then(res => res.json())
+        .then(data => setUserData(data))
+        .catch(() => setUserData(null));
+    }
+  }, []);
 
   const handleProfileClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -80,9 +84,15 @@ function NavbarSubAdmin() {
             <Avatar sx={{ bgcolor: '#52AB41', width: 64, height: 64, mb: 1 }}>
               <AccountCircleIcon sx={{ fontSize: 40, color: '#fff' }} />
             </Avatar>
-            <Typography variant="h6" fontWeight={700}>{user.nombre}</Typography>
-            <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-            <Typography variant="body2" color="#52AB41" fontWeight={700}>{user.rol}</Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {userData ? `${userData.persona?.nombres || ''} ${userData.persona?.apellidos || ''}` : 'Cargando...'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userData ? userData.email : ''}
+            </Typography>
+            <Typography variant="body2" color="#52AB41" fontWeight={700}>
+              {userData ? userData.rol?.nombre : ''}
+            </Typography>
             <Divider sx={{ width: '100%', my: 1 }} />
             <Button onClick={handleLogout} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: 2, px: 3, width: '100%' }}>
               Cerrar sesión

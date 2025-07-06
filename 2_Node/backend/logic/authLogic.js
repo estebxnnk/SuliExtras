@@ -14,21 +14,16 @@ class AuthLogic {
         { model: Rol, as: 'rol' }
       ]
     });
-    console.log('Usuario encontrado:', user ? user.toJSON() : user);
     if (!user) throw new Error('Usuario o contraseña incorrectos');
-    console.log('Rol relacionado:', user.rol);
-    console.log('Persona relacionada:', user.persona);
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) throw new Error('Usuario o contraseña incorrectos');
     const payload = {
       id: user.id,
       email: user.email,
       rol: user.rol ? user.rol.nombre : null,
-      persona: {
-        id: user.personaId,
-        nombres: user.persona ? user.persona.nombres : null,
-        apellidos: user.persona ? user.persona.apellidos : null,
-      }
+      nombres: user.persona ? user.persona.nombres : null,
+      apellidos: user.persona ? user.persona.apellidos : null,
+      correo: user.persona ? user.persona.correo : null
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
     return { token, rol: payload.rol, usuario: payload };

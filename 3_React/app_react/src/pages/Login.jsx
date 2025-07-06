@@ -30,12 +30,15 @@ function Login() {
       }
       localStorage.setItem('token', data.token);
       localStorage.setItem('userRol', data.rol);
+      if (data.usuario && data.usuario.id) {
+        localStorage.setItem('userId', data.usuario.id);
+      }
       setMensaje('');
       // Redirección según el rol
       if (data.rol === 'SubAdministrador') {
         navigate('/panel-sub-admin');
       } else if (data.rol === 'Administrador') {
-        navigate('/panel-admin-administrativo');
+        navigate('/panel-admin');
       } else if (data.rol === 'JefeDirecto') {
         navigate('/panel-jefe-directo');
       } else {

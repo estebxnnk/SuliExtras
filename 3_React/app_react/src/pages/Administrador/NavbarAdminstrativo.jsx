@@ -16,17 +16,21 @@ function NavbarAdmin({ onFiltrarPorRol }) {
   const [mensaje, setMensaje] = useState('');
   const [rolFiltro, setRolFiltro] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
-
-  // Simulación de datos de usuario (puedes reemplazar por datos reales)
-  const user = {
-    nombre: 'Administrador',
-    email: localStorage.getItem('userEmail') || 'admin@ejemplo.com',
-    rol: 'Administrador',
-  };
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     if (openRoles) fetchRoles();
   }, [openRoles]);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      fetch(`http://localhost:3000/api/usuarios/${userId}`)
+        .then(res => res.json())
+        .then(data => setUserData(data))
+        .catch(() => setUserData(null));
+    }
+  }, []);
 
   const fetchRoles = async () => {
     try {
@@ -155,9 +159,15 @@ function NavbarAdmin({ onFiltrarPorRol }) {
             <Avatar sx={{ bgcolor: '#1976d2', width: 64, height: 64, mb: 1 }}>
               <AccountCircleIcon sx={{ fontSize: 40, color: '#fff' }} />
             </Avatar>
-            <Typography variant="h6" fontWeight={700}>{user.nombre}</Typography>
-            <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-            <Typography variant="body2" color="#1976d2" fontWeight={700}>{user.rol}</Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {userData ? `${userData.persona?.nombres || ''} ${userData.persona?.apellidos || ''}` : 'Cargando...'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userData ? userData.email : ''}
+            </Typography>
+            <Typography variant="body2" color="#1976d2" fontWeight={700}>
+              {userData ? userData.rol?.nombre : ''}
+            </Typography>
             <Divider sx={{ width: '100%', my: 1 }} />
             <Button onClick={handleLogout} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: 2, px: 3, width: '100%' }}>
               Cerrar sesión
