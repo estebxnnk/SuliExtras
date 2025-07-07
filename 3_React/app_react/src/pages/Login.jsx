@@ -41,7 +41,9 @@ function Login() {
         navigate('/panel-admin');
       } else if (data.rol === 'JefeDirecto') {
         navigate('/panel-jefe-directo');
-      } else {
+      }else if (data.rol === 'Empleado') {
+        navigate('/panel-empleado');
+      }else {
         navigate('/');
       }
     } catch (error) {

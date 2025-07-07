@@ -23,6 +23,11 @@ import CrearRegistroHorasExtra from './pages/JefeDirecto/CrearRegistroHorasExtra
 import GestionarTiposHora from './pages/JefeDirecto/GestionarTiposHora';
 import PanelUsuarios from './pages/JefeDirecto/PanelUsuarios';
 
+// Rol Empleado
+import PanelEmpleado from './pages/Empleado/PanelEmpleado';
+import MisRegistros from './pages/Empleado/MisRegistros';
+import CrearRegistroHorasEmpleado from './pages/Empleado/CrearRegistroHorasEmpleado';
+
 function App() {
   return (
     <Router>
@@ -71,8 +76,8 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/crear-registro-horas" element={
-          <ProtectedRoute allowedRoles={['JefeDirecto']}>
-            <CrearRegistroHorasExtra />
+          <ProtectedRoute allowedRoles={['Empleado']}>
+            <CrearRegistroHorasEmpleado />
           </ProtectedRoute>
         } />
         <Route path="/tipos-hora" element={
@@ -83,6 +88,16 @@ function App() {
         <Route path="/usuarios-jefe-directo" element={
           <ProtectedRoute allowedRoles={['JefeDirecto']}>
             <PanelUsuarios />
+          </ProtectedRoute>
+        } />
+        <Route path="/panel-empleado" element={
+          <ProtectedRoute allowedRoles={['Empleado']}>
+            <PanelEmpleado />
+          </ProtectedRoute>
+        } />
+        <Route path="/mis-registros" element={
+          <ProtectedRoute allowedRoles={['Empleado']}>
+            <MisRegistros />
           </ProtectedRoute>
         } />
       </Routes>
