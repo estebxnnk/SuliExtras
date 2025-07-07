@@ -4,7 +4,6 @@ const usuariosController = require('../controllers/usuariosController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Proteger todas las rutas de usuarios
-router.use(authMiddleware);
 
 /**
  * @swagger
