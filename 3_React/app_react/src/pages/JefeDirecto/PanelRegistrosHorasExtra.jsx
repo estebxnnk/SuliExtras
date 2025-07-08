@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider, Chip, Badge, Card, CardContent, Grid } from '@mui/material';
+import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider, Chip, Badge, Card, CardContent, Grid, TablePagination } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,6 +32,8 @@ function PanelRegistrosHorasExtra() {
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: '', registro: null });
   const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetchRegistros();
@@ -195,6 +197,18 @@ function PanelRegistrosHorasExtra() {
     return cumpleBusqueda && cumpleEstado;
   });
 
+  // Paginación
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const registrosPaginados = registrosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   const showConfirmDialog = (action, registro) => {
     setConfirmDialog({ open: true, action, registro });
   };
@@ -309,7 +323,7 @@ function PanelRegistrosHorasExtra() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {registrosFiltrados.map(registro => {
+              {registrosPaginados.map(registro => {
                 // Buscar el tipo de hora correspondiente
                 const tipoHora = tiposHora.find(tipo => tipo.id === registro.tipoHora);
                 const usuario = usuarios.find(u => u.email === registro.usuario);
@@ -367,6 +381,16 @@ function PanelRegistrosHorasExtra() {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={registrosFiltrados.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Filas por página"
+          rowsPerPageOptions={[5, 10, 25, 50]}
+        />
       </Paper>
 
       {/* Dialogo para ver/editar registro */}
