@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider, Chip, Badge, Card, CardContent } from '@mui/material';
+import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, InputAdornment, Avatar, Divider, Chip, Badge, Card, CardContent, Grid, TablePagination } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,6 +32,8 @@ function PanelRegistrosHorasExtra() {
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: '', registro: null });
   const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetchRegistros();
@@ -95,6 +97,9 @@ function PanelRegistrosHorasExtra() {
         ubicacion: registro.ubicacion,
         cantidadHorasExtra: registro.cantidadHorasExtra,
         justificacionHoraExtra: registro.justificacionHoraExtra || '',
+        horas_extra_divididas: registro.horas_extra_divididas ?? 0,
+        bono_salarial: registro.bono_salarial ?? 0,
+        tipoHora: (registro.Horas && registro.Horas.length > 0) ? registro.Horas[0].id : '',
       });
       setOpenDialog(true);
     }
@@ -114,10 +119,22 @@ function PanelRegistrosHorasExtra() {
 
   const handleGuardarEdicion = async () => {
     try {
+      const dataToSend = {
+        ...editData,
+        horas: [
+          {
+            id: editData.tipoHora,
+            cantidad: editData.cantidadHorasExtra
+          }
+        ]
+      };
+      delete dataToSend.tipoHora;
+      delete dataToSend.bono_salarial;
+
       const response = await fetch(`http://localhost:3000/api/registros/${registroSeleccionado.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editData),
+        body: JSON.stringify(dataToSend),
       });
       if (!response.ok) {
         setMensaje('No se pudo actualizar el registro.');
@@ -179,6 +196,18 @@ function PanelRegistrosHorasExtra() {
     
     return cumpleBusqueda && cumpleEstado;
   });
+
+  // Paginación
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const registrosPaginados = registrosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const showConfirmDialog = (action, registro) => {
     setConfirmDialog({ open: true, action, registro });
@@ -294,7 +323,7 @@ function PanelRegistrosHorasExtra() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {registrosFiltrados.map(registro => {
+              {registrosPaginados.map(registro => {
                 // Buscar el tipo de hora correspondiente
                 const tipoHora = tiposHora.find(tipo => tipo.id === registro.tipoHora);
                 const usuario = usuarios.find(u => u.email === registro.usuario);
@@ -352,6 +381,16 @@ function PanelRegistrosHorasExtra() {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={registrosFiltrados.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Filas por página"
+          rowsPerPageOptions={[5, 10, 25, 50]}
+        />
       </Paper>
 
       {/* Dialogo para ver/editar registro */}
@@ -426,6 +465,15 @@ function PanelRegistrosHorasExtra() {
                       <Typography variant="subtitle2" color="text.secondary">Estado</Typography>
                       {getEstadoChip(registroSeleccionado.estado)}
                     </Box>
+                    {/* CAMPOS NUEVOS CON EL MISMO DISEÑO */}
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Horas Extra (reporte)</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horas_extra_divididas ?? 0} horas</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Bono Salarial</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.bono_salarial ?? 0} horas</Typography>
+                    </Box>
                   </Box>
                 );
               })()}
@@ -440,7 +488,6 @@ function PanelRegistrosHorasExtra() {
               )}
             </Box>
           )}
-          
           {registroSeleccionado && modo === 'estado' && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <Typography variant="h6" fontWeight={600} color="#1976d2" mb={2}>
@@ -483,7 +530,13 @@ function PanelRegistrosHorasExtra() {
           )}
           
           {registroSeleccionado && modo === 'editar' && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+              <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%)', border: '1px solid #dee2e6' }}>
+                <Typography variant="h6" fontWeight={700} color="#495057" sx={{ mb: 3 }}>
+                  Información del Registro
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
               <TextField
                 label="Fecha"
                 type="date"
@@ -491,36 +544,80 @@ function PanelRegistrosHorasExtra() {
                 onChange={e => setEditData({ ...editData, fecha: e.target.value })}
                 InputLabelProps={{ shrink: true }}
                 fullWidth
-              />
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      sx={{ background: '#fff', borderRadius: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      label="Ubicación"
+                      value={editData.ubicacion}
+                      onChange={e => setEditData({ ...editData, ubicacion: e.target.value })}
+                      fullWidth
+                      sx={{ background: '#fff', borderRadius: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                 <TextField
                   label="Hora de Ingreso"
                   type="time"
                   value={editData.horaIngreso}
                   onChange={e => setEditData({ ...editData, horaIngreso: e.target.value })}
                   InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      sx={{ background: '#fff', borderRadius: 2 }}
                 />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                 <TextField
                   label="Hora de Salida"
                   type="time"
                   value={editData.horaSalida}
                   onChange={e => setEditData({ ...editData, horaSalida: e.target.value })}
                   InputLabelProps={{ shrink: true }}
-                />
-              </Box>
-              <TextField
-                label="Ubicación"
-                value={editData.ubicacion}
-                onChange={e => setEditData({ ...editData, ubicacion: e.target.value })}
                 fullWidth
+                      sx={{ background: '#fff', borderRadius: 2 }}
               />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
               <TextField
                 label="Cantidad de Horas Extra"
                 type="number"
                 value={editData.cantidadHorasExtra}
                 onChange={e => setEditData({ ...editData, cantidadHorasExtra: parseFloat(e.target.value) })}
                 fullWidth
-              />
+                      sx={{ background: '#fff', borderRadius: 2 }}
+                      inputProps={{ min: 1, step: 1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      select
+                      label="Tipo de Hora Extra"
+                      value={editData.tipoHora || ''}
+                      onChange={e => setEditData({ ...editData, tipoHora: e.target.value })}
+                      fullWidth
+                      sx={{ background: '#fff', borderRadius: 2 }}
+                    >
+                      {tiposHora.map(tipo => (
+                        <MenuItem key={tipo.id} value={tipo.id}>
+                          {tipo.tipo} - {tipo.denominacion} ({(tipo.valor - 1) * 100}% recargo)
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      label="Horas Extra (reporte)"
+                      type="number"
+                      value={editData.horas_extra_divididas ?? 0}
+                      onChange={e => setEditData({ ...editData, horas_extra_divididas: parseFloat(e.target.value) })}
+                      fullWidth
+                      sx={{ background: '#fff', borderRadius: 2 }}
+                      inputProps={{ min: 0, step: 0.01 }}
+                      helperText="Máximo 2 horas por registro para reporte"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
               <TextField
                 label="Justificación"
                 value={editData.justificacionHoraExtra}
@@ -528,7 +625,11 @@ function PanelRegistrosHorasExtra() {
                 multiline
                 rows={3}
                 fullWidth
+                      sx={{ background: '#fff', borderRadius: 2 }}
               />
+                  </Grid>
+                </Grid>
+              </Card>
             </Box>
           )}
         </DialogContent>

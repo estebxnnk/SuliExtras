@@ -5,11 +5,15 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import NavbarJefeDirecto from './NavbarJefeDirecto';
 import { SalarioMinimoContext } from '../../providers/SalarioMinimoProvider';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, Table as DocxTable, TableRow as DocxTableRow, TableCell as DocxTableCell, TextRun, ImageRun, AlignmentType, WidthType } from 'docx';
 import SalarioMinimoEditor from '../../SalarioMinimoEditor';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 function PanelUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -22,7 +26,7 @@ function PanelUsuarios() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [openReporte, setOpenReporte] = useState(false);
-  const [reporteData, setReporteData] = useState({ totalHoras: 0, totalPagar: 0, detalles: [] });
+  const [reporteData, setReporteData] = useState({ totalHorasDivididas: 0, totalPagarDivididas: 0, totalHorasBono: 0, totalPagarBono: 0, totalPagar: 0, detalles: [] });
   const { salarioMinimo } = useContext(SalarioMinimoContext);
   const valorHoraOrdinaria = salarioMinimo / 240;
   const [openSalario, setOpenSalario] = useState(false);
@@ -56,34 +60,63 @@ function PanelUsuarios() {
   };
 
   const handleVerReporte = async (usuario) => {
-    // Buscar registros completos del usuario
     const response = await fetch(`http://localhost:3000/api/registros/usuario-completo/${usuario.id}`);
     const data = await response.json();
-    const registros = Array.isArray(data.registros) ? data.registros.filter(r => r.estado === 'aprobado') : [];    let totalHoras = 0;
-    let totalPagar = 0;
+    const registros = Array.isArray(data.registros) ? data.registros.filter(r => r.estado === 'aprobado') : [];
+    let totalHorasDivididas = 0;
+    let totalPagarDivididas = 0;
+    let totalHorasBono = 0;
+    let totalPagarBono = 0;
     let detalles = [];
     registros.forEach(registro => {
       if (registro.Horas && registro.Horas.length > 0) {
         registro.Horas.forEach(hora => {
-          const cantidad = hora.RegistroHora.cantidad;
-          const recargo = hora.valor; // Ej: 1.25 para 25% recargo
+          const cantidadDividida = registro.horas_extra_divididas ?? 0;
+          const cantidadBono = registro.bono_salarial ?? 0;
+          const recargo = hora.valor;
           const valorHoraExtra = valorHoraOrdinaria * recargo;
-          const valorTotal = cantidad * valorHoraExtra;
-          totalHoras += cantidad;
-          totalPagar += valorTotal;
+          const valorTotalDivididas = cantidadDividida * valorHoraExtra;
+          const valorTotalBono = cantidadBono * valorHoraOrdinaria;
+
+          totalHorasDivididas += cantidadDividida;
+          totalPagarDivididas += valorTotalDivididas;
+          totalHorasBono += cantidadBono;
+          totalPagarBono += valorTotalBono;
+
           detalles.push({
             fecha: registro.fecha,
             tipo: hora.tipo,
             denominacion: hora.denominacion,
-            cantidad,
+            cantidadDividida,
+            valorTotalDivididas: valorTotalDivididas.toFixed(2),
+            cantidadBono,
+            valorTotalBono: valorTotalBono.toFixed(2),
             recargo,
             valorHoraExtra: valorHoraExtra.toFixed(2),
-            valorTotal: valorTotal.toFixed(2)
+            registroOriginal: registro
           });
         });
       }
     });
-    setReporteData({ totalHoras, totalPagar, detalles });
+
+    // LOG para depuración
+    console.log("Detalles del reporte:", detalles);
+    console.log("Totales:", {
+      totalHorasDivididas,
+      totalPagarDivididas,
+      totalHorasBono,
+      totalPagarBono,
+      totalPagar: totalPagarDivididas + totalPagarBono
+    });
+
+    setReporteData({
+      totalHorasDivididas,
+      totalPagarDivididas,
+      totalHorasBono,
+      totalPagarBono,
+      totalPagar: totalPagarDivididas + totalPagarBono,
+      detalles
+    });
     setUsuarioSeleccionado(usuario);
     setOpenReporte(true);
   };
@@ -121,7 +154,10 @@ function PanelUsuarios() {
 
     // Encabezados de la tabla
     const headers = [
-      'Fecha', 'Tipo', 'Denominación', 'Cantidad', 'Recargo', 'Valor Hora Extra', 'Valor total'
+      'Fecha', 'Tipo', 'Denominación',
+      'Horas Extra (reporte)', 'Valor Horas Extra',
+      'Bono Salarial (horas)', 'Valor Bono Salarial',
+      'Recargo', 'Valor Hora Extra'
     ];
 
     // Filas de datos
@@ -129,17 +165,28 @@ function PanelUsuarios() {
       detalle.fecha,
       detalle.tipo,
       detalle.denominacion,
-      String(detalle.cantidad),
+      String(detalle.cantidadDividida),
+      `$ ${Number(detalle.valorTotalDivididas).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
+      String(detalle.cantidadBono),
+      `$ ${Number(detalle.valorTotalBono).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
       ((detalle.recargo - 1) * 100).toFixed(0) + ' %',
-      `$ ${Number(detalle.valorHoraExtra).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
-      `$ ${Number(detalle.valorTotal).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`
+      `$ ${Number(detalle.valorHoraExtra).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`
     ]);
 
     // Fila de suma total
     const totalRow = [
       { text: 'Totales', bold: true }, '', '',
-      reporteData.totalHoras.toString(), '', '',
-      `$ ${reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`
+      reporteData.totalHorasDivididas.toString(),
+      `$ ${reporteData.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
+      reporteData.totalHorasBono.toString(),
+      `$ ${reporteData.totalPagarBono.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
+      '', ''
+    ];
+
+    // Fila de total a pagar
+    const totalPagarRow = [
+      { text: 'TOTAL A PAGAR', bold: true }, '', '', '', '', '', 
+      { text: `$ ${reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`, bold: true, color: '388e3c' }, '', ''
     ];
 
     // Construir la tabla de docx
@@ -154,7 +201,9 @@ function PanelUsuarios() {
         }),
         ...dataRows.map(row => new DocxTableRow({
           children: row.map(cell => new DocxTableCell({
-            children: [new Paragraph(cell)],
+            children: [typeof cell === 'object'
+              ? new Paragraph({ text: cell.text, bold: cell.bold, color: cell.color })
+              : new Paragraph(cell)],
           }))
         })),
         new DocxTableRow({
@@ -163,6 +212,17 @@ function PanelUsuarios() {
               children: [
                 typeof cell === 'object'
                   ? new Paragraph({ text: cell.text, bold: cell.bold })
+                  : new Paragraph(cell)
+              ],
+            })
+          )
+        }),
+        new DocxTableRow({
+          children: totalPagarRow.map(cell =>
+            new DocxTableCell({
+              children: [
+                typeof cell === 'object'
+                  ? new Paragraph({ text: cell.text, bold: cell.bold, color: cell.color })
                   : new Paragraph(cell)
               ],
             })
@@ -205,7 +265,7 @@ function PanelUsuarios() {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `Total de horas extra: ${reporteData.totalHoras}`,
+                  text: `Total de horas extra (reporte): ${reporteData.totalHorasDivididas}  |  Valor: $ ${reporteData.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
                   bold: true,
                 })
               ],
@@ -214,7 +274,16 @@ function PanelUsuarios() {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `Valor total a pagar: $ ${reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
+                  text: `Total bono salarial (horas): ${reporteData.totalHorasBono}  |  Valor: $ ${reporteData.totalPagarBono.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
+                  bold: true,
+                })
+              ],
+              spacing: { after: 50 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `TOTAL A PAGAR: $ ${reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
                   bold: true,
                 })
               ],
@@ -228,6 +297,100 @@ function PanelUsuarios() {
     const blobWord = await Packer.toBlob(doc);
     const nombreArchivo = `Reportes de hora extra de ${usuarioSeleccionado.persona?.nombres || ''} ${usuarioSeleccionado.persona?.apellidos || ''}.docx`;
     saveAs(blobWord, nombreArchivo);
+  };
+
+  const handleDescargarExcel = async () => {
+    if (!reporteData || !reporteData.detalles || reporteData.detalles.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Reporte');
+
+    // Encabezados
+    const headers = [
+      'Fecha', 'Tipo', 'Denominación',
+      'Horas Extra (reporte)', 'Valor Horas Extra',
+      'Bono Salarial (horas)', 'Valor Bono Salarial',
+      'Recargo', 'Valor Hora Extra'
+    ];
+    worksheet.addRow(headers);
+
+    // Datos
+    reporteData.detalles.forEach(detalle => {
+      worksheet.addRow([
+        detalle.fecha,
+        detalle.tipo,
+        detalle.denominacion,
+        detalle.cantidadDividida,
+        Number(detalle.valorTotalDivididas),
+        detalle.cantidadBono,
+        Number(detalle.valorTotalBono),
+        ((detalle.recargo - 1) * 100) + '%',
+        Number(detalle.valorHoraExtra)
+      ]);
+    });
+
+    // Totales
+    worksheet.addRow([
+      'Totales', '', '',
+      reporteData.totalHorasDivididas,
+      reporteData.totalPagarDivididas,
+      reporteData.totalHorasBono,
+      reporteData.totalPagarBono,
+      '', ''
+    ]);
+    worksheet.addRow([
+      'TOTAL A PAGAR', '', '', '', '', '', reporteData.totalPagar, '', ''
+    ]);
+
+    // Estilos generales: bordes para todas las celdas
+    worksheet.eachRow((row, rowNumber) => {
+      row.eachCell(cell => {
+        cell.border = {
+          top:    { style: 'thin' },
+          left:   { style: 'thin' },
+          bottom: { style: 'thin' },
+          right:  { style: 'thin' }
+        };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+    });
+
+    // Encabezado: fondo azul claro y negrita
+    headers.forEach((_, idx) => {
+      const cell = worksheet.getRow(1).getCell(idx + 1);
+      cell.font = { bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE3F2FD' }
+      };
+    });
+
+    // Fila de TOTAL A PAGAR: fondo verde y texto blanco
+    const totalPagarRow = worksheet.lastRow.number;
+    worksheet.getRow(totalPagarRow).eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF388E3C' }
+      };
+    });
+
+    // Ajusta el ancho de las columnas automáticamente
+    worksheet.columns.forEach(column => {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellValue = cell.value ? cell.value.toString() : '';
+        maxLength = Math.max(maxLength, cellValue.length);
+      });
+      column.width = maxLength + 2;
+    });
+
+    // Genera el archivo y lo descarga
+    const buffer = await workbook.xlsx.writeBuffer();
+    const nombreArchivo = `Reporte_horas_extra_${usuarioSeleccionado.persona?.nombres || ''}_${usuarioSeleccionado.persona?.apellidos || ''}.xlsx`;
+    saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreArchivo);
   };
 
   return (
@@ -431,14 +594,32 @@ function PanelUsuarios() {
               </Typography>
             </Box>
           )}
-          <Button variant="outlined" color="primary" sx={{ mb: 2 }} onClick={handleDescargarWord}>
-            Descargar Word
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<DescriptionOutlinedIcon />}
+              onClick={handleDescargarWord}
+            >
+              Descargar Word
+            </Button>
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<TableChartOutlinedIcon />}
+              onClick={handleDescargarExcel}
+            >
+              Descargar Excel
+            </Button>
+          </Box>
           <Typography variant="subtitle1" fontWeight={700} color="#1976d2" sx={{ mb: 1 }}>
-            Total de horas extra: {reporteData.totalHoras}
+            Total horas extra (reporte): {reporteData.totalHorasDivididas} &nbsp;|&nbsp; Valor: $ {reporteData.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={700} color="#ff9800" sx={{ mb: 1 }}>
+            Total bono salarial (horas): {reporteData.totalHorasBono} &nbsp;|&nbsp; Valor: $ {reporteData.totalPagarBono.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
           </Typography>
           <Typography variant="subtitle1" fontWeight={700} color="#388e3c" sx={{ mb: 2 }}>
-            Valor total a pagar: $ {reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+            <u>Total a pagar:</u> $ {reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>Detalle por registro:</Typography>
@@ -449,10 +630,12 @@ function PanelUsuarios() {
                   <TableCell>Fecha</TableCell>
                   <TableCell>Tipo</TableCell>
                   <TableCell>Denominación</TableCell>
-                  <TableCell>Cantidad</TableCell>
+                  <TableCell>Horas Extra (reporte)</TableCell>
+                  <TableCell>Valor Horas Extra</TableCell>
+                  <TableCell>Bono Salarial (horas)</TableCell>
+                  <TableCell>Valor Bono Salarial</TableCell>
                   <TableCell>Recargo</TableCell>
                   <TableCell>Valor Hora Extra</TableCell>
-                  <TableCell>Valor Total</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -461,10 +644,12 @@ function PanelUsuarios() {
                     <TableCell>{detalle.fecha}</TableCell>
                     <TableCell>{detalle.tipo}</TableCell>
                     <TableCell>{detalle.denominacion}</TableCell>
-                    <TableCell>{detalle.cantidad}</TableCell>
+                    <TableCell>{detalle.cantidadDividida}</TableCell>
+                    <TableCell>$ {Number(detalle.valorTotalDivididas).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>{detalle.cantidadBono}</TableCell>
+                    <TableCell>$ {Number(detalle.valorTotalBono).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>{((detalle.recargo - 1) * 100).toFixed(0)}%</TableCell>
                     <TableCell>$ {Number(detalle.valorHoraExtra).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>$ {Number(detalle.valorTotal).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
