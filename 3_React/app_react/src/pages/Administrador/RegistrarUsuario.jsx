@@ -89,7 +89,7 @@ function RegistrarUsuarioAdministrativo() {
       }
       setExito(true);
       setMensaje('¡Usuario registrado exitosamente!');
-      setTimeout(() => navigate('/panel-admin-administrativo'), 1500);
+      setTimeout(() => navigate('/panel-admin'), 1500);
     } catch (error) {
       setMensaje('No se pudo conectar con el servidor.');
     }
