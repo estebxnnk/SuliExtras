@@ -54,4 +54,25 @@ router.post('/', rolController.crearRol);
  */
 router.get('/', rolController.listarRoles);
 
+/**
+ * @swagger
+ * /api/roles/{id}:
+ *   delete:
+ *     summary: Eliminar un rol por ID
+ *     tags: [Roles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del rol a eliminar
+ *     responses:
+ *       200:
+ *         description: Rol eliminado correctamente
+ *       404:
+ *         description: Rol no encontrado
+ */
+router.delete('/:id', rolController.eliminarRol);
+
 module.exports = router; 
