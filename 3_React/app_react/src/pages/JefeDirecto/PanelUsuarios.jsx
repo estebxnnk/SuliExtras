@@ -59,8 +59,7 @@ function PanelUsuarios() {
     // Buscar registros completos del usuario
     const response = await fetch(`http://localhost:3000/api/registros/usuario-completo/${usuario.id}`);
     const data = await response.json();
-    const registros = Array.isArray(data.registros) ? data.registros : [];
-    let totalHoras = 0;
+    const registros = Array.isArray(data.registros) ? data.registros.filter(r => r.estado === 'aprobado') : [];    let totalHoras = 0;
     let totalPagar = 0;
     let detalles = [];
     registros.forEach(registro => {
