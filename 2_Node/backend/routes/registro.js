@@ -76,6 +76,56 @@ router.get('/usuario/:usuario', registroController.getRegistrosByUsuario);
  *     responses:
  *       200:
  *         description: Registros del usuario encontrados
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 total:
+ *                   type: integer
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       fecha:
+ *                         type: string
+ *                         format: date
+ *                       horaIngreso:
+ *                         type: string
+ *                       horaSalida:
+ *                         type: string
+ *                       ubicacion:
+ *                         type: string
+ *                       usuario:
+ *                         type: string
+ *                       usuarioId:
+ *                         type: integer
+ *                       numRegistro:
+ *                         type: string
+ *                       cantidadHorasExtra:
+ *                         type: number
+ *                         description: Horas reales registradas
+ *                       horas_extra_divididas:
+ *                         type: number
+ *                         description: Máximo 2 horas extra por registro para reporte
+ *                       bono_salarial:
+ *                         type: number
+ *                         description: Horas extra que exceden el máximo y se consideran bono salarial
+ *                       justificacionHoraExtra:
+ *                         type: string
+ *                       estado:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
  *       404:
  *         description: No se encontraron registros para el usuario
  *       500:
@@ -269,5 +319,25 @@ router.delete('/:id', registroController.deleteRegistro);
  *         description: Lista de registros con información básica
  */
 router.get('/debug', registroController.debugRegistros);
+
+/**
+ * @swagger
+ * /api/registros/dividir-horas:
+ *   post:
+ *     summary: Crear un nuevo registro dividiendo las horas extra en horas_extra (máx 2), bono_salarial (resto) y horas_reales (todas las horas registradas)
+ *     tags: [Registros]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegistroInput'
+ *     responses:
+ *       201:
+ *         description: Registro creado exitosamente con los campos divididos
+ *       400:
+ *         description: Error en la solicitud
+ */
+router.post('/dividir-horas', registroController.createRegistroConDivisionHoras);
 
 module.exports = router;

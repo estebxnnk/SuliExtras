@@ -65,6 +65,9 @@ const getRegistrosByUsuarioId = async (req, res) => {
       });
     }
 
+    // Mostrar en consola los datos completos
+    console.log('Registros enviados en la respuesta:', JSON.stringify(registros, null, 2));
+
     res.status(200).json({
       message: `Registros encontrados para el usuario ID: ${usuarioId}`,
       total: registros.length,
@@ -167,6 +170,16 @@ const deleteRegistro = async (req, res) => {
   }
 };
 
+// Nuevo endpoint para crear registro con división de horas
+const createRegistroConDivisionHoras = async (req, res) => {
+  try {
+    const nuevoRegistro = await registroLogic.crearRegistroConDivisionHoras(req.body);
+    res.status(201).json(nuevoRegistro);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 module.exports = {
   getAllRegistros,
   getRegistroById,
@@ -177,5 +190,6 @@ module.exports = {
   debugRegistros,
   createRegistro,
   updateRegistro,
-  deleteRegistro
+  deleteRegistro,
+  createRegistroConDivisionHoras
 };

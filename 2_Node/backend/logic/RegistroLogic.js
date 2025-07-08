@@ -45,6 +45,23 @@ const obtenerRegistrosPorUsuario = async (usuario) => {
 const obtenerRegistrosPorUsuarioId = async (usuarioId) => {
   return await Registro.findAll({
     where: { usuarioId },
+    attributes: [
+      'id',
+      'fecha',
+      'horaIngreso',
+      'horaSalida',
+      'ubicacion',
+      'usuario',
+      'usuarioId',
+      'numRegistro',
+      'cantidadHorasExtra', // Horas reales
+      'horas_extra_divididas', // Máximo 2
+      'bono_salarial', // Excedente
+      'justificacionHoraExtra',
+      'estado',
+      'createdAt',
+      'updatedAt'
+    ],
     include: {
       model: Hora,
       through: {
@@ -94,6 +111,43 @@ const obtenerRegistrosPorUsuarioConInfo = async (usuarioId) => {
     ],
     order: [['fecha', 'DESC']]
   });
+};
+
+// Lógica para dividir las horas extra
+function dividirHorasExtra(cantidad) {
+  const horas_extra_divididas = Math.min(2, cantidad);
+  const bono_salarial = cantidad > 2 ? cantidad - 2 : 0;
+  const cantidadHorasExtra = cantidad; // Horas reales
+  return { horas_extra_divididas, bono_salarial, cantidadHorasExtra };
+}
+
+// Nuevo registro especial con lógica de división de horas
+const crearRegistroConDivisionHoras = async (data) => {
+  const { cantidadHorasExtra, usuarioId, usuario, ...registroData } = data;
+
+  if (!usuarioId) {
+    throw new Error('El usuarioId es requerido para crear un registro');
+  }
+
+  const user = await User.findByPk(usuarioId);
+  if (!user) {
+    throw new Error(`No se encontró un usuario con el ID: ${usuarioId}`);
+  }
+
+  // Dividir las horas extra
+  const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
+
+  // Crear el registro con los nuevos campos
+  const nuevoRegistro = await Registro.create({
+    ...registroData,
+    usuarioId,
+    usuario: user.email,
+    cantidadHorasExtra: Number(cantidadHorasExtra), // Horas reales
+    horas_extra_divididas,
+    bono_salarial
+  });
+
+  return nuevoRegistro;
 };
 
 // Crear un nuevo registro con horas asociadas
@@ -147,12 +201,25 @@ const crearRegistro = async (data) => {
 
 // Actualizar un registro y sus horas
 const actualizarRegistro = async (id, data) => {
-  const { horas, ...registroData } = data;
+  const { horas, cantidadHorasExtra, ...registroData } = data;
   const registro = await Registro.findByPk(id);
   if (!registro) throw new Error('Registro no encontrado');
 
-  await registro.update(registroData);
+  // Si se edita la cantidad de horas extra, recalcular los campos
+  let updateFields = { ...registroData };
+  if (typeof cantidadHorasExtra !== 'undefined') {
+    const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
+    updateFields = {
+      ...updateFields,
+      cantidadHorasExtra: Number(cantidadHorasExtra),
+      horas_extra_divididas,
+      bono_salarial
+    };
+  }
 
+  await registro.update(updateFields);
+
+  // Si se editan los tipos de hora asociados
   if (horas) {
     await registro.setHoras([]); // Elimina relaciones anteriores
     for (const hora of horas) {
@@ -180,5 +247,6 @@ module.exports = {
   obtenerRegistrosPorUsuarioConInfo,
   crearRegistro,
   actualizarRegistro,
-  eliminarRegistro
+  eliminarRegistro,
+  crearRegistroConDivisionHoras
 };
