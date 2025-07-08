@@ -1,0 +1,181 @@
+const registroLogic = require('../logic/RegistroLogic');
+
+const getAllRegistros = async (req, res) => {
+  try {
+    const registros = await registroLogic.obtenerRegistros();
+    res.status(200).json(registros);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getRegistroById = async (req, res) => {
+  try {
+    const registro = await registroLogic.obtenerRegistroPorId(req.params.id);
+    if (!registro) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+    res.status(200).json(registro);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getRegistrosByUsuario = async (req, res) => {
+  try {
+    const { usuario } = req.params;
+    
+    if (!usuario) {
+      return res.status(400).json({ error: 'El parámetro usuario es requerido' });
+    }
+
+    const registros = await registroLogic.obtenerRegistrosPorUsuario(usuario);
+    
+    if (registros.length === 0) {
+      return res.status(404).json({ 
+        message: `No se encontraron registros para el usuario: ${usuario}`,
+        registros: []
+      });
+    }
+
+    res.status(200).json({
+      message: `Registros encontrados para el usuario: ${usuario}`,
+      total: registros.length,
+      registros
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getRegistrosByUsuarioId = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    
+    if (!usuarioId) {
+      return res.status(400).json({ error: 'El parámetro usuarioId es requerido' });
+    }
+
+    const registros = await registroLogic.obtenerRegistrosPorUsuarioId(usuarioId);
+    
+    if (registros.length === 0) {
+      return res.status(404).json({ 
+        message: `No se encontraron registros para el usuario ID: ${usuarioId}`,
+        registros: []
+      });
+    }
+
+    res.status(200).json({
+      message: `Registros encontrados para el usuario ID: ${usuarioId}`,
+      total: registros.length,
+      registros
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getRegistrosConUsuario = async (req, res) => {
+  try {
+    const registros = await registroLogic.obtenerRegistrosConUsuario();
+    res.status(200).json({
+      message: 'Registros con información de usuario',
+      total: registros.length,
+      registros
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getRegistrosPorUsuarioConInfo = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    
+    if (!usuarioId) {
+      return res.status(400).json({ error: 'El parámetro usuarioId es requerido' });
+    }
+
+    const registros = await registroLogic.obtenerRegistrosPorUsuarioConInfo(usuarioId);
+    
+    if (registros.length === 0) {
+      return res.status(404).json({ 
+        message: `No se encontraron registros para el usuario ID: ${usuarioId}`,
+        registros: []
+      });
+    }
+
+    res.status(200).json({
+      message: `Registros encontrados para el usuario ID: ${usuarioId}`,
+      total: registros.length,
+      registros
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const debugRegistros = async (req, res) => {
+  try {
+    const registros = await registroLogic.obtenerRegistros();
+    
+    res.status(200).json({
+      message: 'Debug: Todos los registros en la base de datos',
+      total: registros.length,
+      registros: registros.map(reg => ({
+        id: reg.id,
+        usuario: reg.usuario,
+        usuarioId: reg.usuarioId,
+        fecha: reg.fecha,
+        numRegistro: reg.numRegistro,
+        estado: reg.estado,
+        ubicacion: reg.ubicacion,
+        horaIngreso: reg.horaIngreso,
+        horaSalida: reg.horaSalida,
+        cantidadHorasExtra: reg.cantidadHorasExtra
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const createRegistro = async (req, res) => {
+  try {
+    const nuevoRegistro = await registroLogic.crearRegistro(req.body);
+    res.status(201).json(nuevoRegistro);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const updateRegistro = async (req, res) => {
+  try {
+    const registroActualizado = await registroLogic.actualizarRegistro(req.params.id, req.body);
+    res.status(200).json(registroActualizado);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const deleteRegistro = async (req, res) => {
+  try {
+    const resultado = await registroLogic.eliminarRegistro(req.params.id);
+    res.status(200).json(resultado);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = {
+  getAllRegistros,
+  getRegistroById,
+  getRegistrosByUsuario,
+  getRegistrosByUsuarioId,
+  getRegistrosConUsuario,
+  getRegistrosPorUsuarioConInfo,
+  debugRegistros,
+  createRegistro,
+  updateRegistro,
+  deleteRegistro
+};
