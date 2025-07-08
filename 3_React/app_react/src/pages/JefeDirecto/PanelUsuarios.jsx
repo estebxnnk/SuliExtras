@@ -5,11 +5,15 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import NavbarJefeDirecto from './NavbarJefeDirecto';
 import { SalarioMinimoContext } from '../../providers/SalarioMinimoProvider';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, Table as DocxTable, TableRow as DocxTableRow, TableCell as DocxTableCell, TextRun, ImageRun, AlignmentType, WidthType } from 'docx';
 import SalarioMinimoEditor from '../../SalarioMinimoEditor';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 function PanelUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -295,6 +299,100 @@ function PanelUsuarios() {
     saveAs(blobWord, nombreArchivo);
   };
 
+  const handleDescargarExcel = async () => {
+    if (!reporteData || !reporteData.detalles || reporteData.detalles.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Reporte');
+
+    // Encabezados
+    const headers = [
+      'Fecha', 'Tipo', 'Denominación',
+      'Horas Extra (reporte)', 'Valor Horas Extra',
+      'Bono Salarial (horas)', 'Valor Bono Salarial',
+      'Recargo', 'Valor Hora Extra'
+    ];
+    worksheet.addRow(headers);
+
+    // Datos
+    reporteData.detalles.forEach(detalle => {
+      worksheet.addRow([
+        detalle.fecha,
+        detalle.tipo,
+        detalle.denominacion,
+        detalle.cantidadDividida,
+        Number(detalle.valorTotalDivididas),
+        detalle.cantidadBono,
+        Number(detalle.valorTotalBono),
+        ((detalle.recargo - 1) * 100) + '%',
+        Number(detalle.valorHoraExtra)
+      ]);
+    });
+
+    // Totales
+    worksheet.addRow([
+      'Totales', '', '',
+      reporteData.totalHorasDivididas,
+      reporteData.totalPagarDivididas,
+      reporteData.totalHorasBono,
+      reporteData.totalPagarBono,
+      '', ''
+    ]);
+    worksheet.addRow([
+      'TOTAL A PAGAR', '', '', '', '', '', reporteData.totalPagar, '', ''
+    ]);
+
+    // Estilos generales: bordes para todas las celdas
+    worksheet.eachRow((row, rowNumber) => {
+      row.eachCell(cell => {
+        cell.border = {
+          top:    { style: 'thin' },
+          left:   { style: 'thin' },
+          bottom: { style: 'thin' },
+          right:  { style: 'thin' }
+        };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+    });
+
+    // Encabezado: fondo azul claro y negrita
+    headers.forEach((_, idx) => {
+      const cell = worksheet.getRow(1).getCell(idx + 1);
+      cell.font = { bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE3F2FD' }
+      };
+    });
+
+    // Fila de TOTAL A PAGAR: fondo verde y texto blanco
+    const totalPagarRow = worksheet.lastRow.number;
+    worksheet.getRow(totalPagarRow).eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF388E3C' }
+      };
+    });
+
+    // Ajusta el ancho de las columnas automáticamente
+    worksheet.columns.forEach(column => {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellValue = cell.value ? cell.value.toString() : '';
+        maxLength = Math.max(maxLength, cellValue.length);
+      });
+      column.width = maxLength + 2;
+    });
+
+    // Genera el archivo y lo descarga
+    const buffer = await workbook.xlsx.writeBuffer();
+    const nombreArchivo = `Reporte_horas_extra_${usuarioSeleccionado.persona?.nombres || ''}_${usuarioSeleccionado.persona?.apellidos || ''}.xlsx`;
+    saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreArchivo);
+  };
+
   return (
     <Box
       minHeight="100vh"
@@ -496,9 +594,24 @@ function PanelUsuarios() {
               </Typography>
             </Box>
           )}
-          <Button variant="outlined" color="primary" sx={{ mb: 2 }} onClick={handleDescargarWord}>
-            Descargar Word
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<DescriptionOutlinedIcon />}
+              onClick={handleDescargarWord}
+            >
+              Descargar Word
+            </Button>
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<TableChartOutlinedIcon />}
+              onClick={handleDescargarExcel}
+            >
+              Descargar Excel
+            </Button>
+          </Box>
           <Typography variant="subtitle1" fontWeight={700} color="#1976d2" sx={{ mb: 1 }}>
             Total horas extra (reporte): {reporteData.totalHorasDivididas} &nbsp;|&nbsp; Valor: $ {reporteData.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
           </Typography>
