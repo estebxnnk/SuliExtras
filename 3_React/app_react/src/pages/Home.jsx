@@ -148,58 +148,96 @@ function Home() {
             }}
           >
             <Typography variant="h4" sx={{ fontWeight: 700, color: '#000', mb: 2, textAlign: 'center' }}>
-              Título de la Descripción
+              Sulicor SAS
             </Typography>
             <Typography variant="body1" sx={{ color: '#000', mb: 2, textAlign: 'center' }}>
-              Este es el contenido descriptivo de la sección, aquí va la explicación central del propósito de la imagen o mensaje principal de la empresa.
+              Bienvenido al portal administrativo para uso interno de Sulicor SAS.
             </Typography>
-            <Button
-              variant="contained"
-              onClick={() => navigate('/login')}
+            {/* Formulario de contacto solo vista */}
+            <Box
+              component="form"
               sx={{
                 width: '100%',
-                height: 56,
-                borderRadius: 2,
-                background: '#52AB41',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 18,
-                my: 1,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-                transition: 'background 0.2s, transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  background: '#3fa32c',
-                  transform: 'translateY(-2px) scale(1.03)',
-                  boxShadow: '0 6px 16px rgba(82,171,65,0.18)',
-                },
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                mb: 2,
               }}
+              onSubmit={e => e.preventDefault()}
             >
-              Iniciar Sesión
-            </Button>
-            <Link to="/contactanos" style={{ width: '100%', textDecoration: 'none' }}>
+              <input
+                type="text"
+                placeholder="Nombre"
+                disabled
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  fontSize: '16px',
+                  marginBottom: '8px',
+                  background: '#f5f5f5'
+                }}
+              />
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                disabled
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  fontSize: '16px',
+                  marginBottom: '8px',
+                  background: '#f5f5f5'
+                }}
+              />
+              <textarea
+                placeholder="Mensaje"
+                disabled
+                rows={3}
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  fontSize: '16px',
+                  marginBottom: '8px',
+                  resize: 'vertical',
+                  background: '#f5f5f5'
+                }}
+              />
               <Button
+                type="submit"
                 variant="contained"
+                disabled
                 sx={{
-                  width: '100%',
-                  height: 56,
-                  borderRadius: 2,
-                  background: '#3B394F',
+                  background: '#52AB41',
                   color: '#fff',
                   fontWeight: 700,
-                  fontSize: 18,
-                  my: 1,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-                  transition: 'background 0.2s, transform 0.2s, box-shadow 0.2s',
+                  borderRadius: 2,
+                  fontSize: 16,
                   '&:hover': {
-                    background: '#23213a',
-                    transform: 'translateY(-2px) scale(1.03)',
-                    boxShadow: '0 6px 16px rgba(59,57,79,0.18)',
+                    background: '#3fa32c',
                   },
                 }}
               >
-                Contáctanos
+                Enviar mensaje
               </Button>
-            </Link>
+            </Box>
+            {/* Redes sociales */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
+              <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer">
+                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg" alt="Facebook" style={{ width: 32, height: 32 }} />
+              </a>
+              <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer">
+                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram" style={{ width: 32, height: 32 }} />
+              </a>
+              <a href="https://wa.me/" target="_blank" rel="noopener noreferrer">
+                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="WhatsApp" style={{ width: 32, height: 32 }} />
+              </a>
+              <a href="mailto:info@sulicor.com" target="_blank" rel="noopener noreferrer">
+                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" alt="Correo" style={{ width: 32, height: 32 }} />
+              </a>
+            </Box>
           </Paper>
         </Box>
       </Container>
