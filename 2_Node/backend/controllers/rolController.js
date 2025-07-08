@@ -18,4 +18,13 @@ const listarRoles = async (req, res) => {
   }
 };
 
-module.exports = { crearRol, listarRoles }; 
+const eliminarRol = async (req, res) => {
+  try {
+    const resultado = await rolLogic.eliminarRol(req.params.id);
+    res.status(200).json(resultado);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+};
+
+module.exports = { crearRol, listarRoles, eliminarRol }; 

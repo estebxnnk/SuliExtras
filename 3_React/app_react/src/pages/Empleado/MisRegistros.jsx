@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useContext } from 'react';
 import NavbarEmpleado from './NavbarEmpleado';
 import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, TextField, MenuItem, InputAdornment, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Avatar, Divider, IconButton, TableContainer, Alert } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -12,6 +12,7 @@ import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { useNavigate } from 'react-router-dom';
+import { SalarioMinimoContext } from '../../providers/SalarioMinimoProvider';
 
 function MisRegistros() {
   const [registros, setRegistros] = useState([]);
@@ -30,6 +31,7 @@ function MisRegistros() {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, registro: null });
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
+  const { salarioMinimo } = useContext(SalarioMinimoContext);
 
   useEffect(() => {
     fetchRegistros();
@@ -258,12 +260,16 @@ function MisRegistros() {
                       <IconButton onClick={() => handleVer(registro)} title="Ver detalles" sx={{ color: 'green' }}>
                         <VisibilityIcon />
                       </IconButton>
-                      <IconButton onClick={() => handleEditar(registro)} title="Editar" sx={{ color: '#1976d2' }}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleEliminar(registro)} title="Eliminar" color="error">
-                        <DeleteIcon />
-                      </IconButton>
+                      {registro.estado !== 'aprobado' && (
+                        <>
+                          <IconButton onClick={() => handleEditar(registro)} title="Editar" sx={{ color: '#1976d2' }}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleEliminar(registro)} title="Eliminar" color="error">
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

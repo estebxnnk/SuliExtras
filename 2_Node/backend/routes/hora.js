@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Hora = require('../models/Hora');
+const horaController = require('../controllers/horaController');
 
 /**
  * @swagger
@@ -19,14 +19,7 @@ const Hora = require('../models/Hora');
  *       200:
  *         description: Lista de horas
  */
-router.get('/', async (req, res) => {
-  try {
-    const horas = await Hora.findAll();
-    res.json(horas);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.get('/', horaController.listarHoras);
 
 /**
  * @swagger
@@ -46,15 +39,7 @@ router.get('/', async (req, res) => {
  *       404:
  *         description: No encontrada
  */
-router.get('/:tipo', async (req, res) => {
-  try {
-    const hora = await Hora.findOne({ where: { tipo: req.params.tipo } });
-    if (!hora) return res.status(404).json({ error: 'Hora no encontrada' });
-    res.json(hora);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.get('/:tipo', horaController.obtenerHoraPorTipo);
 
 /**
  * @swagger
@@ -74,14 +59,7 @@ router.get('/:tipo', async (req, res) => {
  *       400:
  *         description: Error en la solicitud
  */
-router.post('/', async (req, res) => {
-  try {
-    const nuevaHora = await Hora.create(req.body);
-    res.status(201).json(nuevaHora);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+router.post('/', horaController.crearHora);
 
 /**
  * @swagger
@@ -107,17 +85,7 @@ router.post('/', async (req, res) => {
  *       404:
  *         description: Hora no encontrada
  */
-router.put('/:tipo', async (req, res) => {
-  try {
-    const hora = await Hora.findOne({ where: { tipo: req.params.tipo } });
-    if (!hora) return res.status(404).json({ error: 'Hora no encontrada' });
-
-    await hora.update(req.body);
-    res.json(hora);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+router.put('/:tipo', horaController.actualizarHora);
 
 /**
  * @swagger
@@ -137,15 +105,7 @@ router.put('/:tipo', async (req, res) => {
  *       404:
  *         description: Hora no encontrada
  */
-router.delete('/:tipo', async (req, res) => {
-  try {
-    const deleted = await Hora.destroy({ where: { tipo: req.params.tipo } });
-    if (!deleted) return res.status(404).json({ error: 'Hora no encontrada' });
-    res.json({ message: 'Hora eliminada' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.delete('/:tipo', horaController.eliminarHora);
 
 module.exports = router;
 

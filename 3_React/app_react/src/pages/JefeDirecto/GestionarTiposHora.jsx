@@ -71,7 +71,7 @@ function GestionarTiposHora() {
   const handleEliminar = async (tipo) => {
     if (!window.confirm('¿Seguro que deseas eliminar este tipo de hora?')) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/horas/${tipo.id}`, {
+      const response = await fetch(`http://localhost:3000/api/horas/${tipo.tipo}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -100,7 +100,7 @@ function GestionarTiposHora() {
           body: JSON.stringify(dataToSend),
         });
       } else {
-        response = await fetch(`http://localhost:3000/api/horas/${tipoSeleccionado.id}`, {
+        response = await fetch(`http://localhost:3000/api/horas/${tipoSeleccionado.tipo}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSend),
