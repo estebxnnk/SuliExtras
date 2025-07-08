@@ -75,6 +75,12 @@ function App() {
             <PanelRegistrosHorasExtra />
           </ProtectedRoute>
         } />
+
+        <Route path="/crear-registros-horas-extra" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <CrearRegistroHorasExtra />
+          </ProtectedRoute>
+        } />
         <Route path="/crear-registro-horas" element={
           <ProtectedRoute allowedRoles={['Empleado']}>
             <CrearRegistroHorasEmpleado />

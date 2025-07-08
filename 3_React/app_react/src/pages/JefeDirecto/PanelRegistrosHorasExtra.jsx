@@ -244,7 +244,7 @@ function PanelRegistrosHorasExtra() {
           color="primary"
           startIcon={<AddCircleIcon />}
           sx={{ position: 'absolute', right: 32, top: 32, fontWeight: 700, borderRadius: 2, fontSize: 16, zIndex: 10 }}
-          onClick={() => navigate('/crear-registro-horas')}
+          onClick={() => navigate('/crear-registros-horas-extra')}
         >
           Crear Nuevo Registro
         </Button>
