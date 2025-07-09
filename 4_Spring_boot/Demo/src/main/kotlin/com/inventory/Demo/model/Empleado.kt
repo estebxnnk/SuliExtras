@@ -20,6 +20,13 @@ data class Empleado(
     @Column(length = 20)
     val telefono: String? = null,
 
+    // Campos nuevos
+    @Column(length = 100)
+    val emailCorporativo: String? = null, // Ej: luisa.hormaza@sulicor.com
+
+    @Column(length = 50)
+    val tipoContrato: String? = null,     // Ej: Término fijo, prestación servicios
+
     @ManyToOne
     @JoinColumn(name = "area_id")
     val area: Area? = null,

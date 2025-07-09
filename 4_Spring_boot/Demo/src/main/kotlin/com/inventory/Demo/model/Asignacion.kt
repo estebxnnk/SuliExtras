@@ -30,5 +30,9 @@ data class Asignacion(
     val fechaDevolucion: LocalDate? = null,
 
     @Column
-    val comentario: String? = null
+    val comentario: String? = null,
+
+    // Campo nuevo para detalles específicos
+    @Column(columnDefinition = "TEXT")
+    val observaciones: String? = null // Ej: "Celular de bajas"
 )

@@ -66,6 +66,25 @@ data class Dispositivo(
     @Column(columnDefinition = "TEXT")
     val observaciones: String? = null,
 
+    // Campos nuevos para celulares
+    @Column(length = 15)
+    val imei1: String? = null,       // Ej: 868379040092180
+
+    @Column(length = 15)
+    val imei2: String? = null,       // Ej: 868379040642182
+
+    @Column(length = 100)
+    val emailAsociado: String? = null, // Ej: comercial124.sulicor@gmail.com
+
+    @Column(length = 255)
+    val contrasena: String? = null,   // Ej: Sulicor999# (considera encryptar este campo)
+
+    @Column(columnDefinition = "TEXT")
+    val estadoFisico: String? = null, // Ej: "Ajustado, rayado"
+
+    @OneToMany(mappedBy = "dispositivo", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val accesorios: List<Accesorio> = emptyList(),
+
     @OneToMany(mappedBy = "dispositivo")
     val asignaciones: List<Asignacion> = emptyList(),
 
