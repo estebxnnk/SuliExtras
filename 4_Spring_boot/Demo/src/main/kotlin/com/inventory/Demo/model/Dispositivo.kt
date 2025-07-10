@@ -4,8 +4,10 @@ import jakarta.persistence.*
 import java.time.LocalDate
 
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "dispositivos")
-data class Dispositivo(
+@DiscriminatorColumn(name = "tipo_dispositivo", discriminatorType = DiscriminatorType.STRING)
+abstract class Dispositivo(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val dispositivoId: Long = 0,
 
@@ -26,6 +28,10 @@ data class Dispositivo(
     @JoinColumn(name = "sede_id", nullable = false)
     val sede: Sede,
 
+    @ManyToOne
+    @JoinColumn(name = "empleado_id")
+    val empleado: Empleado? = null,
+
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     val estado: EstadoDispositivo,
@@ -42,54 +48,8 @@ data class Dispositivo(
     @Column(nullable = false, length = 50)
     val tipo: String,
 
-    @Column(length = 100)
-    val procesador: String? = null,
-
-    @Column(length = 20)
-    val ram: String? = null,
-
-    @Column(length = 50)
-    val almacenamiento: String? = null,
-
-    @Column(name = "valor_compra", precision = 12, scale = 2)
-    val valorCompra: Double? = null,
-
-    @Column(name = "fecha_compra")
-    val fechaCompra: LocalDate? = null,
-
-    @Column(length = 100)
-    val sistemaOperativo: String? = null,
-
     @Column(columnDefinition = "TEXT")
-    val softwareAdicional: String? = null,
-
-    @Column(columnDefinition = "TEXT")
-    val observaciones: String? = null,
-
-    // Campos nuevos para celulares
-    @Column(length = 15)
-    val imei1: String? = null,       // Ej: 868379040092180
-
-    @Column(length = 15)
-    val imei2: String? = null,       // Ej: 868379040642182
-
-    @Column(length = 100)
-    val emailAsociado: String? = null, // Ej: comercial124.sulicor@gmail.com
-
-    @Column(length = 255)
-    val contrasena: String? = null,   // Ej: Sulicor999# (considera encryptar este campo)
-
-    @Column(columnDefinition = "TEXT")
-    val estadoFisico: String? = null, // Ej: "Ajustado, rayado"
-
-    @OneToMany(mappedBy = "dispositivo", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val accesorios: List<Accesorio> = emptyList(),
-
-    @OneToMany(mappedBy = "dispositivo")
-    val asignaciones: List<Asignacion> = emptyList(),
-
-    @OneToMany(mappedBy = "dispositivo")
-    val mantenimientos: List<Mantenimiento> = emptyList()
+    val observaciones: String? = null
 )
 
 enum class EstadoDispositivo {

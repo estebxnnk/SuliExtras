@@ -4,16 +4,19 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "areas")
-data class Area(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val areaId: Long = 0,
+class Area(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
-    @Column(nullable = false, length = 100)
     val nombre: String,
 
-    @Column(length = 100)
+    @Column(name = "subarea")
     val subarea: String? = null,
 
-    @Column(name = "tipo_area", length = 100)
+    @Column(name = "tipo_area")
     val tipoArea: String? = null,
+
+    @OneToMany(mappedBy = "area")
+    val empleados: List<Empleado> = emptyList()
 ) 

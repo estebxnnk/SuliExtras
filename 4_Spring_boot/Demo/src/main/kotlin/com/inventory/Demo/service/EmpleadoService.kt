@@ -9,11 +9,6 @@ class EmpleadoService(private val empleadoRepository: EmpleadoRepository) {
     fun findAll(): List<Empleado> = empleadoRepository.findAll()
     fun findById(id: Long): Empleado? = empleadoRepository.findById(id).orElse(null)
     fun save(empleado: Empleado): Empleado = empleadoRepository.save(empleado)
-    fun update(id: Long, empleado: Empleado): Empleado? {
-        return if (empleadoRepository.existsById(id)) {
-            empleadoRepository.save(empleado.copy(empleadoId = id))
-        } else null
-    }
     fun delete(id: Long) = empleadoRepository.deleteById(id)
-    fun findBySedeId(sedeId: Long): List<Empleado> = empleadoRepository.findBySedeSedeId(sedeId)
+    // Si necesitas buscar por área, implementa aquí el método correspondiente
 } 

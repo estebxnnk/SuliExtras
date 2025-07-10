@@ -4,37 +4,28 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "empleados")
-data class Empleado(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val empleadoId: Long = 0,
+class Empleado(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "documento_identidad", unique = true)
     val documentoIdentidad: String,
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "nombre_completo")
     val nombreCompleto: String,
 
-    @Column(length = 100)
-    val cargo: String? = null,
+    val cargo: String,
 
-    @Column(length = 20)
+    @Column(unique = true)
+    val email: String? = null,
+
     val telefono: String? = null,
-
-    // Campos nuevos
-    @Column(length = 100)
-    val emailCorporativo: String? = null, // Ej: luisa.hormaza@sulicor.com
-
-    @Column(length = 50)
-    val tipoContrato: String? = null,     // Ej: Término fijo, prestación servicios
 
     @ManyToOne
     @JoinColumn(name = "area_id")
-    val area: Area? = null,
-
-    @ManyToOne
-    @JoinColumn(name = "sede_id", nullable = false)
-    val sede: Sede,
+    val area: Area,
 
     @OneToMany(mappedBy = "empleado")
-    val asignaciones: List<Asignacion> = emptyList()
+    val dispositivos: List<Dispositivo> = emptyList()
 )

@@ -2,8 +2,8 @@ package com.inventory.Demo.controller
 
 import com.inventory.Demo.model.Empleado
 import com.inventory.Demo.service.EmpleadoService
-import com.inventory.Demo.service.SedeService
 import com.inventory.Demo.dto.EmpleadoRequest
+import com.inventory.Demo.service.AreaService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/empleados")
 class EmpleadoController(
     private val empleadoService: EmpleadoService,
-    private val sedeService: SedeService
+    private val areaService: AreaService
 ) {
 
     @GetMapping
@@ -22,35 +22,39 @@ class EmpleadoController(
         empleadoService.findById(id)?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 
-    @GetMapping("/por-sede/{sedeId}")
-    fun getBySede(@PathVariable sedeId: Long): List<Empleado> = empleadoService.findBySedeId(sedeId)
-
     @PostMapping
     fun create(@RequestBody request: EmpleadoRequest): ResponseEntity<Empleado> {
-        val sede = sedeService.findById(request.sedeId)
+        val area = areaService.findById(request.areaId)
             ?: return ResponseEntity.badRequest().build()
         val empleado = Empleado(
-            nombre = request.nombre,
+            documentoIdentidad = request.documentoIdentidad,
+            nombreCompleto = request.nombreCompleto,
+            cargo = request.cargo,
             email = request.email,
-            departamento = request.departamento,
-            sede = sede
+            telefono = request.telefono,
+            area = area,
+            dispositivos = emptyList()
         )
         return ResponseEntity.ok(empleadoService.save(empleado))
     }
 
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @RequestBody request: EmpleadoRequest): ResponseEntity<Empleado> {
-        val sede = sedeService.findById(request.sedeId)
+        val area = areaService.findById(request.areaId)
             ?: return ResponseEntity.badRequest().build()
         val empleadoActual = empleadoService.findById(id)
             ?: return ResponseEntity.notFound().build()
-        val empleadoActualizado = empleadoActual.copy(
-            nombre = request.nombre,
+        val empleadoActualizado = Empleado(
+            id = empleadoActual.id,
+            documentoIdentidad = request.documentoIdentidad,
+            nombreCompleto = request.nombreCompleto,
+            cargo = request.cargo,
             email = request.email,
-            departamento = request.departamento,
-            sede = sede
+            telefono = request.telefono,
+            area = area,
+            dispositivos = empleadoActual.dispositivos
         )
-        return ResponseEntity.ok(empleadoService.update(id, empleadoActualizado)!!)
+        return ResponseEntity.ok(empleadoService.save(empleadoActualizado))
     }
 
     @DeleteMapping("/{id}")

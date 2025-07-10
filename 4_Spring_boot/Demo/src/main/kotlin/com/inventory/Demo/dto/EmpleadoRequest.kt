@@ -1,8 +1,10 @@
 package com.inventory.Demo.dto
 
 data class EmpleadoRequest(
-    val nombre: String,
+    val documentoIdentidad: String,
+    val nombreCompleto: String,
+    val cargo: String,
     val email: String?,
-    val departamento: String?,
-    val sedeId: Long
+    val telefono: String?,
+    val areaId: Long
 ) 
