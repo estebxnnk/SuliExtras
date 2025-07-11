@@ -12,6 +12,29 @@ __pycache__/
 # C extensions
 *.so
 
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Otros temporales
+*.tmp
+*.swp
+
+# Archivos de entorno
+*.env
+setenv.ps1  
+
 # Distribution / packaging
 .Python
 build/
