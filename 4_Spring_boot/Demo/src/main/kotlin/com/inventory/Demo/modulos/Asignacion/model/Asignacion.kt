@@ -2,8 +2,11 @@ package com.inventory.Demo.modulos.Asignacion.model
 
 import com.inventory.Demo.modulos.Dispositivo.model.Dispositivo
 import com.inventory.Demo.modulos.Empleado.model.Empleado
+import com.inventory.Demo.modulos.Asignacion.model.EstadoAsignacion
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -35,6 +38,10 @@ data class Asignacion(
     @Column(name = "motivo_finalizacion", length = 100)
     val motivoFinalizacion: String? = null,
 
+    @Column(name = "estado_asignacion", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    val estado: EstadoAsignacion = EstadoAsignacion.ACTIVA,
+
     @Column
     val fechaDevolucion: LocalDate? = null,
 
@@ -45,3 +52,8 @@ data class Asignacion(
     @Column(columnDefinition = "TEXT")
     val observaciones: String? = null // Ej: "Celular de bajas"
 )
+
+// Enum para el estado de la asignación
+enum class EstadoAsignacion {
+    ACTIVA, INACTIVA, FINALIZADA
+}

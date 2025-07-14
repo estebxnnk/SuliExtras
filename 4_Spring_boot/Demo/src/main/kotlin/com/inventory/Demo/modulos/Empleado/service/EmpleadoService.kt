@@ -10,5 +10,6 @@ class EmpleadoService(private val empleadoRepository: EmpleadoRepository) {
     fun findById(id: Long): Empleado? = empleadoRepository.findById(id).orElse(null)
     fun save(empleado: Empleado): Empleado = empleadoRepository.save(empleado)
     fun delete(id: Long) = empleadoRepository.deleteById(id)
+    fun findByAreaId(areaId: Long): List<Empleado> = empleadoRepository.findByArea_Id(areaId)
     // Si necesitas buscar por área, implementa aquí el método correspondiente
 } 

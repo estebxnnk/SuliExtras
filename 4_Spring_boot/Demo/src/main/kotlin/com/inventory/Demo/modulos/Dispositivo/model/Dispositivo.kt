@@ -31,9 +31,10 @@ abstract class Dispositivo(
     @JoinColumn(name = "sede_id")
     val sede: Sede? = null,
 
-    @ManyToOne
-    @JoinColumn(name = "empleado_id")
-    val empleado: Empleado? = null,
+    // Eliminado: relación directa con Empleado
+    // @ManyToOne
+    // @JoinColumn(name = "empleado_id")
+    // val empleado: Empleado? = null,
 
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)

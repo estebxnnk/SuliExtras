@@ -40,7 +40,6 @@ class Celular(
     marca: String,
     categoria: Categoria? = null,
     sede: Sede? = null,
-    empleado: Empleado? = null,
     estado: EstadoDispositivo,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
@@ -48,5 +47,5 @@ class Celular(
     tipo: String,
     observaciones: String? = null
 ) : Dispositivo(
-    dispositivoId, serial, modelo, marca, categoria, sede, empleado, estado, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
+    dispositivoId, serial, modelo, marca, categoria, sede, estado, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
 )

@@ -16,8 +16,5 @@ class Area(
     val subarea: String? = null,
 
     @Column(name = "tipo_area")
-    val tipoArea: String? = null,
-
-    @OneToMany(mappedBy = "area")
-    val empleados: List<Empleado> = emptyList()
+    val tipoArea: String? = null
 ) 

@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface EmpleadoRepository : JpaRepository<Empleado, Long> 
+interface EmpleadoRepository : JpaRepository<Empleado, Long> {
+    fun findByArea_Id(areaId: Long): List<Empleado>
+} 
