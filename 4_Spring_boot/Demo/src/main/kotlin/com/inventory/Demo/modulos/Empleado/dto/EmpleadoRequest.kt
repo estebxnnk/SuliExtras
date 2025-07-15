@@ -6,5 +6,6 @@ data class EmpleadoRequest(
     val cargo: String,
     val email: String?,
     val telefono: String?,
+    val lineaCorporativa: String?,
     val areaId: Long
 ) 

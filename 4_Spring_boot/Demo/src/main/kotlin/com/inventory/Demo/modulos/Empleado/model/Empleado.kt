@@ -24,6 +24,8 @@ class Empleado(
 
     val telefono: String? = null,
 
+    val lineaCorporativa: String? = null,
+
     @ManyToOne
     @JoinColumn(name = "area_id")
     val area: Area,

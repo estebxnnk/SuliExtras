@@ -21,9 +21,14 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
         return if (dispositivoRepository.existsById(id)) {
             val actualizado = when (dispositivo) {
                 is Computador -> Computador(
+                    item = dispositivo.item,
                     procesador = dispositivo.procesador,
                     ram = dispositivo.ram,
                     almacenamiento = dispositivo.almacenamiento,
+                    almacenamiento2 = dispositivo.almacenamiento2,
+                    mac = dispositivo.mac,
+                    ofimatica = dispositivo.ofimatica,
+                    antivirus = dispositivo.antivirus,
                     sistemaOperativo = dispositivo.sistemaOperativo,
                     softwareAdicional = dispositivo.softwareAdicional,
                     dispositivoId = id,
@@ -33,13 +38,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "ALTA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Celular -> Celular(
+                    item = dispositivo.item,
                     imei1 = dispositivo.imei1,
                     imei2 = dispositivo.imei2,
                     sistemaOperativoMovil = dispositivo.sistemaOperativoMovil,
@@ -53,13 +61,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "MEDIA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Pda -> Pda(
+                    item = dispositivo.item,
                     numeroPda = dispositivo.numeroPda,
                     sistemaOperativoPda = dispositivo.sistemaOperativoPda,
                     emailAsociado = dispositivo.emailAsociado,
@@ -71,13 +82,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Impresora -> Impresora(
+                    item = dispositivo.item,
                     ipAsignada = dispositivo.ipAsignada,
                     contrasenaDispositivo = dispositivo.contrasenaDispositivo,
                     tecnologiaImpresion = dispositivo.tecnologiaImpresion,
@@ -88,13 +102,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Videobeam -> Videobeam(
+                    item = dispositivo.item,
                     tipoConexion = dispositivo.tipoConexion,
                     resolucionNativa = dispositivo.resolucionNativa,
                     dispositivoId = id,
@@ -104,13 +121,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Biometrico -> Biometrico(
+                    item = dispositivo.item,
                     ipAsignada = dispositivo.ipAsignada,
                     tipoBiometrico = dispositivo.tipoBiometrico,
                     dispositivoId = id,
@@ -120,13 +140,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Camara -> Camara(
+                    item = dispositivo.item,
                     macAddress = dispositivo.macAddress,
                     ipAsignada = dispositivo.ipAsignada,
                     tipoCamara = dispositivo.tipoCamara,
@@ -137,13 +160,16 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 is Intercomunicador -> Intercomunicador(
+                    item = dispositivo.item,
                     numeroSerieCompleto = dispositivo.numeroSerieCompleto,
                     accesoriosIncluidos = dispositivo.accesoriosIncluidos,
                     fechaInstalacion = dispositivo.fechaInstalacion,
@@ -155,14 +181,17 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     categoria = dispositivo.categoria,
                     sede = dispositivo.sede,
                     estado = dispositivo.estado,
+                    clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                     fechaAdquisicion = dispositivo.fechaAdquisicion,
                     costo = dispositivo.costo,
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
-                    observaciones = dispositivo.observaciones
+                    observaciones = dispositivo.observaciones,
+                    accesorios = dispositivo.accesorios
                 )
                 else -> {
                     object : Dispositivo(
+                        item = dispositivo.item,
                         dispositivoId = id,
                         serial = dispositivo.serial,
                         modelo = dispositivo.modelo,
@@ -170,11 +199,13 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                         categoria = dispositivo.categoria,
                         sede = dispositivo.sede,
                         estado = dispositivo.estado,
+                        clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                         fechaAdquisicion = dispositivo.fechaAdquisicion,
                         costo = dispositivo.costo,
                         codigoActivo = dispositivo.codigoActivo,
                         tipo = dispositivo.tipo,
-                        observaciones = dispositivo.observaciones
+                        observaciones = dispositivo.observaciones,
+                        accesorios = dispositivo.accesorios
                     ) {}
                 }
             }

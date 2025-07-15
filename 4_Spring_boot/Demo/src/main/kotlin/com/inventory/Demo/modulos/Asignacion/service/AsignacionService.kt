@@ -65,6 +65,10 @@ class AsignacionService(
                             procesador = dispositivo.procesador,
                             ram = dispositivo.ram,
                             almacenamiento = dispositivo.almacenamiento,
+                            almacenamiento2 = dispositivo.almacenamiento2,
+                            mac = dispositivo.mac,
+                            ofimatica = dispositivo.ofimatica,
+                            antivirus = dispositivo.antivirus,
                             sistemaOperativo = dispositivo.sistemaOperativo,
                             softwareAdicional = dispositivo.softwareAdicional,
                             dispositivoId = dispositivo.dispositivoId,
@@ -74,11 +78,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "ALTA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -97,11 +104,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "MEDIA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -117,11 +127,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -138,11 +151,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -157,11 +173,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -177,11 +196,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -198,11 +220,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }
@@ -217,11 +242,14 @@ class AsignacionService(
                             categoria = dispositivo.categoria,
                             sede = dispositivo.sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            clasificacion = if (dispositivo.estado.name == "BAJA") "OBSOLETO" else "BAJA",
                             fechaAdquisicion = dispositivo.fechaAdquisicion,
                             costo = dispositivo.costo,
                             codigoActivo = dispositivo.codigoActivo,
                             tipo = dispositivo.tipo,
-                            observaciones = dispositivo.observaciones
+                            observaciones = dispositivo.observaciones,
+                            accesorios = dispositivo.accesorios,
+                            item = dispositivo.item ?: "SIN_ITEM"
                         )
                         dispositivoService.save(dispositivoDisponible)
                     }

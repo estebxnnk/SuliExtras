@@ -12,6 +12,8 @@ class Sede(
 
     val nombre: String,
 
+    val ubicacion: String,
+
     val ciudad: String,
 
     @OneToMany(mappedBy = "sede")

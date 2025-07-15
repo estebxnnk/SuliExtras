@@ -35,6 +35,7 @@ class EmpleadoController(
             cargo = request.cargo,
             email = request.email,
             telefono = request.telefono,
+            lineaCorporativa = request.lineaCorporativa,
             area = area
         )
         return ResponseEntity.ok(empleadoService.save(empleado))
@@ -53,6 +54,7 @@ class EmpleadoController(
             cargo = request.cargo,
             email = request.email,
             telefono = request.telefono,
+            lineaCorporativa = request.lineaCorporativa,
             area = area
         )
         return ResponseEntity.ok(empleadoService.save(empleadoActualizado))

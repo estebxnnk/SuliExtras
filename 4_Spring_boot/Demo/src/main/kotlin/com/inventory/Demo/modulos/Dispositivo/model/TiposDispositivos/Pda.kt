@@ -10,6 +10,7 @@ import jakarta.persistence.DiscriminatorValue
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import java.time.LocalDate
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 
 @Entity
 @DiscriminatorValue("PDA")
@@ -29,17 +30,20 @@ class Pda(
 
     // Campos heredados
     dispositivoId: Long = 0,
+    item: String,
     serial: String,
     modelo: String,
     marca: String,
     categoria: Categoria? = null,
     sede: Sede? = null,
     estado: EstadoDispositivo,
+    clasificacion: String,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
     codigoActivo: String,
     tipo: String,
-    observaciones: String? = null
+    observaciones: String? = null,
+    accesorios: List<Accesorio> = emptyList()
 ) : Dispositivo(
-    dispositivoId, serial, modelo, marca, categoria, sede, estado, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
+    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, codigoActivo, tipo, observaciones, accesorios
 )

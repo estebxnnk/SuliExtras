@@ -22,6 +22,8 @@ data class Accesorio(
     @Column(length = 50)
     val marca: String? = null,
 
+    val serial: String,
+
     @Column(length = 100)
     val modelo: String? = null,
 
