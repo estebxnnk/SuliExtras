@@ -16,7 +16,13 @@ import org.springframework.stereotype.Service
 class DispositivoService(private val dispositivoRepository: DispositivoRepository) {
     fun findAll(): List<Dispositivo> = dispositivoRepository.findAll()
     fun findById(id: Long): Dispositivo? = dispositivoRepository.findById(id).orElse(null)
-    fun save(dispositivo: Dispositivo): Dispositivo = dispositivoRepository.save(dispositivo)
+    fun save(dispositivo: Dispositivo): Dispositivo {
+        val existente = dispositivoRepository.findBySerial(dispositivo.serial)
+        if (existente != null) {
+            throw IllegalArgumentException("Ya existe un dispositivo con el serial: ${dispositivo.serial}")
+        }
+        return dispositivoRepository.save(dispositivo)
+    }
     fun update(id: Long, dispositivo: Dispositivo): Dispositivo? {
         return if (dispositivoRepository.existsById(id)) {
             val actualizado = when (dispositivo) {
@@ -44,7 +50,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Celular -> Celular(
                     item = dispositivo.item,
@@ -67,7 +72,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Pda -> Pda(
                     item = dispositivo.item,
@@ -88,7 +92,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Impresora -> Impresora(
                     item = dispositivo.item,
@@ -108,7 +111,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Videobeam -> Videobeam(
                     item = dispositivo.item,
@@ -127,7 +129,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Biometrico -> Biometrico(
                     item = dispositivo.item,
@@ -146,7 +147,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Camara -> Camara(
                     item = dispositivo.item,
@@ -166,7 +166,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 is Intercomunicador -> Intercomunicador(
                     item = dispositivo.item,
@@ -187,7 +186,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     codigoActivo = dispositivo.codigoActivo,
                     tipo = dispositivo.tipo,
                     observaciones = dispositivo.observaciones,
-                    accesorios = dispositivo.accesorios
                 )
                 else -> {
                     object : Dispositivo(
@@ -205,7 +203,6 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                         codigoActivo = dispositivo.codigoActivo,
                         tipo = dispositivo.tipo,
                         observaciones = dispositivo.observaciones,
-                        accesorios = dispositivo.accesorios
                     ) {}
                 }
             }

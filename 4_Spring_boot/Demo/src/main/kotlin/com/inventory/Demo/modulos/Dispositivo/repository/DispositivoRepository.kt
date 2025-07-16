@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
  
 @Repository
-interface DispositivoRepository : JpaRepository<Dispositivo, Long> 
+interface DispositivoRepository : JpaRepository<Dispositivo, Long> {
+    fun findBySerial(serial: String): Dispositivo?
+} 

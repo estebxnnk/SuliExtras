@@ -54,9 +54,6 @@ abstract class Dispositivo(
 
     @Column(columnDefinition = "TEXT")
     val observaciones: String? = null,
-
-    @OneToMany(mappedBy = "dispositivo", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val accesorios: List<Accesorio> = emptyList()
 )
 
 enum class EstadoDispositivo {
