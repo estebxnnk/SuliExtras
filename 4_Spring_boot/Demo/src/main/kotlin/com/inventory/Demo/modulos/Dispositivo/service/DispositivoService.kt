@@ -9,8 +9,10 @@ import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Videobeam
 import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Biometrico
 import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Camara
 import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Intercomunicador
+import com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo
 import com.inventory.Demo.modulos.Dispositivo.repository.DispositivoRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class DispositivoService(private val dispositivoRepository: DispositivoRepository) {
@@ -216,4 +218,9 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
 
     fun <T : Dispositivo> findByIdAndType(id: Long, type: Class<T>): T? =
         dispositivoRepository.findById(id).orElse(null)?.let { if (type.isInstance(it)) it as T else null }
+
+    @Transactional
+    fun actualizarEstado(id: Long, estado: EstadoDispositivo) {
+        dispositivoRepository.actualizarEstado(id, estado)
+    }
 } 
