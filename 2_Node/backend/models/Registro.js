@@ -43,6 +43,19 @@ const Registro = sequelize.define('Registro', {
   cantidadHorasExtra: {
     type: DataTypes.FLOAT,
     allowNull: false,
+    // Este campo representa las horas reales registradas
+  },
+  horas_extra_divididas: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    defaultValue: 0,
+    comment: 'Máximo 2 horas extra por registro para reporte',
+  },
+  bono_salarial: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    defaultValue: 0,
+    comment: 'Horas extra que exceden el máximo y se consideran bono salarial',
   },
   justificacionHoraExtra: {
     type: DataTypes.TEXT,

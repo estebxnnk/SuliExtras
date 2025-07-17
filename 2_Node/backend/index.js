@@ -28,7 +28,7 @@ app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const corsOptions = {
-    origin: 'http://localhost:5050', // Cambia esto al dominio de tu frontend
+    origin: '*', // Cambia esto al dominio de tu frontend
     methods: ['GET', 'POST', 'PUT','PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

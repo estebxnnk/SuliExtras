@@ -7,12 +7,13 @@ class RegisterLogic {
     if (!email || !password || !persona || !rolId) {
       throw new Error('Faltan datos requeridos');
     }
-    const existe = await User.findOne({ where: { email } });
+    const emailNormalizado = email.trim().toLowerCase();
+    const existe = await User.findOne({ where: { email: emailNormalizado } });
     if (existe) throw new Error('El usuario ya existe');
     const hashedPassword = await bcrypt.hash(password, 10);
     const personaCreada = await Persona.create(persona);
     const user = await User.create({
-      email,
+      email: emailNormalizado,
       password: hashedPassword,
       personaId: personaCreada.id,
       rolId
