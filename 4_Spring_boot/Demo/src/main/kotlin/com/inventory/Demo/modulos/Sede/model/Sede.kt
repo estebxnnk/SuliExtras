@@ -12,8 +12,8 @@ class Sede(
 
     val nombre: String,
 
-    val ciudad: String,
+    val ubicacion: String,
 
-    @OneToMany(mappedBy = "sede")
-    val dispositivos: List<Dispositivo> = emptyList()
+    val ciudad: String
+    // Relación dispositivos eliminada
 )

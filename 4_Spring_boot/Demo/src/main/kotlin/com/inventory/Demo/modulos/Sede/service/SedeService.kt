@@ -15,8 +15,8 @@ class SedeService(private val sedeRepository: SedeRepository) {
             val sedeActualizada = Sede(
                 id = id,
                 nombre = sede.nombre,
+                ubicacion = sede.ubicacion,
                 ciudad = sede.ciudad,
-                dispositivos = sede.dispositivos
             )
             sedeRepository.save(sedeActualizada)
         } else null

@@ -24,10 +24,13 @@ class Empleado(
 
     val telefono: String? = null,
 
+    val lineaCorporativa: String? = null,
+
     @ManyToOne
     @JoinColumn(name = "area_id")
     val area: Area,
 
-    @OneToMany(mappedBy = "empleado")
-    val dispositivos: List<Dispositivo> = emptyList()
+    // Eliminada la relación con dispositivos, ahora se maneja por Asignacion
+    // @OneToMany(mappedBy = "empleado")
+    // val dispositivos: List<Dispositivo> = emptyList()
 )

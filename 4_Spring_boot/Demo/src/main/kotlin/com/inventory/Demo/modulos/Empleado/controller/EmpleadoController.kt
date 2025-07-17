@@ -22,6 +22,9 @@ class EmpleadoController(
         empleadoService.findById(id)?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 
+    @GetMapping("/area/{areaId}")
+    fun getByArea(@PathVariable areaId: Long): List<Empleado> = empleadoService.findByAreaId(areaId)
+
     @PostMapping
     fun create(@RequestBody request: EmpleadoRequest): ResponseEntity<Empleado> {
         val area = areaService.findById(request.areaId)
@@ -32,8 +35,8 @@ class EmpleadoController(
             cargo = request.cargo,
             email = request.email,
             telefono = request.telefono,
-            area = area,
-            dispositivos = emptyList()
+            lineaCorporativa = request.lineaCorporativa,
+            area = area
         )
         return ResponseEntity.ok(empleadoService.save(empleado))
     }
@@ -51,8 +54,8 @@ class EmpleadoController(
             cargo = request.cargo,
             email = request.email,
             telefono = request.telefono,
-            area = area,
-            dispositivos = empleadoActual.dispositivos
+            lineaCorporativa = request.lineaCorporativa,
+            area = area
         )
         return ResponseEntity.ok(empleadoService.save(empleadoActualizado))
     }

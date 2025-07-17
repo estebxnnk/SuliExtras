@@ -3,6 +3,7 @@ package com.inventory.Demo.modulos.Dispositivo.model
 import com.inventory.Demo.modulos.Categoria.model.Categoria
 import com.inventory.Demo.modulos.Empleado.model.Empleado
 import com.inventory.Demo.modulos.Sede.model.Sede
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 import jakarta.persistence.*
 import java.time.LocalDate
 
@@ -13,6 +14,8 @@ import java.time.LocalDate
 abstract class Dispositivo(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val dispositivoId: Long = 0,
+
+    val item: String,
 
     @Column(nullable = false, unique = true, length = 100)
     val serial: String,
@@ -31,13 +34,11 @@ abstract class Dispositivo(
     @JoinColumn(name = "sede_id")
     val sede: Sede? = null,
 
-    @ManyToOne
-    @JoinColumn(name = "empleado_id")
-    val empleado: Empleado? = null,
-
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     val estado: EstadoDispositivo,
+
+    val clasificacion: String,
 
     @Column(name = "fecha_adquisicion")
     val fechaAdquisicion: LocalDate? = null,
@@ -52,7 +53,7 @@ abstract class Dispositivo(
     val tipo: String,
 
     @Column(columnDefinition = "TEXT")
-    val observaciones: String? = null
+    val observaciones: String? = null,
 )
 
 enum class EstadoDispositivo {

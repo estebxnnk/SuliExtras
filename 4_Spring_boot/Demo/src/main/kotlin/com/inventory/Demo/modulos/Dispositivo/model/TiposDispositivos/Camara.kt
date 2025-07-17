@@ -5,6 +5,7 @@ import com.inventory.Demo.modulos.Empleado.model.Empleado
 import com.inventory.Demo.modulos.Sede.model.Sede
 import com.inventory.Demo.modulos.Dispositivo.model.Dispositivo
 import com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 import jakarta.persistence.Column
 import jakarta.persistence.DiscriminatorValue
 import jakarta.persistence.Entity
@@ -26,18 +27,19 @@ class Camara(
 
     // Campos heredados
     dispositivoId: Long = 0,
+    item: String,
     serial: String,
     modelo: String,
     marca: String,
     categoria: Categoria? = null,
     sede: Sede? = null,
-    empleado: Empleado? = null,
     estado: EstadoDispositivo,
+    clasificacion: String,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
     codigoActivo: String,
     tipo: String,
-    observaciones: String? = null
+    observaciones: String? = null,
 ) : Dispositivo(
-    dispositivoId, serial, modelo, marca, categoria, sede, empleado, estado, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
+    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
 )

@@ -1,6 +1,7 @@
 package com.inventory.Demo.modulos.Accesorio.model
 
 import com.inventory.Demo.modulos.Dispositivo.model.Dispositivo
+import com.inventory.Demo.modulos.Asignacion.model.Asignacion
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -22,6 +23,8 @@ data class Accesorio(
     @Column(length = 50)
     val marca: String? = null,
 
+    val serial: String,
+
     @Column(length = 100)
     val modelo: String? = null,
 
@@ -30,5 +33,9 @@ data class Accesorio(
 
     @ManyToOne
     @JoinColumn(name = "dispositivo_id", nullable = false)
-    val dispositivo: Dispositivo    // Relación con dispositivo
+    val dispositivo: Dispositivo,    // Relación con dispositivo
+
+    @ManyToOne
+    @JoinColumn(name = "asignacion_id")
+    var asignacion: Asignacion? = null
 )
