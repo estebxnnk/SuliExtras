@@ -30,6 +30,7 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
             val actualizado = when (dispositivo) {
                 is Computador -> Computador(
                     item = dispositivo.item,
+                    nombreEquipo = dispositivo.nombreEquipo,
                     procesador = dispositivo.procesador,
                     ram = dispositivo.ram,
                     almacenamiento = dispositivo.almacenamiento,

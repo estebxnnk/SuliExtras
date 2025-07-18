@@ -16,6 +16,9 @@ import java.time.LocalDate
 @DiscriminatorValue("COMPUTADOR")
 @Table(name = "computadores")
 class Computador(
+
+    val nombreEquipo: String,
+
     @Column(nullable = false, length = 100)
     val procesador: String,
 
@@ -31,7 +34,7 @@ class Computador(
 
     val ofimatica: String,
 
-    val antivirus: String, // Solo en Computador
+    val antivirus: String,
 
     @Column(nullable = false, length = 100)
     val sistemaOperativo: String,

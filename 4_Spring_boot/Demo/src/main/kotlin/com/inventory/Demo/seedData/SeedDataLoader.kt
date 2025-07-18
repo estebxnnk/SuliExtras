@@ -12,13 +12,19 @@ import com.inventory.Demo.modulos.Area.model.Area
 import com.inventory.Demo.modulos.Empleado.model.Empleado
 import com.inventory.Demo.modulos.Sede.service.SedeService
 import com.inventory.Demo.modulos.Sede.model.Sede
+import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
+import com.inventory.Demo.modulos.Asignacion.service.AsignacionService
+import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
 
 @Component
 class SeedDataLoader(
     private val dispositivoService: DispositivoService,
     private val areaService: AreaService,
     private val empleadoService: EmpleadoService,
-    private val sedeService: SedeService
+    private val sedeService: SedeService,
+    private val accesorioService: AccesorioService, // <--- Inyección del servicio de accesorios
+    private val asignacionService: AsignacionService // <--- Inyección del servicio de asignaciones
 ) : CommandLineRunner {
     override fun run(vararg args: String?) {
         if (areaService.findAll().isNotEmpty() || empleadoService.findAll().isNotEmpty()) {
@@ -75,6 +81,7 @@ class SeedDataLoader(
         if (dispositivoService.findAll().none { it.serial == "2WKKT93" }) {
             dispositivoService.save(Computador(
                 item = "ACTICO/035",
+                nombreEquipo = "Destkpo/123",
                 procesador = "Intel core i5 G11",
                 ram = "8GB",
                 almacenamiento = "N/A",
@@ -227,6 +234,52 @@ class SeedDataLoader(
                 tipo = "INTERCOMUNICADOR",
                 observaciones = "Intercomunicador principal",
             ))
+        }
+        // Accesorios
+        // Crear accesorio normal
+        val accesorioNormal = accesorioService.save(
+            Accesorio(
+                tipo = "Mouse",
+                marca = "Logitech",
+                serial = "MOUSE-001",
+                modelo = "M185",
+                estado = "Bueno",
+                esCombo = false,
+                accesoriosCombo = emptyList(),
+                asignacion = null
+            )
+        )
+        // Crear accesorio combo (que incluye el accesorio normal)
+        val accesorioCombo = accesorioService.save(
+            Accesorio(
+                tipo = "Combo Oficina",
+                marca = null,
+                serial = "COMBO-001",
+                modelo = null,
+                estado = "Bueno",
+                esCombo = true,
+                accesoriosCombo = listOf(accesorioNormal),
+                asignacion = null
+            )
+        )
+        // Crear una asignación de ejemplo para el empleado y dispositivo creados
+        val dispositivoEjemplo = dispositivoService.findAll().firstOrNull() // Usar el primer dispositivo creado
+        if (dispositivoEjemplo != null) {
+            val asignacion = asignacionService.create(
+                AsignacionRequest(
+                    dispositivoId = dispositivoEjemplo.dispositivoId,
+                    empleadoId = empleado1.id!!,
+                    fechaAsignacion = LocalDate.now(),
+                    comentario = "Asignación de ejemplo con accesorios",
+                    observaciones = "Asignación generada por el seed",
+                    accesorios = listOf(accesorioNormal.id!!, accesorioCombo.id!!)
+                )
+            )
+            // Actualizar los accesorios para que tengan la asignación creada
+            accesorioNormal.asignacion = asignacion
+            accesorioService.save(accesorioNormal)
+            accesorioCombo.asignacion = asignacion
+            accesorioService.save(accesorioCombo)
         }
     }
 } 
