@@ -6,6 +6,7 @@ import com.inventory.Demo.modulos.Dispositivo.service.DispositivoService
 import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
 import com.inventory.Demo.modulos.Empleado.service.EmpleadoService
 import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
+import com.inventory.Demo.modulos.Sede.service.SedeService
 import org.springframework.stereotype.Service
 
 @Service
@@ -13,7 +14,8 @@ class AsignacionService(
     private val asignacionRepository: AsignacionRepository,
     private val dispositivoService: DispositivoService,
     private val empleadoService: EmpleadoService,
-    private val accesorioService: AccesorioService
+    private val accesorioService: AccesorioService,
+    private val sedeService: SedeService
 ) {
     fun findAll(): List<Asignacion> = try {
         asignacionRepository.findAll()
@@ -31,6 +33,8 @@ class AsignacionService(
             ?: throw IllegalArgumentException("Dispositivo no encontrado")
         val empleado = empleadoService.findById(dto.empleadoId)
             ?: throw IllegalArgumentException("Empleado no encontrado")
+        val sede = sedeService.findById(dto.sedeId)
+            ?: throw IllegalArgumentException("Sede no encontrada")
         // Validación: un empleado solo puede tener un computador activo y viceversa
         val asignacionActivaDispositivo = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(dispositivo.dispositivoId, Asignacion.EstadoAsignacion.ACTIVA)
         if (asignacionActivaDispositivo != null) {
@@ -42,17 +46,18 @@ class AsignacionService(
             throw IllegalArgumentException("El empleado ya tiene un computador asignado.")
         }
         // Validación: accesorios no pueden estar asignados a otra asignación activa
-        dto.accesorios?.forEach { accesorioId ->
-            val accesorio = accesorioService.findById(accesorioId)
-            if (accesorio?.asignacion?.estado == Asignacion.EstadoAsignacion.ACTIVA) {
-                throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
-            }
-        }
+        // dto.accesorios?.forEach { accesorioId ->
+        //     val accesorio = accesorioService.findById(accesorioId)
+        //     if (accesorio?.asignacion?.estado == Asignacion.EstadoAsignacion.ACTIVA) {
+        //         throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
+        //     }
+        // }
         // Crear la asignación con accesorios si se envían
         val accesorios = dto.accesorios?.mapNotNull { accesorioService.findById(it) }
         val asignacion = Asignacion(
             dispositivo = dispositivo,
             empleado = empleado,
+            sede = sede,
             fechaAsignacion = dto.fechaAsignacion,
             fechaFinalizacion = null,
             motivoFinalizacion = null,
@@ -64,10 +69,10 @@ class AsignacionService(
         )
         val saved = asignacionRepository.save(asignacion)
         // Asociar la asignación a los accesorios (si hay)
-        accesorios?.forEach { accesorio ->
-            accesorio.asignacion = saved
-            accesorioService.save(accesorio)
-        }
+        // accesorios?.forEach { accesorio ->
+        //     accesorio.asignacion = saved
+        //     accesorioService.save(accesorio)
+        // }
         saved
     } catch (e: Exception) {
         throw RuntimeException("Error al crear la asignación: ${e.message}", e)
@@ -84,23 +89,24 @@ class AsignacionService(
                 throw IllegalArgumentException("No se permite cambiar el dispositivo o el empleado de la asignación.")
             }
             // Desasociar accesorios actuales
-            existente.accesorios?.forEach { accesorio ->
-                accesorio.asignacion = null
-                accesorioService.save(accesorio)
-            }
+            // existente.accesorios?.forEach { accesorio ->
+            //     accesorio.asignacion = null
+            //     accesorioService.save(accesorio)
+            // }
             // Validación: accesorios no pueden estar asignados a otra asignación activa
-            dto.accesorios?.forEach { accesorioId ->
-                val accesorio = accesorioService.findById(accesorioId)
-                if (accesorio?.asignacion?.estado == Asignacion.EstadoAsignacion.ACTIVA && accesorio.asignacion?.asignacionId != existente.asignacionId) {
-                    throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
-                }
-            }
+            // dto.accesorios?.forEach { accesorioId ->
+            //     val accesorio = accesorioService.findById(accesorioId)
+            //     if (accesorio?.asignacion?.estado == Asignacion.EstadoAsignacion.ACTIVA && accesorio.asignacion?.asignacionId != existente.asignacionId) {
+            //         throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
+            //     }
+            // }
             // Asociar nuevos accesorios
+            // val nuevosAccesorios = dto.accesorios?.mapNotNull { accesorioService.findById(it) }
+            // nuevosAccesorios?.forEach { accesorio ->
+            //     accesorio.asignacion = existente
+            //     accesorioService.save(accesorio)
+            // }
             val nuevosAccesorios = dto.accesorios?.mapNotNull { accesorioService.findById(it) }
-            nuevosAccesorios?.forEach { accesorio ->
-                accesorio.asignacion = existente
-                accesorioService.save(accesorio)
-            }
             val actualizado = existente.copy(
                 fechaAsignacion = dto.fechaAsignacion,
                 comentario = dto.comentario,

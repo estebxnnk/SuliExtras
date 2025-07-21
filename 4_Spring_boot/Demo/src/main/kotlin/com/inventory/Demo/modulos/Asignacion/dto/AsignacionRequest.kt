@@ -8,6 +8,7 @@ import java.time.LocalDate
 data class AsignacionRequest(
     val dispositivoId: Long,
     val empleadoId: Long,
+    val sedeId: Long, // <--- nuevo campo
     val fechaAsignacion: LocalDate,
     val comentario: String?,
     val observaciones: String?,

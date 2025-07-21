@@ -245,8 +245,7 @@ class SeedDataLoader(
                 modelo = "M185",
                 estado = "Bueno",
                 esCombo = false,
-                accesoriosCombo = emptyList(),
-                asignacion = null
+                accesoriosCombo = emptyList()
             )
         )
         // Crear accesorio combo (que incluye el accesorio normal)
@@ -258,8 +257,7 @@ class SeedDataLoader(
                 modelo = null,
                 estado = "Bueno",
                 esCombo = true,
-                accesoriosCombo = listOf(accesorioNormal),
-                asignacion = null
+                accesoriosCombo = listOf(accesorioNormal)
             )
         )
         // Crear una asignación de ejemplo para el empleado y dispositivo creados
@@ -269,6 +267,7 @@ class SeedDataLoader(
                 AsignacionRequest(
                     dispositivoId = dispositivoEjemplo.dispositivoId,
                     empleadoId = empleado1.id!!,
+                    sedeId = sede1.id!!, // <--- ahora se envía la sede
                     fechaAsignacion = LocalDate.now(),
                     comentario = "Asignación de ejemplo con accesorios",
                     observaciones = "Asignación generada por el seed",
@@ -276,10 +275,6 @@ class SeedDataLoader(
                 )
             )
             // Actualizar los accesorios para que tengan la asignación creada
-            accesorioNormal.asignacion = asignacion
-            accesorioService.save(accesorioNormal)
-            accesorioCombo.asignacion = asignacion
-            accesorioService.save(accesorioCombo)
         }
     }
 } 

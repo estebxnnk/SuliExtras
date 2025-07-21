@@ -40,9 +40,5 @@ data class Accesorio(
         joinColumns = [jakarta.persistence.JoinColumn(name = "combo_id")],
         inverseJoinColumns = [jakarta.persistence.JoinColumn(name = "accesorio_id")]
     )
-    val accesoriosCombo: List<Accesorio> = emptyList(),
-
-    @ManyToOne
-    @JoinColumn(name = "asignacion_id")
-    var asignacion: Asignacion? = null
+    val accesoriosCombo: List<Accesorio> = emptyList()
 )

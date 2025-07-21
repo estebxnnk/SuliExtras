@@ -3,6 +3,7 @@ package com.inventory.Demo.modulos.Asignacion.model
 import com.inventory.Demo.modulos.Dispositivo.model.Dispositivo
 import com.inventory.Demo.modulos.Empleado.model.Empleado
 import com.inventory.Demo.modulos.Accesorio.model.Accesorio
+import com.inventory.Demo.modulos.Sede.model.Sede
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -34,6 +35,10 @@ data class Asignacion(
     @JoinColumn(name = "empleado_id", nullable = false)
     val empleado: Empleado,
 
+    @ManyToOne
+    @JoinColumn(name = "sede_id", nullable = false)
+    val sede: Sede,
+
     @Column(name = "fecha_asignacion", nullable = false)
     val fechaAsignacion: LocalDate,
 
@@ -56,7 +61,7 @@ data class Asignacion(
     @Column(columnDefinition = "TEXT")
     val observaciones: String? = null, // Ej: "Celular de bajas"
 
-    @OneToMany(mappedBy = "asignacion", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     val accesorios: List<Accesorio>? = null
 ) {
     enum class EstadoAsignacion {
