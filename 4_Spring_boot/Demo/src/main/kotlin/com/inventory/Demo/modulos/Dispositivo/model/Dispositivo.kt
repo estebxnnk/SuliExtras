@@ -15,16 +15,16 @@ abstract class Dispositivo(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val dispositivoId: Long = 0,
 
-    val item: String,
+    val item: String?,
 
-    @Column(nullable = false, unique = true, length = 100)
-    val serial: String,
+    @Column(nullable = true, unique = true, length = 100)
+    val serial: String?,
 
-    @Column(nullable = false, length = 100)
-    val modelo: String,
+    @Column(nullable = true, length = 100)
+    val modelo: String?,
 
-    @Column(nullable = false, length = 50)
-    val marca: String,
+    @Column(nullable = true, length = 50)
+    val marca: String?,
 
     @ManyToOne
     @JoinColumn(name = "categoria_id")
@@ -46,11 +46,11 @@ abstract class Dispositivo(
     @Column
     val costo: Double? = null,
 
-    @Column(nullable = false, unique = true, length = 20)
-    val codigoActivo: String,
+    @Column(nullable = true, unique = false, length = 20)
+    val codigoActivo: String? = null,
 
-    @Column(nullable = false, length = 50)
-    val tipo: String,
+    @Column(nullable = true, length = 50)
+    val tipo: String?,
 
     @Column(columnDefinition = "TEXT")
     val observaciones: String? = null,

@@ -220,6 +220,8 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
     fun <T : Dispositivo> findByIdAndType(id: Long, type: Class<T>): T? =
         dispositivoRepository.findById(id).orElse(null)?.let { if (type.isInstance(it)) it as T else null }
 
+    fun findBySerial(serial: String?): Dispositivo? = dispositivoRepository.findBySerial(serial)
+
     @Transactional
     fun actualizarEstado(id: Long, estado: EstadoDispositivo) {
         dispositivoRepository.actualizarEstado(id, estado)

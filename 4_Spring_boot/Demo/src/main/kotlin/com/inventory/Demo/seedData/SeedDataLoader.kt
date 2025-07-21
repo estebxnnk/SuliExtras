@@ -17,7 +17,7 @@ import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 import com.inventory.Demo.modulos.Asignacion.service.AsignacionService
 import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
 
-@Component
+// @Component
 class SeedDataLoader(
     private val dispositivoService: DispositivoService,
     private val areaService: AreaService,

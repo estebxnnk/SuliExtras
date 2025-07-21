@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
  
 @Repository
 interface DispositivoRepository : JpaRepository<Dispositivo, Long> {
-    fun findBySerial(serial: String): Dispositivo?
+    fun findBySerial(serial: String?): Dispositivo?
 
     @Modifying
     @Query("UPDATE Dispositivo d SET d.estado = :estado WHERE d.dispositivoId = :id")
