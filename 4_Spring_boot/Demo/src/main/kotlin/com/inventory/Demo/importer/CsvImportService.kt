@@ -48,6 +48,7 @@ class CsvImportService(
                 val empleadoNombre = fila[8]
                 val empleadoCargo = fila[9]
                 val empleadoEmail = fila[10].toNullIfNA()
+                val numeroCelular = fila[12].toNullIfNA()
                 val tipo = fila[11].toNullIfNA()//s
                 val clasificacion = fila[13]//s
                 val marca = fila[14].toNullIfNA()//s
@@ -91,6 +92,7 @@ class CsvImportService(
                             nombreCompleto = empleadoNombre,
                             cargo = empleadoCargo,
                             email = empleadoEmail,
+                            telefono = numeroCelular,
                             area = area
                         )
                     )
