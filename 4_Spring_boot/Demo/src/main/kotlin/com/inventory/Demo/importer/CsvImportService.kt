@@ -33,10 +33,11 @@ class CsvImportService(
         var duplicados = 0
         val serialesDuplicados = mutableListOf<String>()
         var ignoradosSerialVacio = 0
+        val erroresReporte = mutableListOf<String>()
         try {
             for (i in 1 until filas.size) { // Salta el header
                 val fila = filas[i]
-                val item = fila[0].toNullIfNA()
+                val item = fila[0].toNullIfNA()//s
                 val sedeNombre = fila[1]//s
                 val areaClase = fila[2]//s
                 val areaNombre = fila[3]//s
@@ -48,25 +49,25 @@ class CsvImportService(
                 val empleadoCargo = fila[9]
                 val empleadoEmail = fila[10].toNullIfNA()
                 val tipo = fila[11].toNullIfNA()//s
-                val clasificacion = fila[13]
-                val marca = fila[14].toNullIfNA()
-                val modelo = fila[15].toNullIfNA()
+                val clasificacion = fila[13]//s
+                val marca = fila[14].toNullIfNA()//s
+                val modelo = fila[15].toNullIfNA()//s
                 val serial = fila[16].toNullIfNA()//s
-                val procesador = fila[18].toNullIfNA()
-                val ram = fila[19].toNullIfNA()
-                val almacenamiento = fila[20].toNullIfNA()
-                val almacenamiento2 = fila[21].toNullIfNA()
-                val mac = fila[22].toNullIfNA()
-                val ip = fila[23].toNullIfNA()
+                val procesador = fila[19].toNullIfNA()//19
+                val ram = fila[20].toNullIfNA()//20
+                val almacenamiento = fila[21].toNullIfNA()//22
+                val almacenamiento2 = fila[22].toNullIfNA()
+                val mac = fila[23].toNullIfNA()
+                val ip = fila[24].toNullIfNA()
                 val estado = fila[26]//s
-                val fechaAdquisicion = fila[27]
-                val costo = fila[28]
-                val nombreEquipo = fila[30].toNullIfNA()
-                val sistemaOperativo = fila[31].toNullIfNA()
-                val ofimatica = fila[32].toNullIfNA()
-                val antivirus = fila[33].toNullIfNA()
-                val softwareAdicional = fila[34].toNullIfNA()
-                val observaciones = fila[53].toNullIfNA()
+                val fechaAdquisicion = fila[28]//s
+                val costo = fila[30]
+                val nombreEquipo = fila[31].toNullIfNA()//31
+                val sistemaOperativo = fila[32].toNullIfNA()//32
+                val ofimatica = fila[33].toNullIfNA()//33
+                val antivirus = fila[34].toNullIfNA()//34
+                val softwareAdicional = fila[30].toNullIfNA()//30
+                val observaciones = fila[52].toNullIfNA()//s
 
                 val sede = sedeService.findByNombre(sedeNombre)
                     ?: sedeService.save(Sede(nombre = sedeNombre, ubicacion = "", ciudad = ""))
@@ -99,53 +100,55 @@ class CsvImportService(
                 } catch (e: Exception) { null }
                 val costoEquipo = costo.toDoubleOrNull()
 
-                // Si el serial es vacío o nulo, ignorar y loguear
+                // Validación serial vacío/nulo
                 if (serial.isNullOrBlank() || serial.equals("N.A.", ignoreCase = true)) {
                     ignoradosSerialVacio++
-                    println("[ADVERTENCIA] Línea ${i + 1} ignorada: serial vacío o nulo. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}')")
+                    erroresReporte.add("[ADVERTENCIA] Línea ${i + 1} ignorada: serial vacío o nulo. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
                     continue
                 }
 
-                // Ignorar si ya existe un dispositivo con el mismo serial
+                // Validación duplicado
                 val existente = dispositivoService.findBySerial(serial)
-                if (existente == null) {
-                    try {
-                        dispositivoService.save(
-                            Computador(
-                                nombreEquipo = nombreEquipo,
-                                procesador = procesador,
-                                ram = ram,
-                                almacenamiento = almacenamiento,
-                                almacenamiento2 = almacenamiento2,
-                                mac = mac,
-                                ip = ip,
-                                ofimatica = ofimatica,
-                                antivirus = antivirus,
-                                sistemaOperativo = sistemaOperativo,
-                                softwareAdicional = softwareAdicional,
-                                item = item,
-                                serial = serial,
-                                modelo = modelo,
-                                marca = marca,
-                                categoria = null,
-                                sede = sede,
-                                estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
-                                fechaAdquisicion = fechaAdq,
-                                costo = costoEquipo,
-                                codigoActivo = item?.take(20),
-                                tipo = tipo,
-                                clasificacion = clasificacion,
-                                observaciones = observaciones
-                            )
-                        )
-                        insertados++
-                    } catch (ex: Exception) {
-                        println("[ERROR] Fallo al insertar línea ${i + 1}: ${ex.message}. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}')")
-                    }
-                } else {
+                if (existente != null) {
                     duplicados++
                     serialesDuplicados.add(serial)
-                    println("[DUPLICADO] Línea ${i + 1} ignorada: serial duplicado. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}')")
+                    erroresReporte.add("[DUPLICADO] Línea ${i + 1} ignorada: serial duplicado. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
+                    continue
+                }
+
+                // Intento de inserción
+                try {
+                    dispositivoService.save(
+                        Computador(
+                            nombreEquipo = nombreEquipo,
+                            procesador = procesador,
+                            ram = ram,
+                            almacenamiento = almacenamiento,
+                            almacenamiento2 = almacenamiento2,
+                            mac = mac,
+                            ip = ip,
+                            ofimatica = ofimatica,
+                            antivirus = antivirus,
+                            sistemaOperativo = sistemaOperativo,
+                            softwareAdicional = softwareAdicional,
+                            item = item,
+                            serial = serial,
+                            modelo = modelo,
+                            marca = marca,
+                            categoria = null,
+                            sede = sede,
+                            estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            fechaAdquisicion = fechaAdq,
+                            costo = costoEquipo,
+                            codigoActivo = null,
+                            tipo = tipo,
+                            clasificacion = clasificacion,
+                            observaciones = observaciones
+                        )
+                    )
+                    insertados++
+                } catch (ex: Exception) {
+                    erroresReporte.add("[ERROR] Fallo al insertar línea ${i + 1}: ${ex.message}. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
                 }
             }
         } catch (ex: Exception) {
@@ -156,6 +159,11 @@ class CsvImportService(
             if (serialesDuplicados.isNotEmpty()) {
                 println("Seriales duplicados ignorados:")
                 serialesDuplicados.forEach { println(it) }
+            }
+            if (erroresReporte.isNotEmpty()) {
+                println("\n================= REPORTE DE REGISTROS NO INGRESADOS =================")
+                erroresReporte.forEach { println(it) }
+                println("====================================================================\n")
             }
         }
         reader.close()
