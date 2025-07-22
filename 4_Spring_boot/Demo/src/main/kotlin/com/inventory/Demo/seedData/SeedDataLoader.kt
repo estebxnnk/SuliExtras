@@ -87,6 +87,7 @@ class SeedDataLoader(
                 almacenamiento = "N/A",
                 almacenamiento2 = "480Gb",
                 mac = "0",
+                ip = "192.168.1.10",
                 ofimatica = "Office 2019",
                 antivirus = "Ninguno",
                 sistemaOperativo = "Windows 10",

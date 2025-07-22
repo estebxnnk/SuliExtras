@@ -36,6 +36,7 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     almacenamiento = dispositivo.almacenamiento,
                     almacenamiento2 = dispositivo.almacenamiento2,
                     mac = dispositivo.mac,
+                    ip = dispositivo.ip,
                     ofimatica = dispositivo.ofimatica,
                     antivirus = dispositivo.antivirus,
                     sistemaOperativo = dispositivo.sistemaOperativo,

@@ -37,34 +37,36 @@ class CsvImportService(
             for (i in 1 until filas.size) { // Salta el header
                 val fila = filas[i]
                 val item = fila[0].toNullIfNA()
-                val sedeNombre = fila[1]
-                val areaClase = fila[2]
-                val areaNombre = fila[3]
-                val areaProceso = fila[4]
-                val areaCanal = fila[5]
-                val areaSubCanal = fila[6]
+                val sedeNombre = fila[1]//s
+                val areaClase = fila[2]//s
+                val areaNombre = fila[3]//s
+                val areaProceso = fila[4]//s
+                val areaCanal = fila[5]//s
+                val areaSubCanal = fila[6]//s
                 val empleadoDocumento = fila[7]
                 val empleadoNombre = fila[8]
                 val empleadoCargo = fila[9]
                 val empleadoEmail = fila[10].toNullIfNA()
-                val tipo = fila[11].toNullIfNA()
+                val tipo = fila[11].toNullIfNA()//s
+                val clasificacion = fila[13]
                 val marca = fila[14].toNullIfNA()
                 val modelo = fila[15].toNullIfNA()
-                val serial = fila[17].toNullIfNA()
-                val procesador = fila[19].toNullIfNA()
-                val ram = fila[20].toNullIfNA()
-                val almacenamiento = fila[21].toNullIfNA()
-                val almacenamiento2 = fila[22].toNullIfNA()
-                val mac = fila[23].toNullIfNA()
-                val estado = fila[28]
-                val fechaAdquisicion = fila[29]
-                val costo = fila[31]
-                val nombreEquipo = fila[32].toNullIfNA()
-                val sistemaOperativo = fila[33].toNullIfNA()
-                val ofimatica = fila[34].toNullIfNA()
-                val antivirus = fila[35].toNullIfNA()
+                val serial = fila[16].toNullIfNA()//s
+                val procesador = fila[18].toNullIfNA()
+                val ram = fila[19].toNullIfNA()
+                val almacenamiento = fila[20].toNullIfNA()
+                val almacenamiento2 = fila[21].toNullIfNA()
+                val mac = fila[22].toNullIfNA()
+                val ip = fila[23].toNullIfNA()
+                val estado = fila[26]//s
+                val fechaAdquisicion = fila[27]
+                val costo = fila[28]
+                val nombreEquipo = fila[30].toNullIfNA()
+                val sistemaOperativo = fila[31].toNullIfNA()
+                val ofimatica = fila[32].toNullIfNA()
+                val antivirus = fila[33].toNullIfNA()
                 val softwareAdicional = fila[34].toNullIfNA()
-                val observaciones = fila[41].toNullIfNA()
+                val observaciones = fila[53].toNullIfNA()
 
                 val sede = sedeService.findByNombre(sedeNombre)
                     ?: sedeService.save(Sede(nombre = sedeNombre, ubicacion = "", ciudad = ""))
@@ -98,46 +100,52 @@ class CsvImportService(
                 val costoEquipo = costo.toDoubleOrNull()
 
                 // Si el serial es vacío o nulo, ignorar y loguear
-                if (serial.isNullOrBlank()) {
+                if (serial.isNullOrBlank() || serial.equals("N.A.", ignoreCase = true)) {
                     ignoradosSerialVacio++
-                    println("[ADVERTENCIA] Registro en línea ${i + 1} ignorado: serial vacío o nulo.")
+                    println("[ADVERTENCIA] Línea ${i + 1} ignorada: serial vacío o nulo. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}')")
                     continue
                 }
 
                 // Ignorar si ya existe un dispositivo con el mismo serial
                 val existente = dispositivoService.findBySerial(serial)
                 if (existente == null) {
-                    dispositivoService.save(
-                        Computador(
-                            nombreEquipo = nombreEquipo,
-                            procesador = procesador,
-                            ram = ram,
-                            almacenamiento = almacenamiento,
-                            almacenamiento2 = almacenamiento2,
-                            mac = mac,
-                            ofimatica = ofimatica,
-                            antivirus = antivirus,
-                            sistemaOperativo = sistemaOperativo,
-                            softwareAdicional = softwareAdicional,
-                            item = item,
-                            serial = serial,
-                            modelo = modelo,
-                            marca = marca,
-                            categoria = null,
-                            sede = sede,
-                            estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
-                            clasificacion = "",
-                            fechaAdquisicion = fechaAdq,
-                            costo = costoEquipo,
-                            codigoActivo = item,
-                            tipo = tipo,
-                            observaciones = observaciones
+                    try {
+                        dispositivoService.save(
+                            Computador(
+                                nombreEquipo = nombreEquipo,
+                                procesador = procesador,
+                                ram = ram,
+                                almacenamiento = almacenamiento,
+                                almacenamiento2 = almacenamiento2,
+                                mac = mac,
+                                ip = ip,
+                                ofimatica = ofimatica,
+                                antivirus = antivirus,
+                                sistemaOperativo = sistemaOperativo,
+                                softwareAdicional = softwareAdicional,
+                                item = item,
+                                serial = serial,
+                                modelo = modelo,
+                                marca = marca,
+                                categoria = null,
+                                sede = sede,
+                                estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                                fechaAdquisicion = fechaAdq,
+                                costo = costoEquipo,
+                                codigoActivo = item?.take(20),
+                                tipo = tipo,
+                                clasificacion = clasificacion,
+                                observaciones = observaciones
+                            )
                         )
-                    )
-                    insertados++
+                        insertados++
+                    } catch (ex: Exception) {
+                        println("[ERROR] Fallo al insertar línea ${i + 1}: ${ex.message}. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}')")
+                    }
                 } else {
                     duplicados++
                     serialesDuplicados.add(serial)
+                    println("[DUPLICADO] Línea ${i + 1} ignorada: serial duplicado. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}')")
                 }
             }
         } catch (ex: Exception) {

@@ -32,6 +32,8 @@ class Computador(
 
     val mac: String?,
 
+    val ip: String?,
+
     val ofimatica: String?,
 
     val antivirus: String?,
