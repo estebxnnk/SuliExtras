@@ -34,6 +34,8 @@ class CsvImportService(
         val serialesDuplicados = mutableListOf<String>()
         var ignoradosSerialVacio = 0
         val erroresReporte = mutableListOf<String>()
+        val empleadosInsertados = mutableListOf<String>()
+        val empleadosExistentes = mutableListOf<String>()
         try {
             for (i in 1 until filas.size) { // Salta el header
                 val fila = filas[i]
@@ -85,7 +87,9 @@ class CsvImportService(
                         )
                     )
 
-                val empleado = empleadoService.findByDocumento(empleadoDocumento)
+                // Empleado: registrar si es nuevo o existente
+                val empleadoExistente = empleadoService.findByDocumento(empleadoDocumento)
+                val empleado = empleadoExistente
                     ?: empleadoService.save(
                         Empleado(
                             documentoIdentidad = empleadoDocumento,
@@ -96,6 +100,11 @@ class CsvImportService(
                             area = area
                         )
                     )
+                if (empleadoExistente != null) {
+                    empleadosExistentes.add("[EXISTENTE] Línea ${i + 1}: $empleadoDocumento - $empleadoNombre")
+                } else {
+                    empleadosInsertados.add("[NUEVO] Línea ${i + 1}: $empleadoDocumento - $empleadoNombre")
+                }
 
                 val fechaAdq = try {
                     if (fechaAdquisicion.isNotBlank()) LocalDate.parse(fechaAdquisicion, DateTimeFormatter.ofPattern("d/M/yyyy")) else null
@@ -167,6 +176,13 @@ class CsvImportService(
                 erroresReporte.forEach { println(it) }
                 println("====================================================================\n")
             }
+            // Reporte de empleados
+            println("\n================= REPORTE DE EMPLEADOS =================")
+            println("Empleados insertados: ${empleadosInsertados.size}")
+            empleadosInsertados.forEach { println(it) }
+            println("Empleados ya existentes: ${empleadosExistentes.size}")
+            empleadosExistentes.forEach { println(it) }
+            println("====================================================================\n")
         }
         reader.close()
     }
