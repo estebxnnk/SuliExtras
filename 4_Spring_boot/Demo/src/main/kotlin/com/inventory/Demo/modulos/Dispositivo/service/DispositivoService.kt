@@ -30,11 +30,13 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
             val actualizado = when (dispositivo) {
                 is Computador -> Computador(
                     item = dispositivo.item,
+                    nombreEquipo = dispositivo.nombreEquipo,
                     procesador = dispositivo.procesador,
                     ram = dispositivo.ram,
                     almacenamiento = dispositivo.almacenamiento,
                     almacenamiento2 = dispositivo.almacenamiento2,
                     mac = dispositivo.mac,
+                    ip = dispositivo.ip,
                     ofimatica = dispositivo.ofimatica,
                     antivirus = dispositivo.antivirus,
                     sistemaOperativo = dispositivo.sistemaOperativo,
@@ -218,6 +220,8 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
 
     fun <T : Dispositivo> findByIdAndType(id: Long, type: Class<T>): T? =
         dispositivoRepository.findById(id).orElse(null)?.let { if (type.isInstance(it)) it as T else null }
+
+    fun findBySerial(serial: String?): Dispositivo? = dispositivoRepository.findBySerial(serial)
 
     @Transactional
     fun actualizarEstado(id: Long, estado: EstadoDispositivo) {

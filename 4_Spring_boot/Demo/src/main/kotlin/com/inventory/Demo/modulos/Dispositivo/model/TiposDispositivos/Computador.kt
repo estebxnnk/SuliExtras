@@ -16,43 +16,48 @@ import java.time.LocalDate
 @DiscriminatorValue("COMPUTADOR")
 @Table(name = "computadores")
 class Computador(
-    @Column(nullable = false, length = 100)
-    val procesador: String,
 
-    @Column(nullable = false, length = 20)
-    val ram: String,
+    val nombreEquipo: String?,
 
-    @Column(nullable = false, length = 50)
-    val almacenamiento: String,
+    @Column(length = 100)
+    val procesador: String?,
 
-    val almacenamiento2: String,
+    @Column(length = 20)
+    val ram: String?,
 
-    val mac: String,
+    @Column(length = 50)
+    val almacenamiento: String?,
 
-    val ofimatica: String,
+    val almacenamiento2: String?,
 
-    val antivirus: String, // Solo en Computador
+    val mac: String?,
 
-    @Column(nullable = false, length = 100)
-    val sistemaOperativo: String,
+    val ip: String?,
+
+    val ofimatica: String?,
+
+    val antivirus: String?,
+
+    @Column(length = 100)
+    val sistemaOperativo: String?,
 
     @Column(columnDefinition = "TEXT")
     val softwareAdicional: String? = null,
 
     // Campos heredados
     dispositivoId: Long = 0,
-    item: String,
-    serial: String,
-    modelo: String,
-    marca: String,
+    item: String?,
+    serial: String?,
+    modelo: String?,
+    marca: String?,
     categoria: Categoria? = null,
     sede: Sede? = null,
     estado: EstadoDispositivo,
     clasificacion: String,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
-    codigoActivo: String,
-    tipo: String,
+    codigoActivo: String? = null,
+    tipo: String?,
     observaciones: String? = null,
 ) : Dispositivo(
     dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, codigoActivo, tipo, observaciones

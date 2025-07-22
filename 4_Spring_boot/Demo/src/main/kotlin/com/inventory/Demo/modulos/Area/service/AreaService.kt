@@ -10,4 +10,5 @@ class AreaService(private val areaRepository: AreaRepository) {
     fun findAll(): List<Area> = areaRepository.findAll()
     fun save(area: Area): Area = areaRepository.save(area)
     fun delete(id: Long) = areaRepository.deleteById(id)
+    fun findByNombreAndSede(nombre: String, sede: com.inventory.Demo.modulos.Sede.model.Sede): Area? = areaRepository.findByNombreAndSede(nombre, sede)
 } 

@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface SedeRepository : JpaRepository<Sede, Long> 
+interface SedeRepository : JpaRepository<Sede, Long> {
+    fun findByNombre(nombre: String): Sede?
+} 

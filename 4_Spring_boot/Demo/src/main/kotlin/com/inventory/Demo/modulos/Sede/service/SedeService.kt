@@ -22,4 +22,5 @@ class SedeService(private val sedeRepository: SedeRepository) {
         } else null
     }
     fun delete(id: Long) = sedeRepository.deleteById(id)
+    fun findByNombre(nombre: String): Sede? = sedeRepository.findByNombre(nombre)
 } 

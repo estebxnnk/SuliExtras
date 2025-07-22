@@ -31,11 +31,14 @@ data class Accesorio(
     @Column(nullable = false, length = 20)
     val estado: String,             // Ej: "Bueno", "Dañado", "Perdido"
 
-    @ManyToOne
-    @JoinColumn(name = "dispositivo_id", nullable = false)
-    val dispositivo: Dispositivo,    // Relación con dispositivo
+    @Column(nullable = false)
+    val esCombo: Boolean = false,
 
-    @ManyToOne
-    @JoinColumn(name = "asignacion_id")
-    var asignacion: Asignacion? = null
+    @jakarta.persistence.ManyToMany
+    @jakarta.persistence.JoinTable(
+        name = "combo_accesorios",
+        joinColumns = [jakarta.persistence.JoinColumn(name = "combo_id")],
+        inverseJoinColumns = [jakarta.persistence.JoinColumn(name = "accesorio_id")]
+    )
+    val accesoriosCombo: List<Accesorio> = emptyList()
 )

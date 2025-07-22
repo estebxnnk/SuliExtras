@@ -36,18 +36,18 @@ class Celular(
 
     // Campos heredados
     dispositivoId: Long = 0,
-    item: String,
-    serial: String,
-    modelo: String,
-    marca: String,
+    item: String?,
+    serial: String?,
+    modelo: String?,
+    marca: String?,
     categoria: Categoria? = null,
     sede: Sede? = null,
     estado: EstadoDispositivo,
     clasificacion: String,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
-    codigoActivo: String,
-    tipo: String,
+    codigoActivo: String? = null,
+    tipo: String?,
     observaciones: String? = null,
 ) : Dispositivo(
     dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, codigoActivo, tipo, observaciones

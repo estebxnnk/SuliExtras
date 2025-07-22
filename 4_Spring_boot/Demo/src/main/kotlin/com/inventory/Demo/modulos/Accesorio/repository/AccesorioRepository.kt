@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface AccesorioRepository : JpaRepository<Accesorio, Long> {
-    fun findByAsignacion_Estado(estado: com.inventory.Demo.modulos.Asignacion.model.Asignacion.EstadoAsignacion): List<Accesorio>
-    fun findByIdAndAsignacion_Estado(id: Long, estado: com.inventory.Demo.modulos.Asignacion.model.Asignacion.EstadoAsignacion): Accesorio?
+    // Métodos eliminados porque la propiedad 'asignacion' ya no existe en Accesorio
 } 
