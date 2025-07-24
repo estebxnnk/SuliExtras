@@ -7,6 +7,7 @@ import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
 import com.inventory.Demo.modulos.Empleado.service.EmpleadoService
 import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
 import com.inventory.Demo.modulos.Sede.service.SedeService
+import com.inventory.Demo.modulos.Area.service.AreaService
 import org.springframework.stereotype.Service
 
 @Service
@@ -15,7 +16,8 @@ class AsignacionService(
     private val dispositivoService: DispositivoService,
     private val empleadoService: EmpleadoService,
     private val accesorioService: AccesorioService,
-    private val sedeService: SedeService
+    private val sedeService: SedeService,
+    private val areaService: AreaService
 ) {
     fun findAll(): List<Asignacion> = try {
         asignacionRepository.findAll()
@@ -35,6 +37,8 @@ class AsignacionService(
             ?: throw IllegalArgumentException("Empleado no encontrado")
         val sede = sedeService.findById(dto.sedeId)
             ?: throw IllegalArgumentException("Sede no encontrada")
+        val area = areaService.findById(dto.areaId)
+            ?: throw IllegalArgumentException("Área no encontrada")
         // Validación: un empleado solo puede tener un computador activo y viceversa
         val asignacionActivaDispositivo = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(dispositivo.dispositivoId, Asignacion.EstadoAsignacion.ACTIVA)
         if (asignacionActivaDispositivo != null) {
@@ -58,6 +62,7 @@ class AsignacionService(
             dispositivo = dispositivo,
             empleado = empleado,
             sede = sede,
+            area = area, // Nuevo campo obligatorio
             fechaAsignacion = dto.fechaAsignacion,
             fechaFinalizacion = null,
             motivoFinalizacion = null,

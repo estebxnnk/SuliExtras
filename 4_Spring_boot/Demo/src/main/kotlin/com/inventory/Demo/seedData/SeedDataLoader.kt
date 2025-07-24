@@ -265,10 +265,11 @@ class SeedDataLoader(
         val dispositivoEjemplo = dispositivoService.findAll().firstOrNull() // Usar el primer dispositivo creado
         if (dispositivoEjemplo != null) {
             val asignacion = asignacionService.create(
-                AsignacionRequest(
+                com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest(
                     dispositivoId = dispositivoEjemplo.dispositivoId,
                     empleadoId = empleado1.id!!,
                     sedeId = sede1.id!!, // <--- ahora se envía la sede
+                    areaId = area1.id!!, // <--- nuevo campo obligatorio para el área
                     fechaAsignacion = LocalDate.now(),
                     comentario = "Asignación de ejemplo con accesorios",
                     observaciones = "Asignación generada por el seed",

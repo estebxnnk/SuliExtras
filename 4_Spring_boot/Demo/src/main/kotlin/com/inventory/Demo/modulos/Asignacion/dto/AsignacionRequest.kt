@@ -9,6 +9,7 @@ data class AsignacionRequest(
     val dispositivoId: Long,
     val empleadoId: Long,
     val sedeId: Long, // <--- nuevo campo
+    val areaId: Long, // Nuevo campo obligatorio para el área
     val fechaAsignacion: LocalDate,
     val comentario: String?,
     val observaciones: String?,
