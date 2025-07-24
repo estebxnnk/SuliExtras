@@ -3,7 +3,7 @@ const Rol = require('../models/Roles');
 class RolLogic {
   async crearRol({ nombre, estado = true }) {
     if (!nombre) throw new Error('El nombre del rol es requerido');
-    const nombreNormalizado = nombre.trim().toLowerCase();
+    const nombreNormalizado = nombre.trim();
     const existe = await Rol.findOne({ where: { nombre: nombreNormalizado } });
     if (existe) throw new Error('El rol ya existe');
     return await Rol.create({ nombre: nombreNormalizado, estado });

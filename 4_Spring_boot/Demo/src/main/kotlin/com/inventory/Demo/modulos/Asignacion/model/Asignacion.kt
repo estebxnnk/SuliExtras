@@ -39,6 +39,10 @@ data class Asignacion(
     @JoinColumn(name = "sede_id", nullable = false)
     val sede: Sede,
 
+    @ManyToOne
+    @JoinColumn(name = "area_id", nullable = false)
+    val area: com.inventory.Demo.modulos.Area.model.Area,
+    
     @Column(name = "fecha_asignacion", nullable = false)
     val fechaAsignacion: LocalDate,
 
@@ -59,7 +63,7 @@ data class Asignacion(
     val comentario: String? = null,
 
     @Column(columnDefinition = "TEXT")
-    val observaciones: String? = null, // Ej: "Celular de bajas"
+    val observaciones: String? = null,
 
     @OneToMany(fetch = FetchType.LAZY)
     val accesorios: List<Accesorio>? = null

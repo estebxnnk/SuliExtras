@@ -1,25 +1,25 @@
+// TEMPORALMENTE DESHABILITADO POR MANTENIMIENTO: No ejecutar hasta resolver conflictos en CsvImportService.kt
+/*
 package com.inventory.Demo.importer
 
 import com.inventory.Demo.modulos.Sede.model.Sede
 import com.inventory.Demo.modulos.Area.model.Area
 import com.inventory.Demo.modulos.Empleado.model.Empleado
-import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Computador
+import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Celular
 import com.inventory.Demo.modulos.Sede.service.SedeService
 import com.inventory.Demo.modulos.Area.service.AreaService
 import com.inventory.Demo.modulos.Empleado.service.EmpleadoService
 import com.inventory.Demo.modulos.Dispositivo.service.DispositivoService
 import com.inventory.Demo.modulos.Asignacion.service.AsignacionService
+import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
 import com.opencsv.CSVReaderBuilder
 import org.springframework.stereotype.Service
 import java.io.FileReader
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-fun String?.toNullIfNA(): String? =
-    if (this == null || this.trim().equals("N.A.", ignoreCase = true) || this.trim().isBlank()) null else this.trim()
-
 @Service
-class CsvImportService(
+class CsvImportServiceCelulares(
     private val sedeService: SedeService,
     private val areaService: AreaService,
     private val empleadoService: EmpleadoService,
@@ -38,44 +38,42 @@ class CsvImportService(
         val erroresReporte = mutableListOf<String>()
         val empleadosInsertados = mutableListOf<String>()
         val empleadosExistentes = mutableListOf<String>()
+        val celularesInsertados = mutableListOf<String>()
+        val celularesFallidos = mutableListOf<String>()
         try {
             for (i in 1 until filas.size) { // Salta el header
                 val fila = filas[i]
-                val item = fila[0].toNullIfNA()//s
-                val sedeNombre = fila[1]//s
-                val areaClase = fila[2]//s
-                val areaNombre = fila[3]//s
-                val areaProceso = fila[4]//s
-                val areaCanal = fila[5]//s
-                val areaSubCanal = fila[6]//s
+                val item = fila[0].toNullIfNA()
+                val sedeNombre = fila[1]
+                val areaClase = fila[2]
+                val areaNombre = fila[3]
+                val areaProceso = fila[4]
+                val areaCanal = fila[5]
+                val areaSubCanal = fila[6]
                 val empleadoDocumento = fila[7]
                 val empleadoNombre = fila[8]
                 val empleadoCargo = fila[9]
                 val empleadoEmail = fila[10].toNullIfNA()
+                val tipo = fila[11].toNullIfNA()
                 val numeroCelular = fila[12].toNullIfNA()
-                val tipo = fila[11].toNullIfNA()//s
-                val clasificacion = fila[13]//s
-                val marca = fila[14].toNullIfNA()//s
-                val modelo = fila[15].toNullIfNA()//s
-                val serial = fila[16].toNullIfNA()//s
-                val procesador = fila[19].toNullIfNA()//19
-                val ram = fila[20].toNullIfNA()//20
-                val almacenamiento = fila[21].toNullIfNA()//22
+                val clasificacion = fila[13]
+                val marca = fila[14].toNullIfNA()
+                val modelo = fila[15].toNullIfNA()
+                val serial = fila[16].toNullIfNA()
+                val imei1 = fila[17].toNullIfNA()
+                val imei2 = fila[18].toNullIfNA()
+                val procesador = fila[19].toNullIfNA()
+                val ram = fila[20].toNullIfNA()
+                val almacenamiento = fila[21].toNullIfNA()
                 val almacenamiento2 = fila[22].toNullIfNA()
-                val mac = fila[23].toNullIfNA()
-                val ip = fila[24].toNullIfNA()
-                val estado = fila[26]//s
-                val fechaAdquisicion = fila[28]//s
+                val ofimatica = fila[23].toNullIfNA()
+                val funcional = fila[27].toBooleanSi()
+                val tenable =fila[35].toBooleanSi()
+                val sistemaOperativo = fila[31].toNullIfNA() ?: fila[29].toNullIfNA() // Android, etc.
+                val estado = fila[28]
+                val fechaAdquisicion = fila[29]
                 val costo = fila[30]
-                val funcional = fila[41].toBooleanFuncional()//36
-                val nombreEquipo = fila[31].toNullIfNA()//31
-                val sistemaOperativo = fila[32].toNullIfNA()//32
-                val ofimatica = fila[33].toNullIfNA()//33
-                val antivirus = fila[34].toNullIfNA()//34
-                val tenable = fila[35].toBooleanSi()//35
-                val softwareAdicional = fila[30].toNullIfNA()//30
-                val observaciones = fila[52].toNullIfNA()//s
-                val mantenimiento = fila[54].toMantenimientoList()//s
+                val observaciones = fila[42].toNullIfNA()
 
                 val sede = sedeService.findByNombre(sedeNombre)
                     ?: sedeService.save(Sede(nombre = sedeNombre, ubicacion = "", ciudad = ""))
@@ -120,7 +118,6 @@ class CsvImportService(
                 if (serial.isNullOrBlank() || serial.equals("N.A.", ignoreCase = true)) {
                     ignoradosSerialVacio++
                     erroresReporte.add("[ADVERTENCIA] Línea ${i + 1} ignorada: serial vacío o nulo. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
-                    continue
                 }
 
                 // Validación duplicado
@@ -134,64 +131,68 @@ class CsvImportService(
 
                 // Intento de inserción
                 try {
-                    val mantenimientosRaw = fila[54].toNullIfNA()
-                    println("[DEBUG] Valor crudo de mantenimiento en fila ${i + 1}: '$mantenimientosRaw'")
-                    val mantenimientosList = mantenimientosRaw.toMantenimientoList()
-                    println("[DEBUG] Lista de mantenimientos parseada en fila ${i + 1}: $mantenimientosList")
-                    val mantenimientos: List<com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.MantenimientoEntry>? = if (mantenimientosList.isEmpty()) null else mantenimientosList
-                    println("[DEBUG] Valor final de mantenimientos para modelo en fila ${i + 1}: $mantenimientos")
-                    val computador = dispositivoService.save(
-                        Computador(
-                            nombreEquipo = nombreEquipo,
+                    val celular = dispositivoService.save(
+                        Celular(
+                            imei1 = imei1 ?: "",
+                            imei2 = imei2,
                             procesador = procesador,
                             ram = ram,
                             almacenamiento = almacenamiento,
                             almacenamiento2 = almacenamiento2,
-                            tenable = tenable,
-                            mac = mac,
-                            ip = ip,
+                            sistemaOperativoMovil = sistemaOperativo,
                             ofimatica = ofimatica,
-                            antivirus = antivirus,
-                            sistemaOperativo = sistemaOperativo,
-                            softwareAdicional = softwareAdicional,
-                            mantenimiento = mantenimientos,
+                            tenable = tenable,
+                            emailAsociado = empleadoEmail,
+                            contrasenaEmail = null,
+                            capacidadSim = null,
                             item = item,
                             serial = serial,
                             modelo = modelo,
                             marca = marca,
-                            categoria = null, // No está en el CSV
+                            categoria = null,
                             sede = sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
                             funcional = funcional,
-                            clasificacion = clasificacion ?: "",
+                            clasificacion = clasificacion,
                             fechaAdquisicion = fechaAdq,
                             costo = costoEquipo,
-                            codigoActivo = null, // No está en el CSV
+                            codigoActivo = null,
                             tipo = tipo,
                             observaciones = observaciones
                         )
                     )
                     insertados++
-                    asignacionService.create(
-                        com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest(
-                            dispositivoId = computador.dispositivoId,
-                            empleadoId = empleado.id!!,
-                            sedeId = sede.id!!,
-                            areaId = area.id!!,
-                            fechaAsignacion = fechaAdq ?: LocalDate.now(),
-                            comentario = "Asignación automática por importación de computadores",
-                            observaciones = observaciones,
-                            accesorios = null // No está en el CSV
-                        )
-                    )
+                    celularesInsertados.add("[OK] Línea ${i + 1}: Serial $serial, IMEI1: ${imei1}, Empleado: $empleadoDocumento - $empleadoNombre")
+                    // Crear la asignación con el empleado
+                    if (empleado.id != null && sede.id != null && area.id != null) {
+                        try {
+                            asignacionService.create(
+                                AsignacionRequest(
+                                    dispositivoId = celular.dispositivoId,
+                                    empleadoId = empleado.id!!,
+                                    sedeId = sede.id!!,
+                                    areaId = area.id!!,
+                                    fechaAsignacion = fechaAdq ?: LocalDate.now(),
+                                    comentario = "Asignación automática por importación de celulares",
+                                    observaciones = observaciones
+                                )
+                            )
+                        } catch (ex: Exception) {
+                            val msg = "[ERROR ASIGNACIÓN] Línea ${i + 1}: ${ex.message}. Serial: '${serial}', Empleado: '${empleadoDocumento}'"
+                            erroresReporte.add(msg)
+                            celularesFallidos.add(msg)
+                        }
+                    }
                 } catch (ex: Exception) {
-                    erroresReporte.add("[ERROR] Fallo al insertar línea ${i + 1}: ${ex.message}. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
+                    val msg = "[ERROR] Fallo al insertar línea ${i + 1}: ${ex.message}. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}"
+                    erroresReporte.add(msg)
+                    celularesFallidos.add(msg)
                 }
             }
         } catch (ex: Exception) {
             println("Error durante la importación: ${ex.message}")
         } finally {
-            println("Importación finalizada: $insertados dispositivos insertados, $duplicados duplicados ignorados.")
+            println("Importación finalizada: $insertados celulares insertados, $duplicados duplicados ignorados.")
             println("Registros ignorados por serial vacío/nulo: $ignoradosSerialVacio")
             if (serialesDuplicados.isNotEmpty()) {
                 println("Seriales duplicados ignorados:")
@@ -209,14 +210,15 @@ class CsvImportService(
             println("Empleados ya existentes: ${empleadosExistentes.size}")
             empleadosExistentes.forEach { println(it) }
             println("====================================================================\n")
-            // Reporte de registros fallidos
-            if (erroresReporte.isNotEmpty()) {
-                println("\n================= REPORTE DE REGISTROS FALLIDOS =================")
-                println("Total registros fallidos: ${erroresReporte.size}")
-                erroresReporte.forEach { println(it) }
-                println("====================================================================\n")
-            }
+            // Reporte de celulares
+            println("\n================= REPORTE DE CELULARES =================")
+            println("Celulares insertados: ${celularesInsertados.size}")
+            celularesInsertados.forEach { println(it) }
+            println("Celulares fallidos: ${celularesFallidos.size}")
+            celularesFallidos.forEach { println(it) }
+            println("====================================================================\n")
         }
         reader.close()
     }
-} 
+}
+*/

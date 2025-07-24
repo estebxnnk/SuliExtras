@@ -11,6 +11,18 @@ import jakarta.persistence.DiscriminatorValue
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import java.time.LocalDate
+import jakarta.persistence.ElementCollection
+import jakarta.persistence.CollectionTable
+import jakarta.persistence.Embeddable
+import jakarta.persistence.JoinColumn
+
+// Data class para mantenimiento
+@Embeddable
+data class MantenimientoEntry(
+    val fecha: LocalDate,
+    val mantenimientoRealizado: Boolean,
+    val observacion: String? = null
+)
 
 @Entity
 @DiscriminatorValue("COMPUTADOR")
@@ -38,11 +50,18 @@ class Computador(
 
     val antivirus: String?,
 
+    @Column(name = "tenable")
+    val tenable: Boolean? = null, 
+
     @Column(length = 100)
     val sistemaOperativo: String?,
 
     @Column(columnDefinition = "TEXT")
     val softwareAdicional: String? = null,
+
+    @ElementCollection
+    @CollectionTable(name = "mantenimientos_computador", joinColumns = [JoinColumn(name = "computador_id")])
+    val mantenimiento: List<MantenimientoEntry>? = null,
 
     // Campos heredados
     dispositivoId: Long = 0,
@@ -56,9 +75,10 @@ class Computador(
     clasificacion: String,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
+    funcional: Boolean? = null,
     codigoActivo: String? = null,
     tipo: String?,
     observaciones: String? = null,
 ) : Dispositivo(
-    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
+    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, funcional, codigoActivo, tipo, observaciones
 )
