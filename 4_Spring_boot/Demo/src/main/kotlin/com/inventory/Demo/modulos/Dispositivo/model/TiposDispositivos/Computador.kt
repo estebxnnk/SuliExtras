@@ -38,6 +38,9 @@ class Computador(
 
     val antivirus: String?,
 
+    @Column(name = "tenable")
+    val tenable: Boolean? = null,
+
     @Column(length = 100)
     val sistemaOperativo: String?,
 

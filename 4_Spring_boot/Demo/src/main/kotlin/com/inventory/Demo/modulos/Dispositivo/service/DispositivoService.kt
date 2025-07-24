@@ -39,6 +39,7 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     ip = dispositivo.ip,
                     ofimatica = dispositivo.ofimatica,
                     antivirus = dispositivo.antivirus,
+                    tenable = dispositivo.tenable,
                     sistemaOperativo = dispositivo.sistemaOperativo,
                     softwareAdicional = dispositivo.softwareAdicional,
                     dispositivoId = id,

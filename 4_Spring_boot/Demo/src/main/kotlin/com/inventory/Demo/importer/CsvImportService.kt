@@ -71,6 +71,7 @@ class CsvImportService(
                 val sistemaOperativo = fila[32].toNullIfNA()//32
                 val ofimatica = fila[33].toNullIfNA()//33
                 val antivirus = fila[34].toNullIfNA()//34
+                val tenable = fila[35].toBooleanSi()//35
                 val softwareAdicional = fila[30].toNullIfNA()//30
                 val observaciones = fila[52].toNullIfNA()//s
 
@@ -142,6 +143,7 @@ class CsvImportService(
                             ip = ip,
                             ofimatica = ofimatica,
                             antivirus = antivirus,
+                            tenable = tenable,
                             sistemaOperativo = sistemaOperativo,
                             softwareAdicional = softwareAdicional,
                             item = item,

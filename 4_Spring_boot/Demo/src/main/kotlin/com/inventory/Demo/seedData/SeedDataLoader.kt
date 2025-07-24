@@ -90,6 +90,7 @@ class SeedDataLoader(
                 ip = "192.168.1.10",
                 ofimatica = "Office 2019",
                 antivirus = "Ninguno",
+                tenable = true,
                 sistemaOperativo = "Windows 10",
                 softwareAdicional = null,
                 serial = "2WKKT93",
