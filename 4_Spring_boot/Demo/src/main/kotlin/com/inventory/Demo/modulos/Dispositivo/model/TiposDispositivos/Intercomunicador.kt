@@ -40,10 +40,11 @@ class Intercomunicador(
     clasificacion: String,
     fechaAdquisicion: LocalDate? = null,
     costo: Double? = null,
+    funcional: Boolean? = null,
     codigoActivo: String? = null,
     tipo: String?,
     observaciones: String? = null,
     accesorios: List<Accesorio> = emptyList()
 ) : Dispositivo(
-    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, codigoActivo, tipo, observaciones
+    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, funcional, codigoActivo, tipo, observaciones
 )

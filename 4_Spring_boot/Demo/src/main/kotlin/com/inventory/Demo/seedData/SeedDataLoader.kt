@@ -16,6 +16,7 @@ import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
 import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 import com.inventory.Demo.modulos.Asignacion.service.AsignacionService
 import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
+import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.MantenimientoEntry
 
 // @Component
 class SeedDataLoader(
@@ -72,6 +73,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
                 fechaAdquisicion = LocalDate.parse("2023-01-10"),
                 costo = 1200000.0,
+                funcional = false,
                 codigoActivo = "ACT-VB-001",
                 tipo = "VIDEOBEAM",
                 observaciones = "Videobeam para sala A",
@@ -79,8 +81,19 @@ class SeedDataLoader(
         }
         // Computador
         if (dispositivoService.findAll().none { it.serial == "2WKKT93" }) {
+            val mantenimientosEjemplo = listOf(
+                MantenimientoEntry(
+                    fecha = LocalDate.parse("2023-06-01"),
+                    mantenimientoRealizado = true,
+                    observacion = "Cambio de disco duro"
+                ),
+                MantenimientoEntry(
+                    fecha = LocalDate.parse("2024-01-15"),
+                    mantenimientoRealizado = false,
+                    observacion = null
+                )
+            )
             dispositivoService.save(Computador(
-                item = "ACTICO/035",
                 nombreEquipo = "Destkpo/123",
                 procesador = "Intel core i5 G11",
                 ram = "8GB",
@@ -90,15 +103,17 @@ class SeedDataLoader(
                 ip = "192.168.1.10",
                 ofimatica = "Office 2019",
                 antivirus = "Ninguno",
-                tenable = true,
                 sistemaOperativo = "Windows 10",
                 softwareAdicional = null,
+                mantenimiento = mantenimientosEjemplo,
+                item = "ACTICO/035",
                 serial = "2WKKT93",
                 modelo = "Latitude 3420",
                 marca = "Dell",
                 categoria = null,
                 sede = sede1,
                 estado = EstadoDispositivo.DISPONIBLE,
+                funcional = true,
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "ALTA",
                 fechaAdquisicion = LocalDate.parse("2022-05-15"),
                 costo = 2500000.0,
@@ -126,6 +141,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "MEDIA",
                 fechaAdquisicion = LocalDate.parse("2023-03-20"),
                 costo = 1800000.0,
+                funcional = false,
                 codigoActivo = "ACT-CEL-001",
                 tipo = "CELULAR",
                 observaciones = "Celular corporativo",
@@ -147,6 +163,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
                 fechaAdquisicion = LocalDate.parse("2021-11-10"),
                 costo = 700000.0,
+                funcional = false,
                 codigoActivo = "ACT-IMP-001",
                 tipo = "IMPRESORA",
                 observaciones = "Impresora de recepción",
@@ -169,6 +186,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
                 fechaAdquisicion = LocalDate.parse("2022-08-01"),
                 costo = 1200000.0,
+                funcional = false,
                 codigoActivo = "ACT-PDA-001",
                 tipo = "PDA",
                 observaciones = "PDA para inventario",
@@ -189,6 +207,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
                 fechaAdquisicion = LocalDate.parse("2022-09-15"),
                 costo = 900000.0,
+                funcional = false,
                 codigoActivo = "ACT-BIO-001",
                 tipo = "BIOMETRICO",
                 observaciones = "Control de acceso",
@@ -210,6 +229,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
                 fechaAdquisicion = LocalDate.parse("2023-02-10"),
                 costo = 600000.0,
+                funcional = false,
                 codigoActivo = "ACT-CAM-001",
                 tipo = "CAMARA",
                 observaciones = "Cámara de seguridad",
@@ -232,6 +252,7 @@ class SeedDataLoader(
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
                 fechaAdquisicion = LocalDate.parse("2023-04-05"),
                 costo = 1500000.0,
+                funcional = false,
                 codigoActivo = "ACT-INT-001",
                 tipo = "INTERCOMUNICADOR",
                 observaciones = "Intercomunicador principal",

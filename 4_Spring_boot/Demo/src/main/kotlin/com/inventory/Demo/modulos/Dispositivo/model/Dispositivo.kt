@@ -46,6 +46,9 @@ abstract class Dispositivo(
     @Column
     val costo: Double? = null,
 
+    @Column(name = "funcional")
+    val funcional: Boolean? = null,
+
     @Column(nullable = true, unique = false, length = 20)
     val codigoActivo: String? = null,
 

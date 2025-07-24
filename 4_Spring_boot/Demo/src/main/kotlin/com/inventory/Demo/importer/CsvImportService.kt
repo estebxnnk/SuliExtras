@@ -67,6 +67,7 @@ class CsvImportService(
                 val estado = fila[26]//s
                 val fechaAdquisicion = fila[28]//s
                 val costo = fila[30]
+                val funcional = fila[41].toBooleanFuncional()//36
                 val nombreEquipo = fila[31].toNullIfNA()//31
                 val sistemaOperativo = fila[32].toNullIfNA()//32
                 val ofimatica = fila[33].toNullIfNA()//33
@@ -74,6 +75,7 @@ class CsvImportService(
                 val tenable = fila[35].toBooleanSi()//35
                 val softwareAdicional = fila[30].toNullIfNA()//30
                 val observaciones = fila[52].toNullIfNA()//s
+                val mantenimiento = fila[54].toMantenimientoList()//s
 
                 val sede = sedeService.findByNombre(sedeNombre)
                     ?: sedeService.save(Sede(nombre = sedeNombre, ubicacion = "", ciudad = ""))
@@ -132,6 +134,12 @@ class CsvImportService(
 
                 // Intento de inserción
                 try {
+                    val mantenimientosRaw = fila[54].toNullIfNA()
+                    println("[DEBUG] Valor crudo de mantenimiento en fila ${i + 1}: '$mantenimientosRaw'")
+                    val mantenimientosList = mantenimientosRaw.toMantenimientoList()
+                    println("[DEBUG] Lista de mantenimientos parseada en fila ${i + 1}: $mantenimientosList")
+                    val mantenimientos: List<com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.MantenimientoEntry>? = if (mantenimientosList.isEmpty()) null else mantenimientosList
+                    println("[DEBUG] Valor final de mantenimientos para modelo en fila ${i + 1}: $mantenimientos")
                     val computador = dispositivoService.save(
                         Computador(
                             nombreEquipo = nombreEquipo,
@@ -139,25 +147,27 @@ class CsvImportService(
                             ram = ram,
                             almacenamiento = almacenamiento,
                             almacenamiento2 = almacenamiento2,
+                            tenable = tenable,
                             mac = mac,
                             ip = ip,
                             ofimatica = ofimatica,
                             antivirus = antivirus,
-                            tenable = tenable,
                             sistemaOperativo = sistemaOperativo,
                             softwareAdicional = softwareAdicional,
+                            mantenimiento = mantenimientos,
                             item = item,
                             serial = serial,
                             modelo = modelo,
                             marca = marca,
-                            categoria = null,
+                            categoria = null, // No está en el CSV
                             sede = sede,
                             estado = com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE,
+                            funcional = funcional,
+                            clasificacion = clasificacion ?: "",
                             fechaAdquisicion = fechaAdq,
                             costo = costoEquipo,
-                            codigoActivo = null,
+                            codigoActivo = null, // No está en el CSV
                             tipo = tipo,
-                            clasificacion = clasificacion,
                             observaciones = observaciones
                         )
                     )
