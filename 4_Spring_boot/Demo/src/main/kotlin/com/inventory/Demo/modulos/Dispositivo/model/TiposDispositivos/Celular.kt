@@ -31,8 +31,8 @@ class Celular(
     @Column(name = "almacenamiento", length = 20)
     val almacenamiento: String? = null,
 
-    @Column(name = "tenable", length = 20)
-    val tenable: String? = null,
+    @Column(name = "tenable")
+    val tenable: Boolean? = null,
 
     @Column(name = "cuenta_gmail_actual", length = 20)
     val cuentaGmailActual: String? = null,

@@ -130,7 +130,7 @@ class SeedDataLoader(
                 procesador = "Snapdragon 888",
                 ram = "8GB",
                 almacenamiento = "128GB",
-                tenable = "Sí",
+                tenable = true,
                 cuentaGmailActual = "usuario@gmail.com",
                 contrasenaGmailActual = "pass1234",
                 cuentaGmailAnterior = null,

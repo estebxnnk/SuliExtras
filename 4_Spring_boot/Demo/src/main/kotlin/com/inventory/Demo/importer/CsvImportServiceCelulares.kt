@@ -77,13 +77,13 @@ class CsvImportServiceCelulares(
                 val procesador = fila[19].toNullIfNA()
                 val ram = fila[20].toNullIfNA()
                 val almacenamiento = fila[21].toNullIfNA()
-                val tenable = fila[22].toNullIfNA()
+                val tenable = fila[35].toBooleanSi()
                 val cuentaGmailActual = fila[23]//.toNullIfNA()
                 val contrasenaGmailActual = fila[24]//.toNullIfNA()
                 val cuentaGmailAnterior = fila[25]//.toNullIfNA()
                 val contrasenaGmailAnterior = fila[26]//.toNullIfNA()
-                val ofimatica = fila[27].toNullIfNA()//33
-                val sistemaOperativoMovil = fila[28].toNullIfNA()
+                val ofimatica = fila[33].toNullIfNA()//33
+                val sistemaOperativoMovil = fila[32].toNullIfNA()
                 // Ajuste: estado está en la posición 29
                 val estadoRaw = fila.getOrNull(29)?.toNullIfNA() ?: "DISPONIBLE"
                 val estado = try {
@@ -92,10 +92,9 @@ class CsvImportServiceCelulares(
                     println("[ERROR] Estado inválido en línea ${i + 1}: '$estadoRaw'. Usando DISPONIBLE por defecto.")
                     com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
                 }
-                val fechaAdquisicion = fila[30]//.getOrNull(30)?.toNullIfNA()//28
+                val fechaAdquisicion = fila[28]//.getOrNull(30)?.toNullIfNA()//28
                 val costo = fila.getOrNull(31)?.toNullIfNA()?.toDoubleOrNull()
-                val funcional = fila[27].toBooleanFuncional()//.getOrNull(32)?.toBoolean()//27
-                val codigoActivo = fila[33]//.getOrNull(33)?.toNullIfNA()
+                val funcional = fila[27].toBooleanFuncional()//s
                 val observaciones = fila[34]//.getOrNull(34)?.toNullIfNA()
 
                 val sede = sedeService.findByNombre(sedeNombre)
@@ -154,8 +153,6 @@ class CsvImportServiceCelulares(
 
                 // Intento de inserción
                 try {
-                    println("Tipo original: '$tipo', tipo discriminador: '${tipo.toTipoDiscriminadorCelular()}'")
-                    println("[LOG-IMPORTADOR] Clase a guardar: ${Celular::class.qualifiedName}")
                     val celular = dispositivoService.save(
                         Celular(
                             imei1 = imei1,
@@ -181,12 +178,11 @@ class CsvImportServiceCelulares(
                             fechaAdquisicion = fechaAdq,
                             costo = costo,
                             funcional = funcional,
-                            codigoActivo = codigoActivo,
+                            codigoActivo = null,
                             tipo = tipo.toTipoDiscriminadorCelular(),
                             observaciones = observaciones
                         )
                     )
-                    println("[LOG-IMPORTADOR] Clase retornada por save: ${celular::class.qualifiedName}")
                     insertados++
                     asignacionService.create(
                         com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest(
