@@ -52,8 +52,14 @@ class CsvImportServiceCelulares(
         val erroresReporte = mutableListOf<String>()
         val empleadosInsertados = mutableListOf<String>()
         val empleadosExistentes = mutableListOf<String>()
+        var filasProcesadas = 0
+        var filasConError = 0
+        var filasSaltadas = 0
+        var empleadosConError = 0
+        val empleadosConErrorList = mutableListOf<String>()
         try {
             for (i in 1 until filas.size) { // Salta el header
+                filasProcesadas++
                 val fila = filas[i]
                 val item = fila[0].toNullIfNA()
                 val sedeNombre = fila[1]
@@ -114,8 +120,8 @@ class CsvImportServiceCelulares(
 
                 // Empleado: registrar si es nuevo o existente
                 val empleadoExistente = empleadoService.findByDocumento(empleadoDocumento)
-                val empleado = empleadoExistente
-                    ?: empleadoService.save(
+                val empleado = try {
+                    empleadoExistente ?: empleadoService.save(
                         Empleado(
                             documentoIdentidad = empleadoDocumento,
                             nombreCompleto = empleadoNombre,
@@ -125,9 +131,37 @@ class CsvImportServiceCelulares(
                             area = area
                         )
                     )
+                } catch (ex: Exception) {
+                    empleadosConError++
+                    empleadosConErrorList.add("[ERROR-EMPLEADO] Línea ${i + 1}: $empleadoDocumento - $empleadoNombre - Error: ${ex.message}")
+                    
+                    // Intentar buscar por email si falla por documento
+                    val empleadoPorEmail = empleadoEmail?.let { email ->
+                        try {
+                            empleadoService.findByEmail(email)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    
+                    empleadoPorEmail ?: run {
+                        // Si no se puede crear ni encontrar el empleado, crear uno temporal
+                        Empleado(
+                            documentoIdentidad = empleadoDocumento ?: "TEMP_${i}",
+                            nombreCompleto = empleadoNombre ?: "Empleado Temporal",
+                            cargo = empleadoCargo ?: "Sin Cargo",
+                            email = empleadoEmail,
+                            telefono = numeroCelular,
+                            area = area
+                        ).also {
+                            // No guardar en BD, solo usar para la asignación
+                        }
+                    }
+                }
+                
                 if (empleadoExistente != null) {
                     empleadosExistentes.add("[EXISTENTE] Línea ${i + 1}: $empleadoDocumento - $empleadoNombre")
-                } else {
+                } else if (empleado.id != null) {
                     empleadosInsertados.add("[NUEVO] Línea ${i + 1}: $empleadoDocumento - $empleadoNombre")
                 }
 
@@ -138,6 +172,7 @@ class CsvImportServiceCelulares(
                 // Validación serial vacío/nulo
                 if (serial.isNullOrBlank() || serial.equals("N.A.", ignoreCase = true)) {
                     ignoradosSerialVacio++
+                    filasSaltadas++
                     erroresReporte.add("[ADVERTENCIA] Línea ${i + 1} ignorada: serial vacío o nulo. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
                     continue
                 }
@@ -146,6 +181,7 @@ class CsvImportServiceCelulares(
                 val existente = dispositivoService.findBySerial(serial)
                 if (existente != null) {
                     duplicados++
+                    filasSaltadas++
                     serialesDuplicados.add(serial)
                     erroresReporte.add("[DUPLICADO] Línea ${i + 1} ignorada: serial duplicado. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
                     continue
@@ -184,19 +220,30 @@ class CsvImportServiceCelulares(
                         )
                     )
                     insertados++
-                    asignacionService.create(
-                        com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest(
-                            dispositivoId = celular.dispositivoId,
-                            empleadoId = empleado.id!!,
-                            sedeId = sede.id!!,
-                            areaId = area.id!!,
-                            fechaAsignacion = fechaAdq ?: LocalDate.now(),
-                            comentario = "Asignación automática por importación de celulares",
-                            observaciones = observaciones,
-                            accesorios = null
-                        )
-                    )
+                    
+                    // Solo crear asignación si el empleado tiene ID (está en BD)
+                    if (empleado.id != null) {
+                        try {
+                            asignacionService.create(
+                                com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest(
+                                    dispositivoId = celular.dispositivoId,
+                                    empleadoId = empleado.id!!,
+                                    sedeId = sede.id!!,
+                                    areaId = area.id!!,
+                                    fechaAsignacion = fechaAdq ?: LocalDate.now(),
+                                    comentario = "Asignación automática por importación de celulares",
+                                    observaciones = observaciones,
+                                    accesorios = null
+                                )
+                            )
+                        } catch (ex: Exception) {
+                            erroresReporte.add("[ERROR-ASIGNACION] Línea ${i + 1}: Error al crear asignación: ${ex.message}. Item: '${item}', Serial: '${serial}'")
+                        }
+                    } else {
+                        erroresReporte.add("[ADVERTENCIA-ASIGNACION] Línea ${i + 1}: No se pudo crear asignación - empleado temporal. Item: '${item}', Serial: '${serial}'")
+                    }
                 } catch (ex: Exception) {
+                    filasConError++
                     erroresReporte.add("[ERROR] Fallo al insertar línea ${i + 1}: ${ex.message}. Item: '${item}', Serial: '${serial}', Fila: ${fila.joinToString(";")}")
                 }
             }
@@ -214,6 +261,11 @@ class CsvImportServiceCelulares(
             println("Total de filas procesadas: $totalProcesados")
             println("Total de filas NO insertadas: $totalNoInsertados")
             println("Total de filas insertadas: $insertados")
+            println("Filas procesadas (contador): $filasProcesadas")
+            println("Filas con error (contador): $filasConError")
+            println("Filas saltadas (contador): $filasSaltadas")
+            println("Empleados con error: $empleadosConError")
+            println("Verificación matemática: ${filasProcesadas} = ${insertados} + ${filasConError} + ${filasSaltadas}")
             if (serialesDuplicados.isNotEmpty()) {
                 println("Seriales duplicados ignorados:")
                 serialesDuplicados.forEach { println(it) }
@@ -229,6 +281,10 @@ class CsvImportServiceCelulares(
             empleadosInsertados.forEach { println(it) }
             println("Empleados ya existentes: ${empleadosExistentes.size}")
             empleadosExistentes.forEach { println(it) }
+            if (empleadosConErrorList.isNotEmpty()) {
+                println("Empleados con error: ${empleadosConErrorList.size}")
+                empleadosConErrorList.forEach { println(it) }
+            }
             println("====================================================================\n")
         }
         reader.close()

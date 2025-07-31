@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
 interface EmpleadoRepository : JpaRepository<Empleado, Long> {
     fun findByArea_Id(areaId: Long): List<Empleado>
     fun findByDocumentoIdentidad(documento: String): Empleado?
+    fun findByEmail(email: String): Empleado?
 } 

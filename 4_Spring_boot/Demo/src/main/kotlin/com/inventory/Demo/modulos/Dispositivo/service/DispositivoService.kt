@@ -19,13 +19,11 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
     fun findAll(): List<Dispositivo> = dispositivoRepository.findAll()
     fun findById(id: Long): Dispositivo? = dispositivoRepository.findById(id).orElse(null)
     fun save(dispositivo: Dispositivo): Dispositivo {
-        println("[LOG-SERVICE] Clase recibida en save: ${dispositivo::class.qualifiedName}")
         val existente = dispositivoRepository.findBySerial(dispositivo.serial)
         if (existente != null) {
             throw IllegalArgumentException("Ya existe un dispositivo con el serial: ${dispositivo.serial}")
         }
         val saved = dispositivoRepository.save(dispositivo)
-        println("[LOG-SERVICE] Clase guardada: ${saved::class.qualifiedName}")
         return saved
     }
     fun update(id: Long, dispositivo: Dispositivo): Dispositivo? {
