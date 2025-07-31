@@ -16,23 +16,39 @@ import java.time.LocalDate
 @DiscriminatorValue("CELULAR")
 @Table(name = "celulares")
 class Celular(
-    @Column(nullable = false, length = 15)
     val imei1: String,
 
-    @Column(length = 15)
-    val imei2: String? = null,
+    val imei2: String,
 
-    @Column(name = "sistema_operativo_movil", nullable = false, length = 100)
-    val sistemaOperativoMovil: String,
+    @Column(name = "procesador")
+    val procesador: String? = null,
 
-    @Column(name = "email_asociado", length = 100)
-    val emailAsociado: String? = null,
+    @Column(name = "ram")
+    val ram: String? = null,
 
-    @Column(name = "contrasena_email", length = 255)
-    val contrasenaEmail: String? = null,
+    @Column(name = "almacenamiento")
+    val almacenamiento: String? = null,
 
-    @Column(name = "capacidad_sim", length = 50)
-    val capacidadSim: String? = null,
+    @Column(name = "tenable")
+    val tenable: Boolean? = null,
+
+    @Column(name = "cuenta_gmail_actual")
+    val cuentaGmailActual: String? = null,
+    
+    @Column(name = "contrasena_gmail_actual")
+    val contrasenaGmailActual: String? = null,
+
+    @Column(name = "cuenta_gmail_anterior")
+    val cuentaGmailAnterior: String? = null,
+    
+    @Column(name = "contrasena_gmail_anterior")
+    val contrasenaGmailAnterior: String? = null,
+
+    @Column(name = "ofimatica", length = 20)
+    val ofimatica: String? = null,
+
+    @Column(name = "sistema_operativo_movil")
+    val sistemaOperativoMovil: String? = null,
 
     // Campos heredados
     dispositivoId: Long = 0,

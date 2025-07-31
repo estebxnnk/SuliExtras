@@ -125,13 +125,20 @@ class SeedDataLoader(
         // Celular
         if (dispositivoService.findAll().none { it.serial == "CEL-1001" }) {
             dispositivoService.save(Celular(
-                item = "ACTICO/035",
                 imei1 = "123456789012345",
-                imei2 = null,
+                imei2 = "987654321098765",
+                procesador = "Snapdragon 888",
+                ram = "8GB",
+                almacenamiento = "128GB",
+                tenable = true,
+                cuentaGmailActual = "usuario@gmail.com",
+                contrasenaGmailActual = "pass1234",
+                cuentaGmailAnterior = null,
+                contrasenaGmailAnterior = null,
+                ofimatica = "Office Mobile",
                 sistemaOperativoMovil = "Android 12",
-                emailAsociado = null,
-                contrasenaEmail = null,
-                capacidadSim = null,
+                dispositivoId = 0,
+                item = "ACTICO/035",
                 serial = "CEL-1001",
                 modelo = "Galaxy S21",
                 marca = "Samsung",
@@ -144,7 +151,7 @@ class SeedDataLoader(
                 funcional = false,
                 codigoActivo = "ACT-CEL-001",
                 tipo = "CELULAR",
-                observaciones = "Celular corporativo",
+                observaciones = "Celular corporativo de ejemplo",
             ))
         }
         // Impresora

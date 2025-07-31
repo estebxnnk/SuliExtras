@@ -23,7 +23,8 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
         if (existente != null) {
             throw IllegalArgumentException("Ya existe un dispositivo con el serial: ${dispositivo.serial}")
         }
-        return dispositivoRepository.save(dispositivo)
+        val saved = dispositivoRepository.save(dispositivo)
+        return saved
     }
     fun update(id: Long, dispositivo: Dispositivo): Dispositivo? {
         return if (dispositivoRepository.existsById(id)) {
@@ -59,14 +60,20 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
                     observaciones = dispositivo.observaciones,
                 )
                 is Celular -> Celular(
-                    item = dispositivo.item,
                     imei1 = dispositivo.imei1,
                     imei2 = dispositivo.imei2,
+                    procesador = dispositivo.procesador,
+                    ram = dispositivo.ram,
+                    almacenamiento = dispositivo.almacenamiento,
+                    tenable = dispositivo.tenable,
+                    cuentaGmailActual = dispositivo.cuentaGmailActual,
+                    contrasenaGmailActual = dispositivo.contrasenaGmailActual,
+                    cuentaGmailAnterior = dispositivo.cuentaGmailAnterior,
+                    contrasenaGmailAnterior = dispositivo.contrasenaGmailAnterior,
+                    ofimatica = dispositivo.ofimatica,
                     sistemaOperativoMovil = dispositivo.sistemaOperativoMovil,
-                    emailAsociado = dispositivo.emailAsociado,
-                    contrasenaEmail = dispositivo.contrasenaEmail,
-                    capacidadSim = dispositivo.capacidadSim,
                     dispositivoId = id,
+                    item = dispositivo.item,
                     serial = dispositivo.serial,
                     modelo = dispositivo.modelo,
                     marca = dispositivo.marca,
