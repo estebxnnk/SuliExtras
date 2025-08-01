@@ -78,6 +78,14 @@ class AsignacionService(
         //     accesorio.asignacion = saved
         //     accesorioService.save(accesorio)
         // }
+        
+        // Validar y actualizar el estado del dispositivo
+        try {
+            dispositivoService.validarYActualizarEstadoDispositivo(dispositivo.dispositivoId)
+        } catch (e: Exception) {
+            println("Error al validar estado del dispositivo después de crear asignación: ${e.message}")
+        }
+        
         saved
     } catch (e: Exception) {
         throw RuntimeException("Error al crear la asignación: ${e.message}", e)
@@ -118,7 +126,16 @@ class AsignacionService(
                 observaciones = dto.observaciones,
                 accesorios = nuevosAccesorios
             )
-            asignacionRepository.save(actualizado)
+            val saved = asignacionRepository.save(actualizado)
+            
+            // Validar y actualizar el estado del dispositivo
+            try {
+                dispositivoService.validarYActualizarEstadoDispositivo(existente.dispositivo.dispositivoId)
+            } catch (e: Exception) {
+                println("Error al validar estado del dispositivo después de actualizar asignación: ${e.message}")
+            }
+            
+            saved
         } catch (e: Exception) {
             throw RuntimeException("Error al actualizar la asignación con id $id: ${e.message}", e)
         }
@@ -151,9 +168,47 @@ class AsignacionService(
                 fechaFinalizacion = fechaFinalizacion,
                 motivoFinalizacion = motivo
             )
-            asignacionRepository.save(asignacionFinalizada)
+            val saved = asignacionRepository.save(asignacionFinalizada)
+            
+            // Validar y actualizar el estado del dispositivo después de finalizar
+            try {
+                dispositivoService.validarYActualizarEstadoDispositivo(asignacion.dispositivo.dispositivoId)
+            } catch (e: Exception) {
+                println("Error al validar estado del dispositivo después de finalizar asignación: ${e.message}")
+            }
+            
+            saved
         } catch (e: Exception) {
             throw RuntimeException("Error al finalizar la asignación con id $id: ${e.message}", e)
+        }
+    }
+
+    fun desactivarAsignacion(id: Long, motivo: String?): Asignacion? {
+        return try {
+            val asignacion = findById(id) ?: return null
+            if (asignacion.estado == Asignacion.EstadoAsignacion.FINALIZADA) {
+                throw IllegalArgumentException("La asignación ya está finalizada.")
+            }
+            if (asignacion.estado == Asignacion.EstadoAsignacion.INACTIVA) {
+                throw IllegalArgumentException("La asignación ya está inactiva.")
+            }
+            
+            val asignacionDesactivada = asignacion.copy(
+                estado = Asignacion.EstadoAsignacion.INACTIVA,
+                motivoFinalizacion = motivo
+            )
+            val saved = asignacionRepository.save(asignacionDesactivada)
+            
+            // Validar y actualizar el estado del dispositivo después de desactivar
+            try {
+                dispositivoService.validarYActualizarEstadoDispositivo(asignacion.dispositivo.dispositivoId)
+            } catch (e: Exception) {
+                println("Error al validar estado del dispositivo después de desactivar asignación: ${e.message}")
+            }
+            
+            saved
+        } catch (e: Exception) {
+            throw RuntimeException("Error al desactivar la asignación con id $id: ${e.message}", e)
         }
     }
 

@@ -34,4 +34,44 @@ class DispositivoController(
             ResponseEntity.notFound().build()
         }
     }
+
+    /**
+     * Valida y actualiza el estado de un dispositivo específico basado en sus asignaciones
+     */
+    @PostMapping("/{id}/validar-estado")
+    fun validarEstadoDispositivo(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
+        return try {
+            val nuevoEstado = dispositivoService.validarYActualizarEstadoDispositivo(id)
+            val dispositivo = dispositivoService.findById(id)
+            ResponseEntity.ok(mapOf(
+                "dispositivoId" to id.toString(),
+                "serial" to (dispositivo?.serial ?: ""),
+                "estadoAnterior" to (dispositivo?.estado?.name ?: ""),
+                "estadoNuevo" to nuevoEstado.name,
+                "mensaje" to "Estado validado y actualizado correctamente"
+            ))
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(mapOf(
+                "error" to (e.message ?: "Error desconocido"),
+                "dispositivoId" to id.toString()
+            ))
+        }
+    }
+
+    /**
+     * Valida y actualiza el estado de todos los dispositivos
+     */
+    @PostMapping("/validar-estados-todos")
+    fun validarEstadosTodosDispositivos(): ResponseEntity<Map<String, String>> {
+        return try {
+            dispositivoService.validarYActualizarEstadosTodosDispositivos()
+            ResponseEntity.ok(mapOf(
+                "mensaje" to "Validación de estados completada para todos los dispositivos"
+            ))
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().body(mapOf(
+                "error" to "Error durante la validación: ${e.message}"
+            ))
+        }
+    }
 } 

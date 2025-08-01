@@ -82,6 +82,35 @@ class AsignacionController(
         }
     }
 
+    @Operation(summary = "Cambiar estado de asignación a INACTIVA", description = "Cambia el estado de una asignación a INACTIVA y actualiza el estado del dispositivo.")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Asignación desactivada correctamente",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = Asignacion::class))]),
+            ApiResponse(responseCode = "400", description = "Solicitud inválida o asignación ya finalizada",
+                content = [Content()]),
+            ApiResponse(responseCode = "404", description = "Asignación no encontrada",
+                content = [Content()])
+        ]
+    )
+    @PutMapping("/{id}/desactivar")
+    fun desactivarAsignacion(
+        @Parameter(description = "ID de la asignación a desactivar")
+        @PathVariable id: Long,
+        @Parameter(description = "Motivo de la desactivación")
+        @RequestParam(required = false) motivo: String?
+    ): ResponseEntity<Asignacion> {
+        return try {
+            val desactivada = asignacionService.desactivarAsignacion(id, motivo)
+            if (desactivada != null) ResponseEntity.ok(desactivada)
+            else ResponseEntity.notFound().build()
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(null)
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().body(null)
+        }
+    }
+
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         asignacionService.delete(id)
