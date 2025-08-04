@@ -3,8 +3,11 @@ package com.inventory.Demo.modulos.Accesorio.repository
 import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo
+import org.springframework.transaction.annotation.Transactional
 
 @Repository
 interface AccesorioRepository : JpaRepository<Accesorio, Long> {
@@ -44,4 +47,12 @@ interface AccesorioRepository : JpaRepository<Accesorio, Long> {
      */
     @Query("SELECT a FROM Accesorio a WHERE a.estado = 'DISPONIBLE'")
     fun findDisponibles(): List<Accesorio>
+    
+    /**
+     * Actualiza el estado de un accesorio
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Accesorio a SET a.estado = :estado WHERE a.dispositivoId = :id")
+    fun actualizarEstado(@Param("id") id: Long, @Param("estado") estado: EstadoDispositivo)
 } 

@@ -159,6 +159,13 @@ class AccesorioService(
     }
     
     /**
+     * Actualiza el estado de un accesorio
+     */
+    fun actualizarEstado(id: Long, estado: EstadoDispositivo) {
+        accesorioRepository.actualizarEstado(id, estado)
+    }
+    
+    /**
      * Convierte un Accesorio a AccesorioResponseDTO
      */
     private fun toResponseDTO(accesorio: Accesorio): AccesorioResponseDTO {

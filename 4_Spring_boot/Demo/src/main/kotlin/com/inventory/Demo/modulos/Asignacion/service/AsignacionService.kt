@@ -74,11 +74,20 @@ class AsignacionService(
             )
             val saved = asignacionRepository.save(asignacion)
             
-            // Validar y actualizar el estado del dispositivo
+            // Actualizar estado del dispositivo a ASIGNADO
             try {
-                dispositivoService.validarYActualizarEstadoDispositivo(dispositivo.dispositivoId)
+                dispositivoService.actualizarEstado(dispositivo.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.ASIGNADO)
             } catch (e: Exception) {
-                println("Error al validar estado del dispositivo después de crear asignación: ${e.message}")
+                println("Error al actualizar estado del dispositivo después de crear asignación: ${e.message}")
+            }
+            
+            // Actualizar estado de los accesorios a ASIGNADO
+            try {
+                accesorios?.forEach { accesorio ->
+                    accesorioService.actualizarEstado(accesorio.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.ASIGNADO)
+                }
+            } catch (e: Exception) {
+                println("Error al actualizar estado de los accesorios después de crear asignación: ${e.message}")
             }
             
             saved
@@ -115,11 +124,20 @@ class AsignacionService(
             )
             val saved = asignacionRepository.save(actualizado)
             
-            // Validar y actualizar el estado del dispositivo
+            // Actualizar estado del dispositivo a ASIGNADO
             try {
-                dispositivoService.validarYActualizarEstadoDispositivo(existente.dispositivo.dispositivoId)
+                dispositivoService.actualizarEstado(existente.dispositivo.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.ASIGNADO)
             } catch (e: Exception) {
-                println("Error al validar estado del dispositivo después de actualizar asignación: ${e.message}")
+                println("Error al actualizar estado del dispositivo después de actualizar asignación: ${e.message}")
+            }
+            
+            // Actualizar estado de los nuevos accesorios a ASIGNADO
+            try {
+                nuevosAccesorios?.forEach { accesorio ->
+                    accesorioService.actualizarEstado(accesorio.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.ASIGNADO)
+                }
+            } catch (e: Exception) {
+                println("Error al actualizar estado de los accesorios después de actualizar asignación: ${e.message}")
             }
             
             saved
@@ -153,19 +171,21 @@ class AsignacionService(
                 nuevoEstadoDispositivo
             )
             
+            // Actualizar estado de los accesorios a DISPONIBLE
+            try {
+                asignacion.accesorios?.forEach { accesorio ->
+                    accesorioService.actualizarEstado(accesorio.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE)
+                }
+            } catch (e: Exception) {
+                println("Error al actualizar estado de los accesorios después de finalizar asignación: ${e.message}")
+            }
+            
             val asignacionFinalizada = asignacion.copy(
                 estado = Asignacion.EstadoAsignacion.FINALIZADA,
                 fechaFinalizacion = fechaFinalizacion,
                 motivoFinalizacion = motivo
             )
             val saved = asignacionRepository.save(asignacionFinalizada)
-            
-            // Validar y actualizar el estado del dispositivo después de finalizar
-            try {
-                dispositivoService.validarYActualizarEstadoDispositivo(asignacion.dispositivo.dispositivoId)
-            } catch (e: Exception) {
-                println("Error al validar estado del dispositivo después de finalizar asignación: ${e.message}")
-            }
             
             saved
         } catch (e: Exception) {
@@ -189,11 +209,20 @@ class AsignacionService(
             )
             val saved = asignacionRepository.save(asignacionDesactivada)
             
-            // Validar y actualizar el estado del dispositivo después de desactivar
+            // Actualizar estado del dispositivo a DISPONIBLE cuando se desactiva
             try {
-                dispositivoService.validarYActualizarEstadoDispositivo(asignacion.dispositivo.dispositivoId)
+                dispositivoService.actualizarEstado(asignacion.dispositivo.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE)
             } catch (e: Exception) {
-                println("Error al validar estado del dispositivo después de desactivar asignación: ${e.message}")
+                println("Error al actualizar estado del dispositivo después de desactivar asignación: ${e.message}")
+            }
+            
+            // Actualizar estado de los accesorios a DISPONIBLE
+            try {
+                asignacion.accesorios?.forEach { accesorio ->
+                    accesorioService.actualizarEstado(accesorio.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE)
+                }
+            } catch (e: Exception) {
+                println("Error al actualizar estado de los accesorios después de desactivar asignación: ${e.message}")
             }
             
             saved
