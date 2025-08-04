@@ -2,93 +2,89 @@ package com.inventory.Demo.modulos.Asignacion.service
 
 import com.inventory.Demo.modulos.Asignacion.model.Asignacion
 import com.inventory.Demo.modulos.Asignacion.repository.AsignacionRepository
-import com.inventory.Demo.modulos.Dispositivo.service.DispositivoService
 import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
+import com.inventory.Demo.modulos.Dispositivo.service.DispositivoService
 import com.inventory.Demo.modulos.Empleado.service.EmpleadoService
-import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
 import com.inventory.Demo.modulos.Sede.service.SedeService
 import com.inventory.Demo.modulos.Area.service.AreaService
+import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
+import com.inventory.Demo.modulos.Accesorio.repository.AccesorioRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Service
+@Transactional
 class AsignacionService(
     private val asignacionRepository: AsignacionRepository,
     private val dispositivoService: DispositivoService,
     private val empleadoService: EmpleadoService,
-    private val accesorioService: AccesorioService,
     private val sedeService: SedeService,
-    private val areaService: AreaService
+    private val areaService: AreaService,
+    private val accesorioService: AccesorioService,
+    private val accesorioRepository: AccesorioRepository
 ) {
-    fun findAll(): List<Asignacion> = try {
-        asignacionRepository.findAll()
-    } catch (e: Exception) {
-        throw RuntimeException("Error al obtener todas las asignaciones: ${e.message}", e)
-    }
-    fun findById(id: Long): Asignacion? = try {
-        asignacionRepository.findById(id).orElse(null)
-    } catch (e: Exception) {
-        throw RuntimeException("Error al buscar la asignación con id $id: ${e.message}", e)
-    }
-
-    fun create(dto: AsignacionRequest): Asignacion = try {
-        val dispositivo = dispositivoService.findById(dto.dispositivoId)
-            ?: throw IllegalArgumentException("Dispositivo no encontrado")
-        val empleado = empleadoService.findById(dto.empleadoId)
-            ?: throw IllegalArgumentException("Empleado no encontrado")
-        val sede = sedeService.findById(dto.sedeId)
-            ?: throw IllegalArgumentException("Sede no encontrada")
-        val area = areaService.findById(dto.areaId)
-            ?: throw IllegalArgumentException("Área no encontrada")
-        // Validación: un empleado solo puede tener un computador activo y viceversa
-        val asignacionActivaDispositivo = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(dispositivo.dispositivoId, Asignacion.EstadoAsignacion.ACTIVA)
-        if (asignacionActivaDispositivo != null) {
-            throw IllegalArgumentException("El dispositivo ya está asignado a otro empleado.")
-        }
-        val empleadoId = empleado.id ?: throw IllegalArgumentException("El empleado no tiene ID")
-        val asignacionesActivasEmpleado = asignacionRepository.findByEmpleado_IdAndEstado(empleadoId, Asignacion.EstadoAsignacion.ACTIVA)
-        if (asignacionesActivasEmpleado.any { it.dispositivo.dispositivoId == dispositivo.dispositivoId }) {
-            throw IllegalArgumentException("El empleado ya tiene un computador asignado.")
-        }
-        // Validación: accesorios no pueden estar asignados a otra asignación activa
-        // dto.accesorios?.forEach { accesorioId ->
-        //     val accesorio = accesorioService.findById(accesorioId)
-        //     if (accesorio?.asignacion?.estado == Asignacion.EstadoAsignacion.ACTIVA) {
-        //         throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
-        //     }
-        // }
-        // Crear la asignación con accesorios si se envían
-        val accesorios = dto.accesorios?.mapNotNull { accesorioService.findById(it) }
-        val asignacion = Asignacion(
-            dispositivo = dispositivo,
-            empleado = empleado,
-            sede = sede,
-            area = area, // Nuevo campo obligatorio
-            fechaAsignacion = dto.fechaAsignacion,
-            fechaFinalizacion = null,
-            motivoFinalizacion = null,
-            estado = Asignacion.EstadoAsignacion.ACTIVA,
-            fechaDevolucion = null,
-            comentario = dto.comentario,
-            observaciones = dto.observaciones,
-            accesorios = accesorios
-        )
-        val saved = asignacionRepository.save(asignacion)
-        // Asociar la asignación a los accesorios (si hay)
-        // accesorios?.forEach { accesorio ->
-        //     accesorio.asignacion = saved
-        //     accesorioService.save(accesorio)
-        // }
-        
-        // Validar y actualizar el estado del dispositivo
-        try {
-            dispositivoService.validarYActualizarEstadoDispositivo(dispositivo.dispositivoId)
+    fun create(dto: AsignacionRequest): Asignacion {
+        return try {
+            // Validar que el dispositivo existe
+            val dispositivo = dispositivoService.findById(dto.dispositivoId)
+                ?: throw IllegalArgumentException("Dispositivo con id ${dto.dispositivoId} no encontrado.")
+            
+            // Validar que el empleado existe
+            val empleado = empleadoService.findById(dto.empleadoId)
+                ?: throw IllegalArgumentException("Empleado con id ${dto.empleadoId} no encontrado.")
+            
+            // Validar que la sede existe
+            val sede = sedeService.findById(dto.sedeId)
+                ?: throw IllegalArgumentException("Sede con id ${dto.sedeId} no encontrada.")
+            
+            // Validar que el área existe
+            val area = areaService.findById(dto.areaId)
+                ?: throw IllegalArgumentException("Área con id ${dto.areaId} no encontrada.")
+            
+            // Validar que el dispositivo no esté asignado a otra asignación activa
+            val asignacionActiva = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+                dto.dispositivoId,
+                Asignacion.EstadoAsignacion.ACTIVA
+            )
+            if (asignacionActiva != null) {
+                throw IllegalArgumentException("El dispositivo ya está asignado a otra asignación activa.")
+            }
+            
+            // Validar que los accesorios existen
+            val accesorios = dto.accesorios?.mapNotNull { accesorioId ->
+                val accesorio = accesorioRepository.findById(accesorioId).orElse(null)
+                if (accesorio == null) {
+                    throw IllegalArgumentException("Accesorio con id $accesorioId no encontrado.")
+                }
+                accesorio
+            }
+            
+            val asignacion = Asignacion(
+                dispositivo = dispositivo,
+                empleado = empleado,
+                sede = sede,
+                area = area,
+                fechaAsignacion = dto.fechaAsignacion,
+                fechaFinalizacion = null,
+                comentario = dto.comentario,
+                observaciones = dto.observaciones,
+                accesorios = accesorios
+            )
+            val saved = asignacionRepository.save(asignacion)
+            
+            // Validar y actualizar el estado del dispositivo
+            try {
+                dispositivoService.validarYActualizarEstadoDispositivo(dispositivo.dispositivoId)
+            } catch (e: Exception) {
+                println("Error al validar estado del dispositivo después de crear asignación: ${e.message}")
+            }
+            
+            saved
         } catch (e: Exception) {
-            println("Error al validar estado del dispositivo después de crear asignación: ${e.message}")
+            throw RuntimeException("Error al crear la asignación: ${e.message}", e)
         }
-        
-        saved
-    } catch (e: Exception) {
-        throw RuntimeException("Error al crear la asignación: ${e.message}", e)
     }
 
     fun update(id: Long, dto: AsignacionRequest): Asignacion? {
@@ -101,25 +97,16 @@ class AsignacionService(
                 existente.empleado.id != dto.empleadoId) {
                 throw IllegalArgumentException("No se permite cambiar el dispositivo o el empleado de la asignación.")
             }
-            // Desasociar accesorios actuales
-            // existente.accesorios?.forEach { accesorio ->
-            //     accesorio.asignacion = null
-            //     accesorioService.save(accesorio)
-            // }
-            // Validación: accesorios no pueden estar asignados a otra asignación activa
-            // dto.accesorios?.forEach { accesorioId ->
-            //     val accesorio = accesorioService.findById(accesorioId)
-            //     if (accesorio?.asignacion?.estado == Asignacion.EstadoAsignacion.ACTIVA && accesorio.asignacion?.asignacionId != existente.asignacionId) {
-            //         throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
-            //     }
-            // }
-            // Asociar nuevos accesorios
-            // val nuevosAccesorios = dto.accesorios?.mapNotNull { accesorioService.findById(it) }
-            // nuevosAccesorios?.forEach { accesorio ->
-            //     accesorio.asignacion = existente
-            //     accesorioService.save(accesorio)
-            // }
-            val nuevosAccesorios = dto.accesorios?.mapNotNull { accesorioService.findById(it) }
+            
+            // Validar que los accesorios existen
+            val nuevosAccesorios = dto.accesorios?.mapNotNull { accesorioId ->
+                val accesorio = accesorioRepository.findById(accesorioId).orElse(null)
+                if (accesorio == null) {
+                    throw IllegalArgumentException("Accesorio con id $accesorioId no encontrado.")
+                }
+                accesorio
+            }
+            
             val actualizado = existente.copy(
                 fechaAsignacion = dto.fechaAsignacion,
                 comentario = dto.comentario,
@@ -148,6 +135,7 @@ class AsignacionService(
                 throw IllegalArgumentException("La asignación ya está finalizada.")
             }
             val fechaFinalizacion = java.time.LocalDate.now()
+            
             // Actualizar estado del dispositivo
             val asignacionActivaDispositivo = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
                 asignacion.dispositivo.dispositivoId,
@@ -158,11 +146,13 @@ class AsignacionService(
             } else {
                 com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
             }
+            
             // Actualizar el estado del dispositivo usando el método público del servicio
             dispositivoService.actualizarEstado(
                 asignacion.dispositivo.dispositivoId,
                 nuevoEstadoDispositivo
             )
+            
             val asignacionFinalizada = asignacion.copy(
                 estado = Asignacion.EstadoAsignacion.FINALIZADA,
                 fechaFinalizacion = fechaFinalizacion,
@@ -217,4 +207,22 @@ class AsignacionService(
     } catch (e: Exception) {
         throw RuntimeException("Error al eliminar la asignación con id $id: ${e.message}", e)
     }
+
+    fun findById(id: Long): Asignacion? = asignacionRepository.findById(id).orElse(null)
+
+    fun findAll(): List<Asignacion> = asignacionRepository.findAll()
+
+    fun findByDispositivoId(dispositivoId: Long): List<Asignacion> = asignacionRepository.findByDispositivo_DispositivoId(dispositivoId)
+
+    fun findByEmpleadoIdAndEstado(empleadoId: Long, estado: Asignacion.EstadoAsignacion): List<Asignacion> = 
+        asignacionRepository.findByEmpleado_IdAndEstado(empleadoId, estado)
+
+    fun findByDispositivoIdAndEstado(dispositivoId: Long, estado: Asignacion.EstadoAsignacion): Asignacion? = 
+        asignacionRepository.findByDispositivo_DispositivoIdAndEstado(dispositivoId, estado)
+
+    fun findActivas(): List<Asignacion> = findAll().filter { it.estado == Asignacion.EstadoAsignacion.ACTIVA }
+
+    fun findFinalizadas(): List<Asignacion> = findAll().filter { it.estado == Asignacion.EstadoAsignacion.FINALIZADA }
+
+    fun findInactivas(): List<Asignacion> = findAll().filter { it.estado == Asignacion.EstadoAsignacion.INACTIVA }
 } 

@@ -14,24 +14,33 @@ import com.inventory.Demo.modulos.Sede.service.SedeService
 import com.inventory.Demo.modulos.Sede.model.Sede
 import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
 import com.inventory.Demo.modulos.Accesorio.model.Accesorio
+import com.inventory.Demo.modulos.Accesorio.dto.AccesorioRequest
+import com.inventory.Demo.modulos.Categoria.model.Categoria
+import com.inventory.Demo.modulos.Categoria.repository.CategoriaRepository
 import com.inventory.Demo.modulos.Asignacion.service.AsignacionService
 import com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest
 import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.MantenimientoEntry
 
-// @Component
+@Component
 class SeedDataLoader(
     private val dispositivoService: DispositivoService,
     private val areaService: AreaService,
     private val empleadoService: EmpleadoService,
     private val sedeService: SedeService,
-    private val accesorioService: AccesorioService, // <--- Inyección del servicio de accesorios
-    private val asignacionService: AsignacionService // <--- Inyección del servicio de asignaciones
+    private val accesorioService: AccesorioService,
+    private val asignacionService: AsignacionService,
+    private val categoriaRepository: CategoriaRepository
 ) : CommandLineRunner {
     override fun run(vararg args: String?) {
         if (areaService.findAll().isNotEmpty() || empleadoService.findAll().isNotEmpty()) {
             // Ya hay datos, no volver a sembrar
             return
         }
+        
+        // Crear categoría para accesorios si no existe
+        val categoriaAccesorios = categoriaRepository.findByNombre("Accesorios") 
+            ?: categoriaRepository.save(Categoria(nombre = "Accesorios", descripcion = "Categoría para accesorios de dispositivos"))
+        
         // Sedes
         val sede1 = sedeService.save(Sede(
             nombre = "SULICOR : BOGOTA : COASMEDAS",
@@ -53,7 +62,6 @@ class SeedDataLoader(
             nombreCompleto = "Santiago Diaz Dominguez",
             cargo = "Analista de Auditoria",
             email = "santiago.diaz@auditoresyrevisoresfiscalesls.com",
-
             telefono = "3001234567",
             lineaCorporativa = "N/A",
             area = area1
@@ -80,7 +88,7 @@ class SeedDataLoader(
             ))
         }
         // Computador
-        if (dispositivoService.findAll().none { it.serial == "2WKKT93" }) {
+        if (dispositivoService.findAll().none { it.serial == "COMP-1001" }) {
             val mantenimientosEjemplo = listOf(
                 MantenimientoEntry(
                     fecha = LocalDate.parse("2023-06-01"),
@@ -99,27 +107,28 @@ class SeedDataLoader(
                 ram = "8GB",
                 almacenamiento = "N/A",
                 almacenamiento2 = "480Gb",
-                mac = "0",
+                mac = "00:1A:2B:3C:4D:5E",
                 ip = "192.168.1.10",
                 ofimatica = "Office 2019",
                 antivirus = "Ninguno",
-                sistemaOperativo = "Windows 10",
+                tenable = true,
+                sistemaOperativo = "Windows 10 Pro",
                 softwareAdicional = null,
                 mantenimiento = mantenimientosEjemplo,
                 item = "ACTICO/035",
-                serial = "2WKKT93",
+                serial = "COMP-1001",
                 modelo = "Latitude 3420",
-                marca = "Dell",
+                marca = "DELL",
                 categoria = null,
                 sede = sede1,
                 estado = EstadoDispositivo.DISPONIBLE,
+                clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
+                fechaAdquisicion = LocalDate.parse("2023-01-10"),
+                costo = 1200000.0,
                 funcional = true,
-                clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "ALTA",
-                fechaAdquisicion = LocalDate.parse("2022-05-15"),
-                costo = 2500000.0,
-                codigoActivo = "ACT-PC-001",
-                tipo = "Portatil",
-                observaciones = "Equipo de oficina",
+                codigoActivo = "ACT-COMP-001",
+                tipo = "COMPUTADOR",
+                observaciones = "Computador para auditoría"
             ))
         }
         // Celular
@@ -137,53 +146,30 @@ class SeedDataLoader(
                 contrasenaGmailAnterior = null,
                 ofimatica = "Office Mobile",
                 sistemaOperativoMovil = "Android 12",
-                dispositivoId = 0,
                 item = "ACTICO/035",
                 serial = "CEL-1001",
-                modelo = "Galaxy S21",
-                marca = "Samsung",
-                categoria = null,
-                sede = sede1,
-                estado = EstadoDispositivo.DISPONIBLE,
-                clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "MEDIA",
-                fechaAdquisicion = LocalDate.parse("2023-03-20"),
-                costo = 1800000.0,
-                funcional = false,
-                codigoActivo = "ACT-CEL-001",
-                tipo = "CELULAR",
-                observaciones = "Celular corporativo de ejemplo",
-            ))
-        }
-        // Impresora
-        if (dispositivoService.findAll().none { it.serial == "IMP-1001" }) {
-            dispositivoService.save(Impresora(
-                item = "ACTICO/035",
-                ipAsignada = "192.168.1.10",
-                contrasenaDispositivo = "admin123",
-                tecnologiaImpresion = null,
-                serial = "IMP-1001",
-                modelo = "HP LaserJet",
-                marca = "HP",
+                modelo = "iPhone 13",
+                marca = "Apple",
                 categoria = null,
                 sede = sede1,
                 estado = EstadoDispositivo.DISPONIBLE,
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
-                fechaAdquisicion = LocalDate.parse("2021-11-10"),
-                costo = 700000.0,
-                funcional = false,
-                codigoActivo = "ACT-IMP-001",
-                tipo = "IMPRESORA",
-                observaciones = "Impresora de recepción",
+                fechaAdquisicion = LocalDate.parse("2023-03-15"),
+                costo = 2500000.0,
+                funcional = true,
+                codigoActivo = "ACT-CEL-001",
+                tipo = "CELULAR",
+                observaciones = "Celular corporativo"
             ))
         }
         // PDA
         if (dispositivoService.findAll().none { it.serial == "PDA-1001" }) {
             dispositivoService.save(Pda(
-                item = "ACTICO/035",
                 numeroPda = "PDA-5001",
                 sistemaOperativoPda = "Android 10",
                 emailAsociado = null,
                 contrasenaEmail = null,
+                item = "ACTICO/035",
                 serial = "PDA-1001",
                 modelo = "Zebra TC21",
                 marca = "Zebra",
@@ -191,23 +177,45 @@ class SeedDataLoader(
                 sede = sede1,
                 estado = EstadoDispositivo.DISPONIBLE,
                 clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
-                fechaAdquisicion = LocalDate.parse("2022-08-01"),
-                costo = 1200000.0,
-                funcional = false,
+                fechaAdquisicion = LocalDate.parse("2023-05-20"),
+                costo = 1800000.0,
+                funcional = true,
                 codigoActivo = "ACT-PDA-001",
                 tipo = "PDA",
-                observaciones = "PDA para inventario",
+                observaciones = "PDA para inventario"
+            ))
+        }
+        // Impresora
+        if (dispositivoService.findAll().none { it.serial == "IMP-1001" }) {
+            dispositivoService.save(Impresora(
+                ipAsignada = "192.168.1.10",
+                contrasenaDispositivo = "admin123",
+                tecnologiaImpresion = "Láser",
+                item = "ACTICO/035",
+                serial = "IMP-1001",
+                modelo = "HP LaserJet Pro",
+                marca = "HP",
+                categoria = null,
+                sede = sede1,
+                estado = EstadoDispositivo.DISPONIBLE,
+                clasificacion = if (EstadoDispositivo.DISPONIBLE == EstadoDispositivo.BAJA) "OBSOLETO" else "BAJA",
+                fechaAdquisicion = LocalDate.parse("2023-07-10"),
+                costo = 800000.0,
+                funcional = true,
+                codigoActivo = "ACT-IMP-001",
+                tipo = "IMPRESORA",
+                observaciones = "Impresora de oficina"
             ))
         }
         // Biometrico
         if (dispositivoService.findAll().none { it.serial == "BIO-1001" }) {
             dispositivoService.save(Biometrico(
-                item = "ACTICO/035",
                 ipAsignada = "192.168.2.10",
-                tipoBiometrico = "Huella",
+                tipoBiometrico = "Huella dactilar",
+                item = "ACTICO/035",
                 serial = "BIO-1001",
-                modelo = "ZKTeco F18",
-                marca = "ZKTeco",
+                modelo = "Suprema BioMini",
+                marca = "Suprema",
                 categoria = null,
                 sede = sede1,
                 estado = EstadoDispositivo.DISPONIBLE,
@@ -217,7 +225,7 @@ class SeedDataLoader(
                 funcional = false,
                 codigoActivo = "ACT-BIO-001",
                 tipo = "BIOMETRICO",
-                observaciones = "Control de acceso",
+                observaciones = "Control de acceso"
             ))
         }
         // Camara
@@ -239,7 +247,7 @@ class SeedDataLoader(
                 funcional = false,
                 codigoActivo = "ACT-CAM-001",
                 tipo = "CAMARA",
-                observaciones = "Cámara de seguridad",
+                observaciones = "Cámara de seguridad"
             ))
         }
         // Intercomunicador
@@ -262,50 +270,114 @@ class SeedDataLoader(
                 funcional = false,
                 codigoActivo = "ACT-INT-001",
                 tipo = "INTERCOMUNICADOR",
-                observaciones = "Intercomunicador principal",
+                observaciones = "Intercomunicador principal"
             ))
         }
-        // Accesorios
-        // Crear accesorio normal
-        val accesorioNormal = accesorioService.save(
-            Accesorio(
-                tipo = "Mouse",
-                marca = "Logitech",
-                serial = "MOUSE-001",
-                modelo = "M185",
-                estado = "Bueno",
-                esCombo = false,
-                accesoriosCombo = emptyList()
+        
+        // Accesorios usando la nueva estructura
+        // Crear accesorio simple (Mouse)
+        val accesorioMouse = accesorioService.create(AccesorioRequest(
+            item = "Mouse Logitech M185",
+            serial = "MOUSE-001",
+            modelo = "M185",
+            marca = "Logitech",
+            categoriaId = categoriaAccesorios.categoriaId,
+            sedeId = sede1.id,
+            estado = EstadoDispositivo.DISPONIBLE,
+            clasificacion = "Accesorio",
+            fechaAdquisicion = LocalDate.parse("2024-01-15"),
+            costo = 45000.0,
+            funcional = true,
+            codigoActivo = "ACC-MOUSE-001",
+            tipo = "Mouse",
+            observaciones = "Mouse inalámbrico para oficina",
+            tipoAccesorio = "Mouse",
+            esCombo = false,
+            accesoriosComboIds = emptyList()
+        ))
+        
+        // Crear accesorio simple (Teclado)
+        val accesorioTeclado = accesorioService.create(AccesorioRequest(
+            item = "Teclado Logitech K380",
+            serial = "TECLADO-001",
+            modelo = "K380",
+            marca = "Logitech",
+            categoriaId = categoriaAccesorios.categoriaId,
+            sedeId = sede1.id,
+            estado = EstadoDispositivo.DISPONIBLE,
+            clasificacion = "Accesorio",
+            fechaAdquisicion = LocalDate.parse("2024-01-15"),
+            costo = 120000.0,
+            funcional = true,
+            codigoActivo = "ACC-TECLADO-001",
+            tipo = "Teclado",
+            observaciones = "Teclado inalámbrico para oficina",
+            tipoAccesorio = "Teclado",
+            esCombo = false,
+            accesoriosComboIds = emptyList()
+        ))
+        
+        // Crear accesorio simple (Cargador)
+        val accesorioCargador = accesorioService.create(AccesorioRequest(
+            item = "Cargador Laptop HP",
+            serial = "CARGADOR-001",
+            modelo = "HP-65W",
+            marca = "HP",
+            categoriaId = categoriaAccesorios.categoriaId,
+            sedeId = sede1.id,
+            estado = EstadoDispositivo.DISPONIBLE,
+            clasificacion = "Accesorio",
+            fechaAdquisicion = LocalDate.parse("2024-01-15"),
+            costo = 85000.0,
+            funcional = true,
+            codigoActivo = "ACC-CARGADOR-001",
+            tipo = "Cargador",
+            observaciones = "Cargador original HP",
+            tipoAccesorio = "Cargador",
+            esCombo = false,
+            accesoriosComboIds = emptyList()
+        ))
+        
+        // Crear combo de accesorios (Kit Oficina)
+        val accesorioCombo = accesorioService.create(AccesorioRequest(
+            item = "Kit Oficina Completo",
+            serial = "KIT-OFICINA-001",
+            modelo = "Kit-Office-2024",
+            marca = "Varios",
+            categoriaId = categoriaAccesorios.categoriaId,
+            sedeId = sede1.id,
+            estado = EstadoDispositivo.DISPONIBLE,
+            clasificacion = "Accesorio",
+            fechaAdquisicion = LocalDate.parse("2024-01-15"),
+            costo = 250000.0,
+            funcional = true,
+            codigoActivo = "ACC-KIT-001",
+            tipo = "Kit",
+            observaciones = "Kit completo para nueva oficina",
+            tipoAccesorio = "Kit",
+            esCombo = true,
+            accesoriosComboIds = listOf(
+                accesorioMouse.dispositivoId,
+                accesorioTeclado.dispositivoId,
+                accesorioCargador.dispositivoId
             )
-        )
-        // Crear accesorio combo (que incluye el accesorio normal)
-        val accesorioCombo = accesorioService.save(
-            Accesorio(
-                tipo = "Combo Oficina",
-                marca = null,
-                serial = "COMBO-001",
-                modelo = null,
-                estado = "Bueno",
-                esCombo = true,
-                accesoriosCombo = listOf(accesorioNormal)
-            )
-        )
+        ))
+        
         // Crear una asignación de ejemplo para el empleado y dispositivo creados
         val dispositivoEjemplo = dispositivoService.findAll().firstOrNull() // Usar el primer dispositivo creado
         if (dispositivoEjemplo != null) {
-            val asignacion = asignacionService.create(
-                com.inventory.Demo.modulos.Asignacion.dto.AsignacionRequest(
+            asignacionService.create(
+                AsignacionRequest(
                     dispositivoId = dispositivoEjemplo.dispositivoId,
                     empleadoId = empleado1.id!!,
-                    sedeId = sede1.id!!, // <--- ahora se envía la sede
-                    areaId = area1.id!!, // <--- nuevo campo obligatorio para el área
+                    sedeId = sede1.id!!,
+                    areaId = area1.id!!,
                     fechaAsignacion = LocalDate.now(),
                     comentario = "Asignación de ejemplo con accesorios",
                     observaciones = "Asignación generada por el seed",
-                    accesorios = listOf(accesorioNormal.id!!, accesorioCombo.id!!)
+                    accesorios = listOf(accesorioMouse.dispositivoId, accesorioCombo.dispositivoId)
                 )
             )
-            // Actualizar los accesorios para que tengan la asignación creada
         }
     }
 } 
