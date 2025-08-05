@@ -11,11 +11,16 @@ import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Camara
 import com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos.Intercomunicador
 import com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo
 import com.inventory.Demo.modulos.Dispositivo.repository.DispositivoRepository
+import com.inventory.Demo.modulos.Asignacion.repository.AsignacionRepository
+import com.inventory.Demo.modulos.Asignacion.model.Asignacion
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class DispositivoService(private val dispositivoRepository: DispositivoRepository) {
+class DispositivoService(
+    private val dispositivoRepository: DispositivoRepository,
+    private val asignacionRepository: AsignacionRepository
+) {
     fun findAll(): List<Dispositivo> = dispositivoRepository.findAll()
     fun findById(id: Long): Dispositivo? = dispositivoRepository.findById(id).orElse(null)
     fun save(dispositivo: Dispositivo): Dispositivo {
@@ -243,5 +248,60 @@ class DispositivoService(private val dispositivoRepository: DispositivoRepositor
     @Transactional
     fun actualizarEstado(id: Long, estado: EstadoDispositivo) {
         dispositivoRepository.actualizarEstado(id, estado)
+    }
+
+    /**
+     * Valida y actualiza el estado de un dispositivo basado en sus asignaciones
+     * Si tiene una asignación ACTIVA -> estado = ASIGNADO
+     * Si todas las asignaciones están INACTIVA o FINALIZADA -> estado = DISPONIBLE
+     */
+    @Transactional
+    fun validarYActualizarEstadoDispositivo(dispositivoId: Long): EstadoDispositivo {
+        val dispositivo = findById(dispositivoId) 
+            ?: throw IllegalArgumentException("Dispositivo no encontrado con ID: $dispositivoId")
+        
+        // Buscar todas las asignaciones del dispositivo
+        val asignaciones = asignacionRepository.findByDispositivo_DispositivoId(dispositivoId)
+        
+        // Verificar si hay alguna asignación activa
+        val tieneAsignacionActiva = asignaciones.any { it.estado == Asignacion.EstadoAsignacion.ACTIVA }
+        
+        val nuevoEstado = if (tieneAsignacionActiva) {
+            EstadoDispositivo.ASIGNADO
+        } else {
+            EstadoDispositivo.DISPONIBLE
+        }
+        
+        // Solo actualizar si el estado es diferente
+        if (dispositivo.estado != nuevoEstado) {
+            actualizarEstado(dispositivoId, nuevoEstado)
+            println("Estado del dispositivo ${dispositivo.serial} actualizado de ${dispositivo.estado} a $nuevoEstado")
+        }
+        
+        return nuevoEstado
+    }
+
+    /**
+     * Valida y actualiza el estado de todos los dispositivos
+     * Útil para sincronizar estados después de cambios masivos
+     */
+    @Transactional
+    fun validarYActualizarEstadosTodosDispositivos() {
+        val dispositivos = findAll()
+        var actualizados = 0
+        
+        dispositivos.forEach { dispositivo ->
+            try {
+                val estadoAnterior = dispositivo.estado
+                val nuevoEstado = validarYActualizarEstadoDispositivo(dispositivo.dispositivoId)
+                if (estadoAnterior != nuevoEstado) {
+                    actualizados++
+                }
+            } catch (e: Exception) {
+                println("Error al validar estado del dispositivo ${dispositivo.serial}: ${e.message}")
+            }
+        }
+        
+        println("Validación completada. $actualizados dispositivos actualizados.")
     }
 } 
