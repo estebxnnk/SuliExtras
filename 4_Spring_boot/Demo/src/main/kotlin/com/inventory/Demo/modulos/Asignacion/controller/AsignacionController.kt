@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import com.inventory.Demo.modulos.Asignacion.dto.AsignacionResponseDTO
 
 @RestController
 @RequestMapping("/api/asignaciones")
@@ -115,5 +116,97 @@ class AsignacionController(
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         asignacionService.delete(id)
         return ResponseEntity.noContent().build()
+    }
+
+    // NUEVOS ENDPOINTS PARA CONSULTAR HISTORIAL
+
+    @Operation(summary = "Obtener historial de asignaciones de un dispositivo", 
+               description = "Retorna todas las asignaciones (activas, finalizadas e inactivas) de un dispositivo específico.")
+    @GetMapping("/dispositivo/{dispositivoId}/historial")
+    fun getHistorialByDispositivoId(
+        @Parameter(description = "ID del dispositivo")
+        @PathVariable dispositivoId: Long
+    ): ResponseEntity<List<AsignacionResponseDTO>> {
+        val historial = asignacionService.findHistorialByDispositivoId(dispositivoId)
+        val historialDTO = historial.map { asignacion ->
+            // Determinar si es una reasignación (no es la primera asignación)
+            val esReasignacion = historial.indexOf(asignacion) > 0
+            AsignacionResponseDTO.fromAsignacion(asignacion, esReasignacion)
+        }
+        return ResponseEntity.ok(historialDTO)
+    }
+
+    @Operation(summary = "Obtener asignación activa de un dispositivo", 
+               description = "Retorna la asignación activa actual de un dispositivo, si existe.")
+    @GetMapping("/dispositivo/{dispositivoId}/activa")
+    fun getAsignacionActivaByDispositivoId(
+        @Parameter(description = "ID del dispositivo")
+        @PathVariable dispositivoId: Long
+    ): ResponseEntity<AsignacionResponseDTO?> {
+        val asignacionActiva = asignacionService.findAsignacionActivaByDispositivoId(dispositivoId)
+        val asignacionDTO = asignacionActiva?.let { 
+            AsignacionResponseDTO.fromAsignacion(it, false)
+        }
+        return ResponseEntity.ok(asignacionDTO)
+    }
+
+    @Operation(summary = "Verificar si un dispositivo está disponible", 
+               description = "Retorna true si el dispositivo está disponible para asignación.")
+    @GetMapping("/dispositivo/{dispositivoId}/disponible")
+    fun isDispositivoDisponible(
+        @Parameter(description = "ID del dispositivo")
+        @PathVariable dispositivoId: Long
+    ): ResponseEntity<Boolean> {
+        val disponible = asignacionService.isDispositivoDisponible(dispositivoId)
+        return ResponseEntity.ok(disponible)
+    }
+
+    @Operation(summary = "Obtener historial de asignaciones de un empleado", 
+               description = "Retorna todas las asignaciones (activas, finalizadas e inactivas) de un empleado específico.")
+    @GetMapping("/empleado/{empleadoId}/historial")
+    fun getHistorialByEmpleadoId(
+        @Parameter(description = "ID del empleado")
+        @PathVariable empleadoId: Long
+    ): ResponseEntity<List<Asignacion>> {
+        val historial = asignacionService.findHistorialByEmpleadoId(empleadoId)
+        return ResponseEntity.ok(historial)
+    }
+
+    @Operation(summary = "Obtener asignaciones activas de un empleado", 
+               description = "Retorna las asignaciones activas de un empleado específico.")
+    @GetMapping("/empleado/{empleadoId}/activas")
+    fun getAsignacionesActivasByEmpleadoId(
+        @Parameter(description = "ID del empleado")
+        @PathVariable empleadoId: Long
+    ): ResponseEntity<List<Asignacion>> {
+        val asignacionesActivas = asignacionService.findAsignacionesActivasByEmpleadoId(empleadoId)
+        return ResponseEntity.ok(asignacionesActivas)
+    }
+
+    @Operation(summary = "Obtener asignaciones finalizadas de un dispositivo", 
+               description = "Retorna las asignaciones finalizadas de un dispositivo específico.")
+    @GetMapping("/dispositivo/{dispositivoId}/finalizadas")
+    fun getAsignacionesFinalizadasByDispositivoId(
+        @Parameter(description = "ID del dispositivo")
+        @PathVariable dispositivoId: Long
+    ): ResponseEntity<List<Asignacion>> {
+        val asignacionesFinalizadas = asignacionService.findAsignacionesFinalizadasByDispositivoId(dispositivoId)
+        return ResponseEntity.ok(asignacionesFinalizadas)
+    }
+
+    @Operation(summary = "Obtener asignaciones por estado", 
+               description = "Retorna las asignaciones filtradas por estado (ACTIVA, FINALIZADA, INACTIVA).")
+    @GetMapping("/estado/{estado}")
+    fun getAsignacionesByEstado(
+        @Parameter(description = "Estado de las asignaciones")
+        @PathVariable estado: String
+    ): ResponseEntity<List<Asignacion>> {
+        val asignaciones = when (estado.uppercase()) {
+            "ACTIVA" -> asignacionService.findActivas()
+            "FINALIZADA" -> asignacionService.findFinalizadas()
+            "INACTIVA" -> asignacionService.findInactivas()
+            else -> return ResponseEntity.badRequest().build()
+        }
+        return ResponseEntity.ok(asignaciones)
     }
 } 

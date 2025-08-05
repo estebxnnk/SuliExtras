@@ -70,6 +70,23 @@ class AccesorioController(private val accesorioService: AccesorioService) {
     @GetMapping("/disponibles")
     fun obtenerDisponibles(): ResponseEntity<List<AccesorioResponseDTO>> =
         ResponseEntity.ok(accesorioService.findDisponibles())
+    
+    /**
+     * Verifica si un accesorio específico está disponible
+     */
+    @GetMapping("/{id}/disponible")
+    fun verificarDisponibilidad(@PathVariable id: Long): ResponseEntity<Map<String, Any?>> {
+        val disponible = accesorioService.isDisponible(id)
+        val accesorio = accesorioService.findById(id)
+        
+        val response = mapOf(
+            "disponible" to disponible,
+            "accesorio" to accesorio,
+            "mensaje" to if (disponible) "El accesorio está disponible para asignación" else "El accesorio no está disponible"
+        )
+        
+        return ResponseEntity.ok(response)
+    }
 
     /**
      * Obtiene accesorios por sede

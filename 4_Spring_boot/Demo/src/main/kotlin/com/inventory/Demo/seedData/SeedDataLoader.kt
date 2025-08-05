@@ -15,6 +15,7 @@ import com.inventory.Demo.modulos.Sede.model.Sede
 import com.inventory.Demo.modulos.Accesorio.service.AccesorioService
 import com.inventory.Demo.modulos.Accesorio.model.Accesorio
 import com.inventory.Demo.modulos.Accesorio.dto.AccesorioRequest
+import com.inventory.Demo.modulos.Accesorio.dto.AccesorioResponseDTO
 import com.inventory.Demo.modulos.Categoria.model.Categoria
 import com.inventory.Demo.modulos.Categoria.repository.CategoriaRepository
 import com.inventory.Demo.modulos.Asignacion.service.AsignacionService
@@ -276,96 +277,112 @@ class SeedDataLoader(
         
         // Accesorios usando la nueva estructura
         // Crear accesorio simple (Mouse)
-        val accesorioMouse = accesorioService.create(AccesorioRequest(
-            item = "Mouse Logitech M185",
-            serial = "MOUSE-001",
-            modelo = "M185",
-            marca = "Logitech",
-            categoriaId = categoriaAccesorios.categoriaId,
-            sedeId = sede1.id,
-            estado = EstadoDispositivo.DISPONIBLE,
-            clasificacion = "Accesorio",
-            fechaAdquisicion = LocalDate.parse("2024-01-15"),
-            costo = 45000.0,
-            funcional = true,
-            codigoActivo = "ACC-MOUSE-001",
-            tipo = "Mouse",
-            observaciones = "Mouse inalámbrico para oficina",
-            tipoAccesorio = "Mouse",
-            esCombo = false,
-            accesoriosComboIds = emptyList()
-        ))
+        var accesorioMouse: AccesorioResponseDTO? = null
+        if (accesorioService.findAll().none { it.serial == "MOUSE-001" }) {
+            accesorioMouse = accesorioService.create(AccesorioRequest(
+                item = "Mouse Logitech M185",
+                serial = "MOUSE-001",
+                modelo = "M185",
+                marca = "Logitech",
+                categoriaId = categoriaAccesorios.categoriaId,
+                sedeId = sede1.id,
+                estado = EstadoDispositivo.DISPONIBLE,
+                clasificacion = "Accesorio",
+                fechaAdquisicion = LocalDate.parse("2024-01-15"),
+                costo = 45000.0,
+                funcional = true,
+                codigoActivo = "ACC-MOUSE-001",
+                tipo = "Mouse",
+                observaciones = "Mouse inalámbrico para oficina",
+                tipoAccesorio = "Mouse",
+                esCombo = false,
+                accesoriosComboIds = emptyList()
+            ))
+        } else {
+            accesorioMouse = accesorioService.findAll().find { it.serial == "MOUSE-001" }
+        }
         
         // Crear accesorio simple (Teclado)
-        val accesorioTeclado = accesorioService.create(AccesorioRequest(
-            item = "Teclado Logitech K380",
-            serial = "TECLADO-001",
-            modelo = "K380",
-            marca = "Logitech",
-            categoriaId = categoriaAccesorios.categoriaId,
-            sedeId = sede1.id,
-            estado = EstadoDispositivo.DISPONIBLE,
-            clasificacion = "Accesorio",
-            fechaAdquisicion = LocalDate.parse("2024-01-15"),
-            costo = 120000.0,
-            funcional = true,
-            codigoActivo = "ACC-TECLADO-001",
-            tipo = "Teclado",
-            observaciones = "Teclado inalámbrico para oficina",
-            tipoAccesorio = "Teclado",
-            esCombo = false,
-            accesoriosComboIds = emptyList()
-        ))
+        var accesorioTeclado: AccesorioResponseDTO? = null
+        if (accesorioService.findAll().none { it.serial == "TECLADO-001" }) {
+            accesorioTeclado = accesorioService.create(AccesorioRequest(
+                item = "Teclado Logitech K380",
+                serial = "TECLADO-001",
+                modelo = "K380",
+                marca = "Logitech",
+                categoriaId = categoriaAccesorios.categoriaId,
+                sedeId = sede1.id,
+                estado = EstadoDispositivo.DISPONIBLE,
+                clasificacion = "Accesorio",
+                fechaAdquisicion = LocalDate.parse("2024-01-15"),
+                costo = 120000.0,
+                funcional = true,
+                codigoActivo = "ACC-TECLADO-001",
+                tipo = "Teclado",
+                observaciones = "Teclado inalámbrico para oficina",
+                tipoAccesorio = "Teclado",
+                esCombo = false,
+                accesoriosComboIds = emptyList()
+            ))
+        } else {
+            accesorioTeclado = accesorioService.findAll().find { it.serial == "TECLADO-001" }
+        }
         
         // Crear accesorio simple (Cargador)
-        val accesorioCargador = accesorioService.create(AccesorioRequest(
-            item = "Cargador Laptop HP",
-            serial = "CARGADOR-001",
-            modelo = "HP-65W",
-            marca = "HP",
-            categoriaId = categoriaAccesorios.categoriaId,
-            sedeId = sede1.id,
-            estado = EstadoDispositivo.DISPONIBLE,
-            clasificacion = "Accesorio",
-            fechaAdquisicion = LocalDate.parse("2024-01-15"),
-            costo = 85000.0,
-            funcional = true,
-            codigoActivo = "ACC-CARGADOR-001",
-            tipo = "Cargador",
-            observaciones = "Cargador original HP",
-            tipoAccesorio = "Cargador",
-            esCombo = false,
-            accesoriosComboIds = emptyList()
-        ))
+        var accesorioCargador: AccesorioResponseDTO? = null
+        if (accesorioService.findAll().none { it.serial == "CARGADOR-001" }) {
+            accesorioCargador = accesorioService.create(AccesorioRequest(
+                item = "Cargador Laptop HP",
+                serial = "CARGADOR-001",
+                modelo = "HP-65W",
+                marca = "HP",
+                categoriaId = categoriaAccesorios.categoriaId,
+                sedeId = sede1.id,
+                estado = EstadoDispositivo.DISPONIBLE,
+                clasificacion = "Accesorio",
+                fechaAdquisicion = LocalDate.parse("2024-01-15"),
+                costo = 85000.0,
+                funcional = true,
+                codigoActivo = "ACC-CARGADOR-001",
+                tipo = "Cargador",
+                observaciones = "Cargador original HP",
+                tipoAccesorio = "Cargador",
+                esCombo = false,
+                accesoriosComboIds = emptyList()
+            ))
+        } else {
+            accesorioCargador = accesorioService.findAll().find { it.serial == "CARGADOR-001" }
+        }
         
         // Crear combo de accesorios (Kit Oficina)
-        val accesorioCombo = accesorioService.create(AccesorioRequest(
-            item = "Kit Oficina Completo",
-            serial = "KIT-OFICINA-001",
-            modelo = "Kit-Office-2024",
-            marca = "Varios",
-            categoriaId = categoriaAccesorios.categoriaId,
-            sedeId = sede1.id,
-            estado = EstadoDispositivo.DISPONIBLE,
-            clasificacion = "Accesorio",
-            fechaAdquisicion = LocalDate.parse("2024-01-15"),
-            costo = 250000.0,
-            funcional = true,
-            codigoActivo = "ACC-KIT-001",
-            tipo = "Kit",
-            observaciones = "Kit completo para nueva oficina",
-            tipoAccesorio = "Kit",
-            esCombo = true,
-            accesoriosComboIds = listOf(
-                accesorioMouse.dispositivoId,
-                accesorioTeclado.dispositivoId,
-                accesorioCargador.dispositivoId
-            )
-        ))
+        var accesorioCombo: AccesorioResponseDTO? = null
+        if (accesorioService.findAll().none { it.serial == "KIT-OFICINA-001" }) {
+            accesorioCombo = accesorioService.create(AccesorioRequest(
+                item = "Kit Oficina Completo",
+                serial = "KIT-OFICINA-001",
+                modelo = "Kit-Office-2024",
+                marca = "Varios",
+                categoriaId = categoriaAccesorios.categoriaId,
+                sedeId = sede1.id,
+                estado = EstadoDispositivo.DISPONIBLE,
+                clasificacion = "Accesorio",
+                fechaAdquisicion = LocalDate.parse("2024-01-15"),
+                costo = 250000.0,
+                funcional = true,
+                codigoActivo = "ACC-KIT-001",
+                tipo = "Kit",
+                observaciones = "Kit completo para nueva oficina",
+                tipoAccesorio = "Kit",
+                esCombo = true,
+                accesoriosComboIds = emptyList() // Removido porque ya no existe la relación ManyToMany
+            ))
+        } else {
+            accesorioCombo = accesorioService.findAll().find { it.serial == "KIT-OFICINA-001" }
+        }
         
         // Crear una asignación de ejemplo para el empleado y dispositivo creados
         val dispositivoEjemplo = dispositivoService.findAll().firstOrNull() // Usar el primer dispositivo creado
-        if (dispositivoEjemplo != null) {
+        if (dispositivoEjemplo != null && accesorioMouse != null && accesorioCombo != null) {
             asignacionService.create(
                 AsignacionRequest(
                     dispositivoId = dispositivoEjemplo.dispositivoId,

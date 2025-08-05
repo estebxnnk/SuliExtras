@@ -100,6 +100,14 @@ class AccesorioService(
     }
     
     /**
+     * Verifica si un accesorio está disponible
+     */
+    fun isDisponible(id: Long): Boolean {
+        val accesorio = accesorioRepository.findById(id).orElse(null)
+        return accesorio?.estado == EstadoDispositivo.DISPONIBLE
+    }
+    
+    /**
      * Obtiene accesorios por sede
      */
     fun findBySedeId(sedeId: Long): List<AccesorioResponseDTO> {

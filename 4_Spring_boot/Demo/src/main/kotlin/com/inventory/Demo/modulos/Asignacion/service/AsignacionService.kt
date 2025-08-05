@@ -43,21 +43,37 @@ class AsignacionService(
             val area = areaService.findById(dto.areaId)
                 ?: throw IllegalArgumentException("Área con id ${dto.areaId} no encontrada.")
             
-            // Validar que el dispositivo no esté asignado a otra asignación activa
+            // Validar que el dispositivo no esté asignado a otra asignación ACTIVA
+            // PERMITIR reasignaciones si la asignación anterior está FINALIZADA o INACTIVA
             val asignacionActiva = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
                 dto.dispositivoId,
                 Asignacion.EstadoAsignacion.ACTIVA
             )
             if (asignacionActiva != null) {
-                throw IllegalArgumentException("El dispositivo ya está asignado a otra asignación activa.")
+                throw IllegalArgumentException("El dispositivo ya está asignado a otra asignación activa. Debe finalizar la asignación actual antes de crear una nueva.")
             }
             
-            // Validar que los accesorios existen
+            // Validar que los accesorios existen, están disponibles y no están asignados activamente
             val accesorios = dto.accesorios?.mapNotNull { accesorioId ->
                 val accesorio = accesorioRepository.findById(accesorioId).orElse(null)
                 if (accesorio == null) {
                     throw IllegalArgumentException("Accesorio con id $accesorioId no encontrado.")
                 }
+                
+                // Verificar que el accesorio esté disponible
+                if (accesorio.estado != com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE) {
+                    throw IllegalArgumentException("El accesorio con id $accesorioId no está disponible. Estado actual: ${accesorio.estado}")
+                }
+                
+                // Verificar que el accesorio no esté en una asignación activa
+                val asignacionActivaAccesorio = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+                    accesorio.dispositivoId,
+                    Asignacion.EstadoAsignacion.ACTIVA
+                )
+                if (asignacionActivaAccesorio != null) {
+                    throw IllegalArgumentException("El accesorio con id $accesorioId ya está asignado a otra asignación activa.")
+                }
+                
                 accesorio
             }
             
@@ -107,12 +123,19 @@ class AsignacionService(
                 throw IllegalArgumentException("No se permite cambiar el dispositivo o el empleado de la asignación.")
             }
             
-            // Validar que los accesorios existen
+            // Validar que los accesorios existen y están disponibles
             val nuevosAccesorios = dto.accesorios?.mapNotNull { accesorioId ->
                 val accesorio = accesorioRepository.findById(accesorioId).orElse(null)
                 if (accesorio == null) {
                     throw IllegalArgumentException("Accesorio con id $accesorioId no encontrado.")
                 }
+                
+                // Verificar que el accesorio esté disponible (excepto si ya está en la asignación actual)
+                val accesorioYaEnAsignacion = existente.accesorios?.any { it.dispositivoId == accesorio.dispositivoId } == true
+                if (!accesorioYaEnAsignacion && accesorio.estado != com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE) {
+                    throw IllegalArgumentException("El accesorio con id $accesorioId no está disponible. Estado actual: ${accesorio.estado}")
+                }
+                
                 accesorio
             }
             
@@ -154,38 +177,52 @@ class AsignacionService(
             }
             val fechaFinalizacion = java.time.LocalDate.now()
             
-            // Actualizar estado del dispositivo
-            val asignacionActivaDispositivo = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
-                asignacion.dispositivo.dispositivoId,
-                Asignacion.EstadoAsignacion.ACTIVA
-            )
-            val nuevoEstadoDispositivo = if (asignacionActivaDispositivo != null && asignacionActivaDispositivo.asignacionId != asignacion.asignacionId) {
-                com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.ASIGNADO
-            } else {
-                com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
-            }
-            
-            // Actualizar el estado del dispositivo usando el método público del servicio
-            dispositivoService.actualizarEstado(
-                asignacion.dispositivo.dispositivoId,
-                nuevoEstadoDispositivo
-            )
-            
-            // Actualizar estado de los accesorios a DISPONIBLE
-            try {
-                asignacion.accesorios?.forEach { accesorio ->
-                    accesorioService.actualizarEstado(accesorio.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE)
-                }
-            } catch (e: Exception) {
-                println("Error al actualizar estado de los accesorios después de finalizar asignación: ${e.message}")
-            }
-            
+            // FINALIZAR LA ASIGNACIÓN PRIMERO
             val asignacionFinalizada = asignacion.copy(
                 estado = Asignacion.EstadoAsignacion.FINALIZADA,
                 fechaFinalizacion = fechaFinalizacion,
                 motivoFinalizacion = motivo
             )
             val saved = asignacionRepository.save(asignacionFinalizada)
+            
+            // DESPUÉS DE FINALIZAR, VERIFICAR SI EL DISPOSITIVO TIENE OTRAS ASIGNACIONES ACTIVAS
+            val otrasAsignacionesActivas = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+                asignacion.dispositivo.dispositivoId,
+                Asignacion.EstadoAsignacion.ACTIVA
+            )
+            
+            // Si no hay otras asignaciones activas, el dispositivo queda DISPONIBLE
+            if (otrasAsignacionesActivas == null) {
+                try {
+                    dispositivoService.actualizarEstado(
+                        asignacion.dispositivo.dispositivoId,
+                        com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
+                    )
+                } catch (e: Exception) {
+                    println("Error al actualizar estado del dispositivo después de finalizar asignación: ${e.message}")
+                }
+            }
+            
+            // ACTUALIZAR ESTADO DE LOS ACCESORIOS
+            try {
+                asignacion.accesorios?.forEach { accesorio ->
+                    // Verificar si el accesorio tiene otras asignaciones activas
+                    val otrasAsignacionesAccesorio = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+                        accesorio.dispositivoId,
+                        Asignacion.EstadoAsignacion.ACTIVA
+                    )
+                    
+                    // Si no hay otras asignaciones activas para el accesorio, queda DISPONIBLE
+                    if (otrasAsignacionesAccesorio == null) {
+                        accesorioService.actualizarEstado(
+                            accesorio.dispositivoId,
+                            com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error al actualizar estado de los accesorios después de finalizar asignación: ${e.message}")
+            }
             
             saved
         } catch (e: Exception) {
@@ -203,23 +240,47 @@ class AsignacionService(
                 throw IllegalArgumentException("La asignación ya está inactiva.")
             }
             
+            // DESACTIVAR LA ASIGNACIÓN PRIMERO
             val asignacionDesactivada = asignacion.copy(
                 estado = Asignacion.EstadoAsignacion.INACTIVA,
                 motivoFinalizacion = motivo
             )
             val saved = asignacionRepository.save(asignacionDesactivada)
             
-            // Actualizar estado del dispositivo a DISPONIBLE cuando se desactiva
-            try {
-                dispositivoService.actualizarEstado(asignacion.dispositivo.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE)
-            } catch (e: Exception) {
-                println("Error al actualizar estado del dispositivo después de desactivar asignación: ${e.message}")
+            // DESPUÉS DE DESACTIVAR, VERIFICAR SI EL DISPOSITIVO TIENE OTRAS ASIGNACIONES ACTIVAS
+            val otrasAsignacionesActivas = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+                asignacion.dispositivo.dispositivoId,
+                Asignacion.EstadoAsignacion.ACTIVA
+            )
+            
+            // Si no hay otras asignaciones activas, el dispositivo queda DISPONIBLE
+            if (otrasAsignacionesActivas == null) {
+                try {
+                    dispositivoService.actualizarEstado(
+                        asignacion.dispositivo.dispositivoId,
+                        com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
+                    )
+                } catch (e: Exception) {
+                    println("Error al actualizar estado del dispositivo después de desactivar asignación: ${e.message}")
+                }
             }
             
-            // Actualizar estado de los accesorios a DISPONIBLE
+            // ACTUALIZAR ESTADO DE LOS ACCESORIOS
             try {
                 asignacion.accesorios?.forEach { accesorio ->
-                    accesorioService.actualizarEstado(accesorio.dispositivoId, com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE)
+                    // Verificar si el accesorio tiene otras asignaciones activas
+                    val otrasAsignacionesAccesorio = asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+                        accesorio.dispositivoId,
+                        Asignacion.EstadoAsignacion.ACTIVA
+                    )
+                    
+                    // Si no hay otras asignaciones activas para el accesorio, queda DISPONIBLE
+                    if (otrasAsignacionesAccesorio == null) {
+                        accesorioService.actualizarEstado(
+                            accesorio.dispositivoId,
+                            com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo.DISPONIBLE
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 println("Error al actualizar estado de los accesorios después de desactivar asignación: ${e.message}")
@@ -254,4 +315,56 @@ class AsignacionService(
     fun findFinalizadas(): List<Asignacion> = findAll().filter { it.estado == Asignacion.EstadoAsignacion.FINALIZADA }
 
     fun findInactivas(): List<Asignacion> = findAll().filter { it.estado == Asignacion.EstadoAsignacion.INACTIVA }
+
+    // NUEVOS MÉTODOS PARA CONSULTAR HISTORIAL
+    
+    /**
+     * Obtiene el historial completo de asignaciones de un dispositivo
+     */
+    fun findHistorialByDispositivoId(dispositivoId: Long): List<Asignacion> {
+        return asignacionRepository.findByDispositivo_DispositivoId(dispositivoId)
+            .sortedByDescending { it.fechaAsignacion }
+    }
+    
+    /**
+     * Obtiene la asignación activa actual de un dispositivo
+     */
+    fun findAsignacionActivaByDispositivoId(dispositivoId: Long): Asignacion? {
+        return asignacionRepository.findByDispositivo_DispositivoIdAndEstado(
+            dispositivoId,
+            Asignacion.EstadoAsignacion.ACTIVA
+        )
+    }
+    
+    /**
+     * Verifica si un dispositivo está disponible para asignación
+     */
+    fun isDispositivoDisponible(dispositivoId: Long): Boolean {
+        val asignacionActiva = findAsignacionActivaByDispositivoId(dispositivoId)
+        return asignacionActiva == null
+    }
+    
+    /**
+     * Obtiene todas las asignaciones de un empleado (activas, finalizadas e inactivas)
+     */
+    fun findHistorialByEmpleadoId(empleadoId: Long): List<Asignacion> {
+        return findAll().filter { it.empleado.id == empleadoId }
+            .sortedByDescending { it.fechaAsignacion }
+    }
+    
+    /**
+     * Obtiene las asignaciones activas de un empleado
+     */
+    fun findAsignacionesActivasByEmpleadoId(empleadoId: Long): List<Asignacion> {
+        return findByEmpleadoIdAndEstado(empleadoId, Asignacion.EstadoAsignacion.ACTIVA)
+    }
+    
+    /**
+     * Obtiene el historial de asignaciones finalizadas de un dispositivo
+     */
+    fun findAsignacionesFinalizadasByDispositivoId(dispositivoId: Long): List<Asignacion> {
+        return asignacionRepository.findByDispositivo_DispositivoId(dispositivoId)
+            .filter { it.estado == Asignacion.EstadoAsignacion.FINALIZADA }
+            .sortedByDescending { it.fechaFinalizacion }
+    }
 } 
