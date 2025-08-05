@@ -52,7 +52,9 @@ function Login() {
           navigate('/panel-jefe-directo');
         } else if (data.rol === 'Empleado') {
           navigate('/panel-empleado');
-        } else {
+        } else if (data.rol === 'InventoryManager') {
+          navigate('/panel-inventory-manager');
+        }else {
           navigate('/');
         }
       }, 1200);

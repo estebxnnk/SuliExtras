@@ -28,6 +28,15 @@ import PanelEmpleado from './pages/Empleado/PanelEmpleado';
 import MisRegistros from './pages/Empleado/MisRegistros';
 import CrearRegistroHorasEmpleado from './pages/Empleado/CrearRegistroHorasEmpleado';
 
+// Rol InventoryManager
+import PanelInventoryManager from './pages/InventoriManager/PanelInventoryManager';
+import GestionarDispositivos from './pages/InventoriManager/GestionarDispositivos';
+import GestionarCategorias from './pages/InventoriManager/GestionarCategorias';
+import GestionarSedes from './pages/InventoriManager/GestionarSedes';
+import ReportesInventario from './pages/InventoriManager/ReportesInventario';
+import EstadisticasDispositivos from './pages/InventoriManager/EstadisticasDispositivos';
+
+
 function App() {
   return (
     <Router>
@@ -104,6 +113,36 @@ function App() {
         <Route path="/mis-registros" element={
           <ProtectedRoute allowedRoles={['Empleado']}>
             <MisRegistros />
+          </ProtectedRoute>
+        } />
+        <Route path="/panel-inventory-manager" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <PanelInventoryManager />
+          </ProtectedRoute>
+        } />
+        <Route path="/dispositivos" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <GestionarDispositivos />
+          </ProtectedRoute>
+        } />
+        <Route path="/categorias" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <GestionarCategorias />
+          </ProtectedRoute>
+        } />
+        <Route path="/sedes" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <GestionarSedes />
+          </ProtectedRoute>
+        } />
+        <Route path="/reportes-inventario" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <ReportesInventario />
+          </ProtectedRoute>
+        } />
+        <Route path="/estadisticas-dispositivos" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <EstadisticasDispositivos />
           </ProtectedRoute>
         } />
       </Routes>
