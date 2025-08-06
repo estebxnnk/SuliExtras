@@ -146,7 +146,8 @@ function GestionarDispositivos() {
   const [filters, setFilters] = useState({
     estado: '',
     sede: '',
-    funcional: ''
+    funcional: '',
+    tipoDispositivo: ''
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -445,7 +446,7 @@ function GestionarDispositivos() {
       (!filters.estado || dispositivo.estado === filters.estado) &&
       (!filters.sede || dispositivo.sede?.sedeId?.toString() === filters.sede) &&
       (!filters.funcional || dispositivo.funcional?.toString() === filters.funcional) &&
-      (!filters.tipoDispositivo || obtenerTipoDispositivo(dispositivo) === filters.tipoDispositivo)
+      (!filters.tipoDispositivo || (dispositivo.tipo_dispositivo || dispositivo.tipo || 'DESCONOCIDO') === filters.tipoDispositivo)
     );
 
     return matchesSearch && matchesFilters;
