@@ -51,9 +51,9 @@ function ReportesInventario() {
     setLoading(true);
     try {
       const [dispositivosRes, categoriasRes, sedesRes] = await Promise.all([
-        fetch('http://localhost:8000/api/dispositivos'),
-        fetch('http://localhost:8000/api/categorias'),
-        fetch('http://localhost:8000/api/sedes')
+        fetch('http://localhost:8080/api/dispositivos'),
+        fetch('http://localhost:8080/api/categorias'),
+        fetch('http://localhost:8080/api/sedes')
       ]);
       
       const dispositivosData = await dispositivosRes.json();

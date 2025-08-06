@@ -272,19 +272,19 @@ function EstadisticasDispositivos() {
           </Typography>
         </Box>
 
-                 {/* Filtros */}
-         <Card sx={{ 
-           background: 'rgba(255,255,255,0.95)', 
-           backdropFilter: 'blur(10px)',
-           borderRadius: 3,
-           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-           mb: 3
-         }}>
-           <CardContent>
+        {/* Filtros */}
+        <Card sx={{ 
+          background: 'rgba(255,255,255,0.95)', 
+          backdropFilter: 'blur(10px)',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          mb: 3
+        }}>
+          <CardContent>
              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                <Typography variant="h6" fontWeight={600}>
                  Filtros y Controles
-               </Typography>
+            </Typography>
                <Box sx={{ display: 'flex', gap: 1 }}>
                  <Tooltip title="Mostrar/Ocultar Filtros">
                    <IconButton 
@@ -308,43 +308,43 @@ function EstadisticasDispositivos() {
              </Box>
              
              <Collapse in={showFilters}>
-               <Grid container spacing={2}>
-                 <Grid item xs={12} md={6}>
-                   <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                     <InputLabel>Sede</InputLabel>
-                     <Select
-                       value={filtroSede}
-                       onChange={(e) => setFiltroSede(e.target.value)}
-                     >
-                       <MenuItem value="">Todas las sedes</MenuItem>
-                       {sedes.map((sede) => (
-                         <MenuItem key={sede.sedeId} value={sede.sedeId}>
-                           {sede.nombre}
-                         </MenuItem>
-                       ))}
-                     </Select>
-                   </FormControl>
-                 </Grid>
-                 <Grid item xs={12} md={6}>
-                   <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                     <InputLabel>Categoría</InputLabel>
-                     <Select
-                       value={filtroCategoria}
-                       onChange={(e) => setFiltroCategoria(e.target.value)}
-                     >
-                       <MenuItem value="">Todas las categorías</MenuItem>
-                       {categorias.map((categoria) => (
-                         <MenuItem key={categoria.categoriaId} value={categoria.categoriaId}>
-                           {categoria.nombre}
-                         </MenuItem>
-                       ))}
-                     </Select>
-                   </FormControl>
-                 </Grid>
-               </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                  <InputLabel>Sede</InputLabel>
+                  <Select
+                    value={filtroSede}
+                    onChange={(e) => setFiltroSede(e.target.value)}
+                  >
+                    <MenuItem value="">Todas las sedes</MenuItem>
+                    {sedes.map((sede) => (
+                      <MenuItem key={sede.sedeId} value={sede.sedeId}>
+                        {sede.nombre}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                  <InputLabel>Categoría</InputLabel>
+                  <Select
+                    value={filtroCategoria}
+                    onChange={(e) => setFiltroCategoria(e.target.value)}
+                  >
+                    <MenuItem value="">Todas las categorías</MenuItem>
+                    {categorias.map((categoria) => (
+                      <MenuItem key={categoria.categoriaId} value={categoria.categoriaId}>
+                        {categoria.nombre}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
              </Collapse>
-           </CardContent>
-         </Card>
+          </CardContent>
+        </Card>
 
         {/* Métricas principales */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -387,20 +387,20 @@ function EstadisticasDispositivos() {
         </Grid>
 
                  {/* Estadísticas Detalladas */}
-         <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
            {/* Distribución por Estado */}
-           <Grid item xs={12} md={6}>
-             <Card sx={{ 
-               background: 'rgba(255,255,255,0.95)', 
-               backdropFilter: 'blur(10px)',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               height: '100%'
-             }}>
-               <CardContent>
-                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                   Distribución por Estado
-                 </Typography>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ 
+              background: 'rgba(255,255,255,0.95)', 
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              height: '100%'
+            }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                  Distribución por Estado
+                </Typography>
                  <Stack spacing={2}>
                    {datosEstado.map((item, index) => (
                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -418,23 +418,23 @@ function EstadisticasDispositivos() {
                      </Box>
                    ))}
                  </Stack>
-               </CardContent>
-             </Card>
-           </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
 
            {/* Estado Funcional */}
-           <Grid item xs={12} md={6}>
-             <Card sx={{ 
-               background: 'rgba(255,255,255,0.95)', 
-               backdropFilter: 'blur(10px)',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               height: '100%'
-             }}>
-               <CardContent>
-                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                   Estado Funcional
-                 </Typography>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ 
+              background: 'rgba(255,255,255,0.95)', 
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              height: '100%'
+            }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                  Estado Funcional
+                </Typography>
                  <Stack spacing={2}>
                    {datosFuncionalidad.map((item, index) => (
                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -452,23 +452,23 @@ function EstadisticasDispositivos() {
                      </Box>
                    ))}
                  </Stack>
-               </CardContent>
-             </Card>
-           </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
 
            {/* Dispositivos por Categoría */}
-           <Grid item xs={12} md={6}>
-             <Card sx={{ 
-               background: 'rgba(255,255,255,0.95)', 
-               backdropFilter: 'blur(10px)',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               height: '100%'
-             }}>
-               <CardContent>
-                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                   Dispositivos por Categoría
-                 </Typography>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ 
+              background: 'rgba(255,255,255,0.95)', 
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              height: '100%'
+            }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                  Dispositivos por Categoría
+                </Typography>
                  <Stack spacing={2}>
                    {datosPorCategoria.map((item, index) => (
                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -477,23 +477,23 @@ function EstadisticasDispositivos() {
                      </Box>
                    ))}
                  </Stack>
-               </CardContent>
-             </Card>
-           </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
 
            {/* Dispositivos por Sede */}
-           <Grid item xs={12} md={6}>
-             <Card sx={{ 
-               background: 'rgba(255,255,255,0.95)', 
-               backdropFilter: 'blur(10px)',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               height: '100%'
-             }}>
-               <CardContent>
-                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                   Dispositivos por Sede
-                 </Typography>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ 
+              background: 'rgba(255,255,255,0.95)', 
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              height: '100%'
+            }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                  Dispositivos por Sede
+                </Typography>
                  <Stack spacing={2}>
                    {datosPorSede.map((item, index) => (
                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -502,26 +502,26 @@ function EstadisticasDispositivos() {
                      </Box>
                    ))}
                  </Stack>
-               </CardContent>
-             </Card>
-           </Grid>
-         </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
 
                  {/* Dispositivos que requieren atención - Resumen */}
          {dispositivosAtencion.length > 0 && (
-           <Card sx={{ 
-             background: 'rgba(255,255,255,0.95)', 
-             backdropFilter: 'blur(10px)',
-             borderRadius: 3,
+        <Card sx={{ 
+          background: 'rgba(255,255,255,0.95)', 
+          backdropFilter: 'blur(10px)',
+          borderRadius: 3,
              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
              mb: 3
-           }}>
-             <CardContent>
+        }}>
+          <CardContent>
                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                 <ErrorIcon sx={{ color: '#f44336', mr: 1 }} />
-                 <Typography variant="h6" fontWeight={600}>
-                   Dispositivos que Requieren Atención ({dispositivosAtencion.length})
-                 </Typography>
+              <ErrorIcon sx={{ color: '#f44336', mr: 1 }} />
+              <Typography variant="h6" fontWeight={600}>
+                Dispositivos que Requieren Atención ({dispositivosAtencion.length})
+              </Typography>
                </Box>
                <Grid container spacing={2}>
                  <Grid item xs={12} sm={6} md={3}>
@@ -583,13 +583,13 @@ function EstadisticasDispositivos() {
                    size="small"
                  />
                </Box>
-             </Box>
-             
+            </Box>
+            
              <Box sx={{ flex: 1, overflow: 'hidden' }}>
                <TableContainer sx={{ height: '100%', maxHeight: 'calc(100vh - 400px)' }}>
                  <Table stickyHeader size={isMobile ? "small" : "medium"}>
-                   <TableHead>
-                     <TableRow>
+                  <TableHead>
+                    <TableRow>
                        <TableCell sx={{ minWidth: 50, width: 50 }}>
                          <Tooltip title="Expandir/Colapsar">
                            <span>Detalles</span>
@@ -609,9 +609,9 @@ function EstadisticasDispositivos() {
                        <TableCell sx={{ minWidth: 100 }}><strong>Costo</strong></TableCell>
                        <TableCell sx={{ minWidth: 120 }}><strong>Fecha Adquisición</strong></TableCell>
                        <TableCell sx={{ minWidth: 150 }}><strong>Observaciones</strong></TableCell>
-                     </TableRow>
-                   </TableHead>
-                   <TableBody>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                      {dispositivosFiltrados
                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                        .map((dispositivo) => (
@@ -627,8 +627,8 @@ function EstadisticasDispositivos() {
                                }
                              </IconButton>
                            </TableCell>
-                           <TableCell>
-                             <Typography variant="body2" fontWeight={600}>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
                                {dispositivo.item || '-'}
                              </Typography>
                            </TableCell>
@@ -650,15 +650,15 @@ function EstadisticasDispositivos() {
                            <TableCell>
                              <Typography variant="body2">
                                {dispositivo.marca || '-'}
-                             </Typography>
+                          </Typography>
                            </TableCell>
                            <TableCell>
                              <Typography variant="body2">
                                {dispositivo.tipo || '-'}
-                             </Typography>
-                           </TableCell>
-                           <TableCell>
-                             <Chip 
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
                                label={dispositivo.categoria?.nombre || 'Sin categoría'} 
                                size="small"
                                color="default"
@@ -675,21 +675,21 @@ function EstadisticasDispositivos() {
                              <Chip 
                                label={getEstadoLabel(dispositivo.estado)} 
                                color={getEstadoColor(dispositivo.estado)}
-                               size="small"
-                             />
-                           </TableCell>
+                            size="small"
+                          />
+                        </TableCell>
                            <TableCell>
                              <Typography variant="body2">
                                {dispositivo.clasificacion || '-'}
                              </Typography>
-                           </TableCell>
-                           <TableCell>
-                             <Chip 
-                               label={dispositivo.funcional ? 'Sí' : 'No'} 
-                               color={dispositivo.funcional ? 'success' : 'error'}
-                               size="small"
-                             />
-                           </TableCell>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={dispositivo.funcional ? 'Sí' : 'No'} 
+                            color={dispositivo.funcional ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
                            <TableCell>
                              <Typography variant="body2" fontWeight={600}>
                                {formatCurrency(dispositivo.costo)}
@@ -700,7 +700,7 @@ function EstadisticasDispositivos() {
                                {formatDate(dispositivo.fechaAdquisicion)}
                              </Typography>
                            </TableCell>
-                           <TableCell>
+                        <TableCell>
                              <Tooltip title={dispositivo.observaciones || 'Sin observaciones'}>
                                <Typography 
                                  variant="body2" 
@@ -772,14 +772,14 @@ function EstadisticasDispositivos() {
                                  </Grid>
                                </Box>
                              </Collapse>
-                           </TableCell>
-                         </TableRow>
+                        </TableCell>
+                      </TableRow>
                        </React.Fragment>
-                     ))}
-                   </TableBody>
-                 </Table>
-               </TableContainer>
-             </Box>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              </Box>
              
              {/* Paginación */}
              <TablePagination
@@ -797,8 +797,8 @@ function EstadisticasDispositivos() {
                  backgroundColor: 'rgba(0,0,0,0.02)'
                }}
              />
-           </CardContent>
-         </Card>
+          </CardContent>
+        </Card>
 
         {/* Snackbar */}
         <Snackbar

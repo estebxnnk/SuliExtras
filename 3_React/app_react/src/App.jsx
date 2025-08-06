@@ -31,6 +31,8 @@ import CrearRegistroHorasEmpleado from './pages/Empleado/CrearRegistroHorasEmple
 // Rol InventoryManager
 import PanelInventoryManager from './pages/InventoriManager/PanelInventoryManager';
 import GestionarDispositivos from './pages/InventoriManager/GestionarDispositivos';
+// Componente
+import AsignacionesDialog from './pages/InventoriManager/components/AsignacionesDialog';
 import GestionarCategorias from './pages/InventoriManager/GestionarCategorias';
 import GestionarSedes from './pages/InventoriManager/GestionarSedes';
 import ReportesInventario from './pages/InventoriManager/ReportesInventario';

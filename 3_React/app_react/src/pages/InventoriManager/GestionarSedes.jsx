@@ -53,7 +53,7 @@ function GestionarSedes() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/sedes');
+      const response = await fetch('http://localhost:8080/api/sedes');
       const data = await response.json();
       setSedes(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -98,8 +98,8 @@ function GestionarSedes() {
   const handleSubmit = async () => {
     try {
       const url = editingSede 
-        ? `http://localhost:8000/api/sedes/${editingSede.sedeId}`
-        : 'http://localhost:8000/api/sedes';
+        ? `http://localhost:8080/api/sedes/${editingSede.sedeId}`
+        : 'http://localhost:8080/api/sedes';
       
       const method = editingSede ? 'PUT' : 'POST';
       
@@ -131,7 +131,7 @@ function GestionarSedes() {
   const handleDelete = async (sedeId) => {
     if (window.confirm('¿Está seguro de que desea eliminar esta sede?')) {
       try {
-        const response = await fetch(`http://localhost:8000/api/sedes/${sedeId}`, {
+        const response = await fetch(`http://localhost:8080/api/sedes/${sedeId}`, {
           method: 'DELETE'
         });
 

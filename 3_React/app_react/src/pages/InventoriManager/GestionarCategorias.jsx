@@ -50,7 +50,7 @@ function GestionarCategorias() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/categorias');
+      const response = await fetch('http://localhost:8080/api/categorias');
       const data = await response.json();
       setCategorias(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -89,8 +89,8 @@ function GestionarCategorias() {
   const handleSubmit = async () => {
     try {
       const url = editingCategoria 
-        ? `http://localhost:8000/api/categorias/${editingCategoria.categoriaId}`
-        : 'http://localhost:8000/api/categorias';
+        ? `http://localhost:8080/api/categorias/${editingCategoria.categoriaId}`
+        : 'http://localhost:8080/api/categorias';
       
       const method = editingCategoria ? 'PUT' : 'POST';
       
@@ -122,7 +122,7 @@ function GestionarCategorias() {
   const handleDelete = async (categoriaId) => {
     if (window.confirm('¿Está seguro de que desea eliminar esta categoría?')) {
       try {
-        const response = await fetch(`http://localhost:8000/api/categorias/${categoriaId}`, {
+        const response = await fetch(`http://localhost:8080/api/categorias/${categoriaId}`, {
           method: 'DELETE'
         });
 

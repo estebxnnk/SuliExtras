@@ -1,39 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  Grid,
-  Alert,
-  Snackbar,
-  Fab,
-  Tooltip,
-  InputAdornment,
-  Stack,
-  Divider,
-  Collapse,
-  Switch,
-  FormControlLabel,
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Grid,
+  Alert,
+  Snackbar,
+  Fab,
+  Tooltip,
+  InputAdornment,
+  Stack,
+  Divider,
+  Collapse,
+  Switch,
+  FormControlLabel,
   CircularProgress,
   TablePagination,
   Avatar,
@@ -71,10 +71,22 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  Build as BuildIcon
+  Build as BuildIcon,
+  Tablet as TabletIcon,
+  Monitor as MonitorIcon,
+  Scanner as ScannerIcon,
+  Videocam as VideocamIcon,
+  Camera as CameraIcon,
+  Tv as TvIcon,
+  Speaker as SpeakerIcon,
+  Security as SecurityIcon,
+  Mouse as MouseIcon,
+  Keyboard as KeyboardIcon,
+  Headset as HeadsetIcon
 } from '@mui/icons-material';
 
 import NavbarInventoryManager from './NavbarInventoryManager';
+import AsignacionesDialog from './components/AsignacionesDialog';
 
 // Simulación de DatePicker
 const DatePicker = ({ value, onChange, label, renderInput }) => {
@@ -102,15 +114,15 @@ const LocalizationProvider = ({ children }) => children;
 const API_BASE_URL = 'http://localhost:8080/api';
 
 function GestionarDispositivos() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
-  
+  
   // Estados principales
-  const [dispositivos, setDispositivos] = useState([]);
-  const [sedes, setSedes] = useState([]);
+  const [dispositivos, setDispositivos] = useState([]);
+  const [sedes, setSedes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
   // Estados de UI
@@ -122,6 +134,12 @@ function GestionarDispositivos() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [expandedDispositivo, setExpandedDispositivo] = useState(null);
   
+  // Estados para asignaciones
+  const [openAsignacionesDialog, setOpenAsignacionesDialog] = useState(false);
+  const [selectedDispositivoAsignaciones, setSelectedDispositivoAsignaciones] = useState(null);
+  const [asignaciones, setAsignaciones] = useState([]);
+  const [loadingAsignaciones, setLoadingAsignaciones] = useState(false);
+
   // Estados de paginación y filtros
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -133,28 +151,28 @@ function GestionarDispositivos() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Form state mejorado
-  const [formData, setFormData] = useState({
-    // Información General
+  const [formData, setFormData] = useState({
+    // Información General
     nombreDispositivo: '',
-    codigoActivo: '', 
-    serial: '',
-    modelo: '',
-    marca: '',
-    tipo: '',
-    
-    // Clasificación y Estado
-    estado: 'DISPONIBLE',
-    clasificacion: '',
-    funcional: true,
-    
-    // Asignación y Ubicación
-    sedeId: '',
+    codigoActivo: '', 
+    serial: '',
+    modelo: '',
+    marca: '',
+    tipo: '',
+    
+    // Clasificación y Estado
+    estado: 'DISPONIBLE',
+    clasificacion: '',
+    funcional: true,
+    
+    // Asignación y Ubicación
+    sedeId: '',
     ubicacionDetallada: '',
     empleadoAsignadoId: '',
-    
-    // Información Financiera
-    costo: '',
-    fechaAdquisicion: null,
+    
+    // Información Financiera
+    costo: '',
+    fechaAdquisicion: null,
     proveedor: '',
     numeroFactura: '',
     fechaFinGarantia: null,
@@ -166,12 +184,12 @@ function GestionarDispositivos() {
     almacenamiento: '',
     direccionIP: '',
     direccionMAC: '',
-    
-    // Adicional
-    observaciones: ''
-  });
+    
+    // Adicional
+    observaciones: ''
+  });
 
-  const estados = [
+  const estados = [
     { value: 'DISPONIBLE', label: 'Disponible', color: 'success', icon: <CheckCircleIcon /> },
     { value: 'ASIGNADO', label: 'Asignado', color: 'primary', icon: <AssignmentIcon /> },
     { value: 'MANTENIMIENTO', label: 'Mantenimiento', color: 'warning', icon: <BuildIcon /> },
@@ -223,6 +241,23 @@ function GestionarDispositivos() {
     }
   };
 
+  const fetchAsignaciones = async (dispositivoId) => {
+    setLoadingAsignaciones(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/asignaciones/dispositivo/${dispositivoId}`);
+      if (!response.ok) {
+        throw new Error('Error al cargar las asignaciones');
+      }
+      const data = await response.json();
+      setAsignaciones(data);
+    } catch (error) {
+      console.error('Error fetching asignaciones:', error);
+      setSnackbar({ open: true, message: 'Error al cargar las asignaciones', severity: 'error' });
+      setAsignaciones([]);
+    }
+    setLoadingAsignaciones(false);
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -238,28 +273,28 @@ function GestionarDispositivos() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const handleOpenDialog = (dispositivo = null) => {
-    if (dispositivo) {
-      setEditingDispositivo(dispositivo);
-      setFormData({
-        nombreDispositivo: dispositivo.item || '',
-        codigoActivo: dispositivo.codigoActivo || '',
-        serial: dispositivo.serial || '',
-        modelo: dispositivo.modelo || '',
-        marca: dispositivo.marca || '',
-        tipo: dispositivo.tipo || '',
-        estado: dispositivo.estado || 'DISPONIBLE',
-        clasificacion: dispositivo.clasificacion || '',
-        funcional: dispositivo.funcional !== undefined ? dispositivo.funcional : true,
-        sedeId: dispositivo.sede?.sedeId || '',
+  const handleOpenDialog = (dispositivo = null) => {
+    if (dispositivo) {
+      setEditingDispositivo(dispositivo);
+      setFormData({
+        nombreDispositivo: dispositivo.item || '',
+        codigoActivo: dispositivo.codigoActivo || '',
+        serial: dispositivo.serial || '',
+        modelo: dispositivo.modelo || '',
+        marca: dispositivo.marca || '',
+        tipo: dispositivo.tipo || '',
+        estado: dispositivo.estado || 'DISPONIBLE',
+        clasificacion: dispositivo.clasificacion || '',
+        funcional: dispositivo.funcional !== undefined ? dispositivo.funcional : true,
+        sedeId: dispositivo.sede?.sedeId || '',
         ubicacionDetallada: dispositivo.ubicacionDetallada || '',
         empleadoAsignadoId: dispositivo.empleadoAsignado?.empleadoId || '',
-        costo: dispositivo.costo || '',
-        fechaAdquisicion: dispositivo.fechaAdquisicion ? new Date(dispositivo.fechaAdquisicion) : null,
+        costo: dispositivo.costo || '',
+        fechaAdquisicion: dispositivo.fechaAdquisicion ? new Date(dispositivo.fechaAdquisicion) : null,
         proveedor: dispositivo.proveedor || '',
         numeroFactura: dispositivo.numeroFactura || '',
         fechaFinGarantia: dispositivo.fechaFinGarantia ? new Date(dispositivo.fechaFinGarantia) : null,
@@ -269,26 +304,26 @@ function GestionarDispositivos() {
         almacenamiento: dispositivo.almacenamiento || '',
         direccionIP: dispositivo.direccionIP || '',
         direccionMAC: dispositivo.direccionMAC || '',
-        observaciones: dispositivo.observaciones || ''
-      });
-    } else {
-      setEditingDispositivo(null);
-      setFormData({
-        nombreDispositivo: '', codigoActivo: '', serial: '', modelo: '', marca: '', tipo: '',
+        observaciones: dispositivo.observaciones || ''
+      });
+    } else {
+      setEditingDispositivo(null);
+      setFormData({
+        nombreDispositivo: '', codigoActivo: '', serial: '', modelo: '', marca: '', tipo: '',
         sedeId: '', empleadoAsignadoId: '', ubicacionDetallada: '',
-        estado: 'DISPONIBLE', clasificacion: '', funcional: true,
-        costo: '', fechaAdquisicion: null, proveedor: '', numeroFactura: '', fechaFinGarantia: null,
+        estado: 'DISPONIBLE', clasificacion: '', funcional: true,
+        costo: '', fechaAdquisicion: null, proveedor: '', numeroFactura: '', fechaFinGarantia: null,
         sistemaOperativo: '', procesador: '', memoria: '', almacenamiento: '', direccionIP: '', direccionMAC: '',
-        observaciones: ''
-      });
-    }
-    setOpenDialog(true);
-  };
+        observaciones: ''
+      });
+    }
+    setOpenDialog(true);
+  };
 
   const handleOpenViewDialog = (dispositivo) => {
     setViewingDispositivo(dispositivo);
     setOpenViewDialog(true);
-  };
+  };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -297,7 +332,19 @@ function GestionarDispositivos() {
     setViewingDispositivo(null);
   };
 
-  const handleSubmit = async () => {
+  const handleOpenAsignacionesDialog = async (dispositivo) => {
+    setSelectedDispositivoAsignaciones(dispositivo);
+    setOpenAsignacionesDialog(true);
+    await fetchAsignaciones(dispositivo.dispositivoId);
+  };
+
+  const handleCloseAsignacionesDialog = () => {
+    setOpenAsignacionesDialog(false);
+    setSelectedDispositivoAsignaciones(null);
+    setAsignaciones([]);
+  };
+
+  const handleSubmit = async () => {
     setSubmitting(true);
     try {
       const dispositivoData = {
@@ -327,14 +374,14 @@ function GestionarDispositivos() {
         observaciones: formData.observaciones
       };
 
-      const url = editingDispositivo 
+      const url = editingDispositivo 
         ? `${API_BASE_URL}/dispositivos/${editingDispositivo.dispositivoId}`
         : `${API_BASE_URL}/dispositivos`;
       
-      const method = editingDispositivo ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
+      const method = editingDispositivo ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -345,46 +392,51 @@ function GestionarDispositivos() {
         throw new Error('Error al guardar el dispositivo');
       }
 
-      setSnackbar({ 
-        open: true, 
-        message: editingDispositivo ? 'Dispositivo actualizado exitosamente' : 'Dispositivo creado exitosamente', 
-        severity: 'success' 
-      });
-      handleCloseDialog();
-      fetchData();
-    } catch (error) {
-      console.error('Error:', error);
-      setSnackbar({ open: true, message: 'Error al guardar el dispositivo', severity: 'error' });
-    }
+        setSnackbar({ 
+          open: true, 
+          message: editingDispositivo ? 'Dispositivo actualizado exitosamente' : 'Dispositivo creado exitosamente', 
+          severity: 'success' 
+        });
+        handleCloseDialog();
+        fetchData();
+    } catch (error) {
+      console.error('Error:', error);
+      setSnackbar({ open: true, message: 'Error al guardar el dispositivo', severity: 'error' });
+    }
     setSubmitting(false);
-  };
+  };
 
-  const handleDelete = async (dispositivoId) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este dispositivo?')) {
-      try {
+  const handleDelete = async (dispositivoId) => {
+    if (window.confirm('¿Está seguro de que desea eliminar este dispositivo?')) {
+      try {
         const response = await fetch(`${API_BASE_URL}/dispositivos/${dispositivoId}`, {
-          method: 'DELETE'
-        });
+          method: 'DELETE'
+        });
 
         if (!response.ok) {
           throw new Error('Error al eliminar el dispositivo');
         }
 
-        setSnackbar({ open: true, message: 'Dispositivo eliminado exitosamente', severity: 'success' });
-        fetchData();
-      } catch (error) {
-        console.error('Error:', error);
-        setSnackbar({ open: true, message: 'Error al eliminar el dispositivo', severity: 'error' });
-      }
-    }
-  };
+          setSnackbar({ open: true, message: 'Dispositivo eliminado exitosamente', severity: 'success' });
+          fetchData();
+      } catch (error) {
+        console.error('Error:', error);
+        setSnackbar({ open: true, message: 'Error al eliminar el dispositivo', severity: 'error' });
+      }
+    }
+  };
 
   // Filtrado y paginación mejorados
   const filteredDispositivos = dispositivos.filter(dispositivo => {
+    // Validar que el dispositivo no sea null
+    if (!dispositivo) {
+      return false;
+    }
+
     const matchesSearch = (
-      (dispositivo.item && dispositivo.item.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (dispositivo.serial && dispositivo.serial.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (dispositivo.modelo && dispositivo.modelo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (dispositivo.item && dispositivo.item.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (dispositivo.serial && dispositivo.serial.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (dispositivo.modelo && dispositivo.modelo.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (dispositivo.marca && dispositivo.marca.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (dispositivo.codigoActivo && dispositivo.codigoActivo.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -392,7 +444,8 @@ function GestionarDispositivos() {
     const matchesFilters = (
       (!filters.estado || dispositivo.estado === filters.estado) &&
       (!filters.sede || dispositivo.sede?.sedeId?.toString() === filters.sede) &&
-      (!filters.funcional || dispositivo.funcional?.toString() === filters.funcional)
+      (!filters.funcional || dispositivo.funcional?.toString() === filters.funcional) &&
+      (!filters.tipoDispositivo || obtenerTipoDispositivo(dispositivo) === filters.tipoDispositivo)
     );
 
     return matchesSearch && matchesFilters;
@@ -414,30 +467,184 @@ function GestionarDispositivos() {
 
   const getEstadoInfo = (estado) => {
     return estados.find(e => e.value === estado) || estados[0];
+  };
+
+  const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined) return '-';
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP'
+    }).format(amount);
+  };
+
+  // Función para detectar el tipo de dispositivo usando discriminator column (SOLO PARA FILTRADO)
+  const obtenerTipoDispositivo = (dispositivo) => {
+    // Validar que el dispositivo no sea null/undefined
+    if (!dispositivo) {
+      return 'DESCONOCIDO';
+    }
+
+    // Prioridad 1: tipo_dispositivo (discriminator column)
+    if (dispositivo.tipo_dispositivo) {
+      return dispositivo.tipo_dispositivo;
+    }
+    
+    // Prioridad 2: campo tipo
+    if (dispositivo.tipo) {
+      return dispositivo.tipo;
+    }
+    
+    // Prioridad 3: Detectar por campos específicos
+    if (dispositivo.imei1 || dispositivo.imei2) return 'CELULAR';
+    if (dispositivo.numeroPda) return 'PDA';
+    if (dispositivo.ipAsignada && dispositivo.tipoCamara) return 'CAMARA';
+    if (dispositivo.ipAsignada && dispositivo.tipoBiometrico) return 'BIOMETRICO';
+    if (dispositivo.macAddress && dispositivo.tipoCamara) return 'CAMARA';
+    if (dispositivo.numeroSerieCompleto) return 'INTERCOMUNICADOR';
+    
+    // Prioridad 4: Por la URL del endpoint
+    if (dispositivo._endpoint) {
+      if (dispositivo._endpoint.includes('celulares')) return 'CELULAR';
+      if (dispositivo._endpoint.includes('pdas')) return 'PDA';
+      if (dispositivo._endpoint.includes('camaras')) return 'CAMARA';
+      if (dispositivo._endpoint.includes('biometricos')) return 'BIOMETRICO';
+      if (dispositivo._endpoint.includes('intercomunicadores')) return 'INTERCOMUNICADOR';
+    }
+    
+    return 'DESCONOCIDO';
   };
 
-  const formatCurrency = (amount) => {
-    if (amount === null || amount === undefined) return '-';
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP'
-    }).format(amount);
+  // Función para formatear nombres de tipos para mostrar
+  const formatearTipo = (tipo) => {
+    const nombres = {
+      'BIOMETRICO': 'Biométrico',
+      'PDA': 'PDA',
+      'CELULAR': 'Celular',
+      'INTERCOMUNICADOR': 'Intercomunicador',
+      'CAMARA': 'Cámara',
+      'IMPRESORA': 'Impresora',
+      'COMPUTADOR': 'Computador',
+      'LAPTOP': 'Laptop',
+      'TABLET': 'Tablet',
+      'MONITOR': 'Monitor',
+      'SCANNER': 'Escáner',
+      'ROUTER': 'Router',
+      'SERVIDOR': 'Servidor',
+      'TELEFONO': 'Teléfono',
+      'VIDEOBEAM': 'Videobeam',
+      'TELEVISOR': 'Televisor',
+      'SPEAKER': 'Parlante',
+      'SECURITY': 'Cámara de Seguridad',
+      'MOUSE': 'Mouse',
+      'TECLADO': 'Teclado',
+      'AUDIFONOS': 'Audífonos',
+      'DESCONOCIDO': 'Otro'
+    };
+    return nombres[tipo] || tipo;
   };
 
+  // Obtener tipos únicos disponibles con conteos (SOLO PARA FILTRADO)
+  const getTiposDisponibles = () => {
+    const tiposSet = new Set();
+    
+    dispositivos.forEach(dispositivo => {
+      // Validar que el dispositivo no sea null
+      if (dispositivo) {
+        const tipo = obtenerTipoDispositivo(dispositivo);
+        if (tipo && tipo !== 'DESCONOCIDO') {
+          tiposSet.add(tipo);
+        }
+      }
+    });
+    
+    const tipos = Array.from(tiposSet).map(tipo => {
+      const count = dispositivos.filter(d => d && obtenerTipoDispositivo(d) === tipo).length;
+      return {
+        value: tipo,
+        label: formatearTipo(tipo),
+        count: count
+      };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+    
+    return [{ value: '', label: 'Todos los tipos', count: dispositivos.length }, ...tipos];
+  };
+
+  const tiposDisponibles = getTiposDisponibles();
+
+  // Función SIMPLE para iconos - NO usa la detección compleja
   const getDispositivoIcon = (tipo) => {
-    switch (tipo?.toLowerCase()) {
+    // Validar entrada
+    if (!tipo) {
+      return <MemoryIcon />;
+    }
+    
+    // Si es un objeto dispositivo, usar solo el campo 'tipo'
+    const tipoString = typeof tipo === 'object' ? (tipo?.tipo || '') : tipo;
+    
+    // Normalizar el texto: quitar espacios, convertir a minúsculas y remover acentos
+    const tipoNormalizado = tipoString?.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    switch (tipoNormalizado) {
       case 'laptop':
       case 'computador':
+      case 'computadora':
+      case 'portatil':
+      case 'pc':
+      case 'desktop':
         return <ComputerIcon />;
       case 'impresora':
+      case 'printer':
         return <PrintIcon />;
-      case 'teléfono':
       case 'telefono':
+      case 'celular':
+      case 'movil':
+      case 'smartphone':
         return <PhoneIcon />;
+      case 'tablet':
+      case 'tableta':
+        return <TabletIcon />;
       case 'router':
+      case 'switch':
+      case 'modem':
         return <RouterIcon />;
       case 'servidor':
+      case 'server':
         return <StorageIcon />;
+      case 'monitor':
+      case 'pantalla':
+      case 'display':
+        return <MonitorIcon />;
+      case 'scanner':
+      case 'escaner':
+        return <ScannerIcon />;
+      case 'camara':
+      case 'camera':
+        return <CameraIcon />;
+      case 'videocamara':
+      case 'videocam':
+        return <VideocamIcon />;
+      case 'televisor':
+      case 'tv':
+      case 'television':
+        return <TvIcon />;
+      case 'parlante':
+      case 'altavoz':
+      case 'speaker':
+      case 'bocina':
+        return <SpeakerIcon />;
+      case 'camara de seguridad':
+      case 'security camera':
+      case 'cctv':
+        return <SecurityIcon />;
+      case 'mouse':
+      case 'raton':
+        return <MouseIcon />;
+      case 'teclado':
+      case 'keyboard':
+        return <KeyboardIcon />;
+      case 'audifonos':
+      case 'headset':
+        return <HeadsetIcon />;
       default:
         return <MemoryIcon />;
     }
@@ -451,22 +658,22 @@ function GestionarDispositivos() {
     });
     setSearchTerm('');
     setPage(0);
-  };
+  };
 
-  const handleToggleExpand = (dispositivoId) => {
-    setExpandedDispositivo(expandedDispositivo === dispositivoId ? null : dispositivoId);
-  };
+  const handleToggleExpand = (dispositivoId) => {
+    setExpandedDispositivo(expandedDispositivo === dispositivoId ? null : dispositivoId);
+  };
 
   // Componente de tarjeta móvil mejorado
-  const MobileDispositivoCard = ({ dispositivo }) => {
-    const isExpanded = expandedDispositivo === dispositivo.dispositivoId;
+  const MobileDispositivoCard = ({ dispositivo }) => {
+    const isExpanded = expandedDispositivo === dispositivo.dispositivoId;
     const estadoInfo = getEstadoInfo(dispositivo.estado);
-    
-    return (
-      <Card sx={{ 
-        mb: 2, 
+    
+    return (
+      <Card sx={{ 
+        mb: 2, 
         background: 'rgba(255,255,255,0.98)', 
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(10px)',
         borderRadius: 4,
         boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
         border: '1px solid rgba(255,255,255,0.2)',
@@ -497,15 +704,15 @@ function GestionarDispositivos() {
                   mb: 0.5,
                   wordBreak: 'break-word'
                 }}>
-                  {dispositivo.item}
-                </Typography>
+                {dispositivo.item}
+              </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
                   {dispositivo.marca} {dispositivo.modelo}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                   Serial: {dispositivo.serial || 'N/A'}
-                </Typography>
-              </Box>
+              </Typography>
+            </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-end' }}>
                 <Badge 
@@ -516,29 +723,35 @@ function GestionarDispositivos() {
                   <Chip 
                     label={estadoInfo.label}
                     size="small"
+                    onClick={dispositivo.estado === 'ASIGNADO' ? () => handleOpenAsignacionesDialog(dispositivo) : undefined}
                     sx={{
                       bgcolor: 'rgba(255,255,255,0.9)',
                       color: theme.palette[estadoInfo.color].main,
-                      fontWeight: 600
+                      fontWeight: 600,
+                      cursor: dispositivo.estado === 'ASIGNADO' ? 'pointer' : 'default',
+                      '&:hover': dispositivo.estado === 'ASIGNADO' ? {
+                        bgcolor: 'rgba(255,255,255,1)',
+                        transform: 'scale(1.05)'
+                      } : {}
                     }}
                   />
                 </Badge>
                 
-                <IconButton 
-                  size="small" 
-                  onClick={() => handleToggleExpand(dispositivo.dispositivoId)}
+              <IconButton 
+                size="small" 
+                onClick={() => handleToggleExpand(dispositivo.dispositivoId)}
                   sx={{ color: 'rgba(255,255,255,0.8)' }}
-                >
-                  {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
+              >
+                {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
               </Box>
-            </Box>
-          </Box>
-
+            </Box>
+          </Box>
+          
           {/* Información básica siempre visible */}
           <Box sx={{ p: 2 }}>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <LocationIcon color="action" fontSize="small" />
                   <Box>
@@ -548,8 +761,8 @@ function GestionarDispositivos() {
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid>
+                            <Grid item xs={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <PersonIcon color="action" fontSize="small" />
                   <Box>
@@ -575,26 +788,26 @@ function GestionarDispositivos() {
                 </Grid>
                 
                 {dispositivo.codigoActivo && (
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">Código Activo</Typography>
                     <Typography variant="body2">{dispositivo.codigoActivo}</Typography>
-                  </Grid>
+              </Grid>
                 )}
                 
                 {dispositivo.tipo && (
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">Tipo</Typography>
                     <Typography variant="body2">{dispositivo.tipo}</Typography>
-                  </Grid>
+              </Grid>
                 )}
                 
 
                 
                 {dispositivo.clasificacion && (
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">Clasificación</Typography>
                     <Typography variant="body2">{dispositivo.clasificacion}</Typography>
-                  </Grid>
+              </Grid>
                 )}
 
                 {(dispositivo.sistemaOperativo || dispositivo.procesador || dispositivo.memoria) && (
@@ -620,17 +833,17 @@ function GestionarDispositivos() {
                     )}
                     
                     {dispositivo.memoria && (
-                      <Grid item xs={6}>
+                            <Grid item xs={6}>
                         <Typography variant="caption" color="text.secondary">Memoria</Typography>
                         <Typography variant="body2">{dispositivo.memoria}</Typography>
-                      </Grid>
+              </Grid>
                     )}
                     
                     {dispositivo.almacenamiento && (
-                      <Grid item xs={6}>
+              <Grid item xs={6}>
                         <Typography variant="caption" color="text.secondary">Almacenamiento</Typography>
                         <Typography variant="body2">{dispositivo.almacenamiento}</Typography>
-                      </Grid>
+              </Grid>
                     )}
                   </>
                 )}
@@ -641,47 +854,47 @@ function GestionarDispositivos() {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={6}>
+              <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">Costo</Typography>
                   <Typography variant="body2" fontWeight={600} color="success.main">
                     {formatCurrency(dispositivo.costo)}
                   </Typography>
-                </Grid>
+              </Grid>
                 
                 {dispositivo.proveedor && (
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">Proveedor</Typography>
                     <Typography variant="body2">{dispositivo.proveedor}</Typography>
-                  </Grid>
+              </Grid>
                 )}
                 
                 {dispositivo.fechaAdquisicion && (
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">Fecha Adquisición</Typography>
-                    <Typography variant="body2">
+                <Typography variant="body2">
                       {new Date(dispositivo.fechaAdquisicion).toLocaleDateString('es-CO')}
-                    </Typography>
-                  </Grid>
+                </Typography>
+              </Grid>
                 )}
                 
                 {dispositivo.fechaFinGarantia && (
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">Fin Garantía</Typography>
-                    <Typography variant="body2">
+                <Typography variant="body2">
                       {new Date(dispositivo.fechaFinGarantia).toLocaleDateString('es-CO')}
-                    </Typography>
-                  </Grid>
+                </Typography>
+              </Grid>
                 )}
 
-                {dispositivo.observaciones && (
-                  <Grid item xs={12}>
+              {dispositivo.observaciones && (
+                <Grid item xs={12}>
                     <Typography variant="caption" color="text.secondary">Observaciones</Typography>
                     <Typography variant="body2" sx={{ fontStyle: 'italic', mt: 0.5 }}>
-                      {dispositivo.observaciones}
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
+                    {dispositivo.observaciones}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
             </Box>
             
             <Divider />
@@ -710,11 +923,11 @@ function GestionarDispositivos() {
                 Eliminar
               </Button>
             </Box>
-          </Collapse>
-        </CardContent>
-      </Card>
-    );
-  };
+          </Collapse>
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Componente de vista detallada
   const ViewDialog = () => {
@@ -997,52 +1210,52 @@ function GestionarDispositivos() {
           </Button>
         </DialogActions>
       </Dialog>
-    );
-  };
+    );
+  };
 
-  return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', pt: 12, pb: 4 }}>
-      <NavbarInventoryManager />
-      
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 } }}>
+  return (
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', pt: 12, pb: 4 }}>
+      <NavbarInventoryManager />
+      
+      <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 } }}>
         {/* Header mejorado */}
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography variant={isMobile ? "h4" : "h3"} fontWeight={700} color="white" sx={{ mb: 1 }}>
-            Gestión de Dispositivos
-          </Typography>
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Typography variant={isMobile ? "h4" : "h3"} fontWeight={700} color="white" sx={{ mb: 1 }}>
+            Gestión de Dispositivos
+          </Typography>
           <Typography variant={isMobile ? "body1" : "h6"} color="rgba(255,255,255,0.8)" sx={{ mb: 1 }}>
-            Administra el inventario de dispositivos tecnológicos
-          </Typography>
+            Administra el inventario de dispositivos tecnológicos
+          </Typography>
           <Typography variant="body2" color="rgba(255,255,255,0.6)">
             {filteredDispositivos.length} dispositivos encontrados
-          </Typography>
-        </Box>
+          </Typography>
+        </Box>
 
         {/* Barra de búsqueda y filtros mejorada */}
-        <Card sx={{ 
+        <Card sx={{ 
           background: 'rgba(255,255,255,0.98)', 
           backdropFilter: 'blur(20px)',
           borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
           mb: 3,
           border: '1px solid rgba(255,255,255,0.2)'
-        }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
+        }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  variant="outlined"
                   placeholder="Buscar por nombre, serial, modelo, marca o código..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  size={isMobile ? "small" : "medium"}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  size={isMobile ? "small" : "medium"}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
                         <SearchIcon color="action" />
-                      </InputAdornment>
-                    ),
+                      </InputAdornment>
+                    ),
                     endAdornment: searchTerm && (
                       <InputAdornment position="end">
                         <IconButton size="small" onClick={() => setSearchTerm('')}>
@@ -1055,12 +1268,12 @@ function GestionarDispositivos() {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
                     }
-                  }}
-                />
-              </Grid>
+                  }}
+                />
+              </Grid>
               
               <Grid item xs={12} md={6}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent={{ xs: 'center', md: 'flex-end' }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent={{ xs: 'center', md: 'flex-end' }}>
                   <Button
                     variant="outlined"
                     startIcon={<FilterIcon />}
@@ -1071,22 +1284,22 @@ function GestionarDispositivos() {
                   >
                     Filtros
                   </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<RefreshIcon />}
-                    onClick={fetchData}
-                    size={isMobile ? "small" : "medium"}
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={fetchData}
+                    size={isMobile ? "small" : "medium"}
                     disabled={loading}
                     sx={{ borderRadius: 3 }}
-                  >
+                  >
                     {loading ? 'Cargando...' : 'Actualizar'}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => handleOpenDialog()}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => handleOpenDialog()}
                     size={isMobile ? "small" : "medium"}
-                    sx={{ 
+                    sx={{ 
                       background: 'linear-gradient(135deg, #0d47a1, #1976d2)',
                       borderRadius: 3,
                       boxShadow: '0 4px 16px rgba(13, 71, 161, 0.3)',
@@ -1095,18 +1308,18 @@ function GestionarDispositivos() {
                         boxShadow: '0 6px 20px rgba(13, 71, 161, 0.4)'
                       }
                     }}
-                  >
-                    Nuevo Dispositivo
-                  </Button>
-                </Stack>
-              </Grid>
-            </Grid>
+                  >
+                    Nuevo Dispositivo
+                  </Button>
+                </Stack>
+              </Grid>
+            </Grid>
 
             {/* Panel de filtros colapsible */}
             <Collapse in={showFilters}>
               <Divider sx={{ my: 2 }} />
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small">
                     <InputLabel>Estado</InputLabel>
                     <Select
@@ -1124,7 +1337,7 @@ function GestionarDispositivos() {
                   </FormControl>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small">
                     <InputLabel>Sede</InputLabel>
                     <Select
@@ -1142,7 +1355,7 @@ function GestionarDispositivos() {
                   </FormControl>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small">
                     <InputLabel>Funcional</InputLabel>
                     <Select
@@ -1153,6 +1366,35 @@ function GestionarDispositivos() {
                       <MenuItem value="">Todos</MenuItem>
                       <MenuItem value="true">Funcional</MenuItem>
                       <MenuItem value="false">No Funcional</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Tipo de Dispositivo</InputLabel>
+                    <Select
+                      value={filters.tipoDispositivo}
+                      onChange={(e) => setFilters({ ...filters, tipoDispositivo: e.target.value })}
+                      label="Tipo de Dispositivo"
+                    >
+                      {tiposDisponibles.map(({ value, label, count }) => (
+                        <MenuItem key={value} value={value}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                            {value && getDispositivoIcon(value)}
+                            <Box sx={{ flex: 1 }}>
+                              {label}
+                            </Box>
+                            <Chip 
+                              label={count} 
+                              size="small" 
+                              color="primary" 
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem', height: '20px' }}
+                            />
+                          </Box>
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -1171,11 +1413,11 @@ function GestionarDispositivos() {
                 </Grid>
               </Grid>
             </Collapse>
-          </CardContent>
-        </Card>
+          </CardContent>
+        </Card>
 
         {/* Contenido principal */}
-        {loading ? (
+        {loading ? (
           <Box>
             {[...Array(3)].map((_, index) => (
               <Card key={index} sx={{ 
@@ -1192,31 +1434,31 @@ function GestionarDispositivos() {
                 </CardContent>
               </Card>
             ))}
-          </Box>
-        ) : isMobile ? (
-          <Box>
+          </Box>
+        ) : isMobile ? (
+          <Box>
             {paginatedDispositivos.map((dispositivo) => (
-              <MobileDispositivoCard key={dispositivo.dispositivoId} dispositivo={dispositivo} />
-            ))}
+              <MobileDispositivoCard key={dispositivo.dispositivoId} dispositivo={dispositivo} />
+            ))}
             
-            {filteredDispositivos.length === 0 && (
-              <Card sx={{ 
+            {filteredDispositivos.length === 0 && (
+              <Card sx={{ 
                 background: 'rgba(255,255,255,0.98)', 
-                backdropFilter: 'blur(10px)',
+                backdropFilter: 'blur(10px)',
                 borderRadius: 4,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-              }}>
+              }}>
                 <CardContent sx={{ textAlign: 'center', py: 6 }}>
                   <MemoryIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
                   <Typography variant="h6" color="text.secondary" gutterBottom>
-                    No se encontraron dispositivos
-                  </Typography>
+                    No se encontraron dispositivos
+                  </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Intenta ajustar los filtros de búsqueda
-                  </Typography>
-                </CardContent>
-              </Card>
-            )}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Paginación móvil */}
             {filteredDispositivos.length > 0 && (
@@ -1238,11 +1480,11 @@ function GestionarDispositivos() {
                     `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`
                   }
                 />
-              </Card>
-            )}
-          </Box>
-        ) : (
-          <Card sx={{ 
+              </Card>
+            )}
+          </Box>
+        ) : (
+          <Card sx={{ 
             background: 'rgba(255,255,255,0.98)', 
             backdropFilter: 'blur(20px)',
             borderRadius: 4,
@@ -1252,7 +1494,7 @@ function GestionarDispositivos() {
             <CardContent sx={{ p: 0 }}>
               <TableContainer>
                 <Table stickyHeader>
-                  <TableHead>
+                                    <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, bgcolor: 'primary.main', color: 'white' }}>
                         Dispositivo
@@ -1277,7 +1519,7 @@ function GestionarDispositivos() {
                       </TableCell>
                     </TableRow>
                   </TableHead>
-                  <TableBody>
+                  <TableBody>
                     {paginatedDispositivos.map((dispositivo, index) => {
                       const estadoInfo = getEstadoInfo(dispositivo.estado);
                       return (
@@ -1288,7 +1530,7 @@ function GestionarDispositivos() {
                             bgcolor: index % 2 === 0 ? 'rgba(0,0,0,0.01)' : 'transparent'
                           }}
                         >
-                          <TableCell>
+                        <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Avatar sx={{ 
                                 bgcolor: theme.palette.primary.light,
@@ -1305,6 +1547,11 @@ function GestionarDispositivos() {
                                 <Typography variant="caption" color="text.secondary">
                                   {dispositivo.marca} {dispositivo.modelo}
                                 </Typography>
+                                {dispositivo.tipo && (
+                                  <Typography variant="caption" color="primary" sx={{ display: 'block', fontWeight: 500 }}>
+                                    {dispositivo.tipo}
+                                  </Typography>
+                                )}
                               </Box>
                             </Box>
                           </TableCell>
@@ -1330,12 +1577,20 @@ function GestionarDispositivos() {
                           
                           <TableCell>
                             <Stack spacing={1}>
-                              <Chip 
+                          <Chip 
                                 icon={estadoInfo.icon}
                                 label={estadoInfo.label}
                                 color={estadoInfo.color}
-                                size="small"
+                            size="small"
                                 variant="filled"
+                                onClick={dispositivo.estado === 'ASIGNADO' ? () => handleOpenAsignacionesDialog(dispositivo) : undefined}
+                                sx={{
+                                  cursor: dispositivo.estado === 'ASIGNADO' ? 'pointer' : 'default',
+                                  '&:hover': dispositivo.estado === 'ASIGNADO' ? {
+                                    transform: 'scale(1.05)',
+                                    boxShadow: 2
+                                  } : {}
+                                }}
                               />
                               <Chip 
                                 label={dispositivo.funcional ? 'Funcional' : 'No Funcional'}
@@ -1344,9 +1599,9 @@ function GestionarDispositivos() {
                                 variant="outlined"
                               />
                             </Stack>
-                          </TableCell>
+                        </TableCell>
                           
-                          <TableCell>
+                        <TableCell>
                             <Box>
                               <Typography variant="body2" fontWeight={500}>
                                 {dispositivo.empleadoAsignado?.nombreCompleto || 'No asignado'}
@@ -1355,9 +1610,9 @@ function GestionarDispositivos() {
                                 {dispositivo.sede?.nombre || 'Sin sede'}
                               </Typography>
                             </Box>
-                          </TableCell>
+                        </TableCell>
                           
-                          <TableCell>
+                        <TableCell>
                             <Typography variant="body2" fontWeight={600} color="success.main">
                               {formatCurrency(dispositivo.costo)}
                             </Typography>
@@ -1380,8 +1635,8 @@ function GestionarDispositivos() {
                                   color="primary" 
                                   onClick={() => handleOpenDialog(dispositivo)}
                                 >
-                                  <EditIcon />
-                                </IconButton>
+                            <EditIcon />
+                          </IconButton>
                               </Tooltip>
                               <Tooltip title="Eliminar" arrow>
                                 <IconButton 
@@ -1389,17 +1644,17 @@ function GestionarDispositivos() {
                                   color="error" 
                                   onClick={() => handleDelete(dispositivo.dispositivoId)}
                                 >
-                                  <DeleteIcon />
-                                </IconButton>
+                            <DeleteIcon />
+                          </IconButton>
                               </Tooltip>
                             </Stack>
-                          </TableCell>
-                        </TableRow>
+                        </TableCell>
+                      </TableRow>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  </TableBody>
+                </Table>
+              </TableContainer>
               
               {filteredDispositivos.length === 0 && (
                 <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -1432,17 +1687,17 @@ function GestionarDispositivos() {
                   }}
                 />
               )}
-            </CardContent>
-          </Card>
-        )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Dialog para agregar/editar */}
-        <Dialog 
-          open={openDialog} 
-          onClose={handleCloseDialog} 
+        <Dialog 
+          open={openDialog} 
+          onClose={handleCloseDialog} 
           maxWidth="lg" 
-          fullWidth
-          fullScreen={isMobile}
+          fullWidth
+          fullScreen={isMobile}
           PaperProps={{
             sx: {
               borderRadius: isMobile ? 0 : 4,
@@ -1462,74 +1717,74 @@ function GestionarDispositivos() {
             </Avatar>
             <Box>
               <Typography variant="h6">
-                {editingDispositivo ? 'Editar Dispositivo' : 'Nuevo Dispositivo'}
+            {editingDispositivo ? 'Editar Dispositivo' : 'Nuevo Dispositivo'}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 {editingDispositivo ? 'Modifica la información del dispositivo' : 'Completa la información del nuevo dispositivo'}
               </Typography>
             </Box>
-          </DialogTitle>
+          </DialogTitle>
           
           <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
             <LocalizationProvider>
-              <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid container spacing={3} sx={{ mt: 1 }}>
                 {/* Sección: Información General */}
-                <Grid item xs={12}>
+                <Grid item xs={12}>
                   <Typography variant="h6" color="primary" sx={{ mb: 1, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ComputerIcon />
-                    Información General
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Nombre del Dispositivo *"
-                    value={formData.nombreDispositivo}
-                    onChange={(e) => setFormData({ ...formData, nombreDispositivo: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
-                    required
+                    Información General
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Nombre del Dispositivo *"
+                    value={formData.nombreDispositivo}
+                    onChange={(e) => setFormData({ ...formData, nombreDispositivo: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
+                    required
                     error={!formData.nombreDispositivo}
                     helperText={!formData.nombreDispositivo ? "Campo requerido" : ""}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Código de Activo"
-                    value={formData.codigoActivo}
-                    onChange={(e) => setFormData({ ...formData, codigoActivo: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Código de Activo"
+                    value={formData.codigoActivo}
+                    onChange={(e) => setFormData({ ...formData, codigoActivo: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Serial"
-                    value={formData.serial}
-                    onChange={(e) => setFormData({ ...formData, serial: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Serial"
+                    value={formData.serial}
+                    onChange={(e) => setFormData({ ...formData, serial: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Marca"
-                    value={formData.marca}
-                    onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Marca"
+                    value={formData.marca}
+                    onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
+                  />
+                </Grid>
+                
+                                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Modelo"
@@ -1552,55 +1807,55 @@ function GestionarDispositivos() {
                   />
                 </Grid>
 
-                {/* Sección: Clasificación y Estado */}
-                <Grid item xs={12}>
+                {/* Sección: Clasificación y Estado */}
+                <Grid item xs={12}>
                   <Typography variant="h6" color="primary" sx={{ mb: 1, mt: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AssignmentIcon />
-                    Clasificación y Estado
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                    <InputLabel>Estado *</InputLabel>
-                    <Select
-                      value={formData.estado}
-                      onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                      required
+                    Clasificación y Estado
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                    <InputLabel>Estado *</InputLabel>
+                    <Select
+                      value={formData.estado}
+                      onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                      required
                       label="Estado"
                       sx={{ borderRadius: 2 }}
-                    >
-                      {estados.map((estado) => (
-                        <MenuItem key={estado.value} value={estado.value}>
+                    >
+                      {estados.map((estado) => (
+                        <MenuItem key={estado.value} value={estado.value}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {estado.icon}
-                            {estado.label}
+                          {estado.label}
                           </Box>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Clasificación"
-                    value={formData.clasificacion}
-                    onChange={(e) => setFormData({ ...formData, clasificacion: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Clasificación"
+                    value={formData.clasificacion}
+                    onChange={(e) => setFormData({ ...formData, clasificacion: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     helperText="Ej: A, B, C según criticidad"
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.funcional}
-                        onChange={(e) => setFormData({ ...formData, funcional: e.target.checked })}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.funcional}
+                        onChange={(e) => setFormData({ ...formData, funcional: e.target.checked })}
                         color="success"
                         size="medium"
                       />
@@ -1693,122 +1948,122 @@ function GestionarDispositivos() {
                     size={isMobile ? "small" : "medium"}
                     helperText="Ej: 00:1B:44:11:3A:B7"
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
+                  />
+                </Grid>
 
-                {/* Sección: Asignación y Ubicación */}
-                <Grid item xs={12}>
+                {/* Sección: Asignación y Ubicación */}
+                <Grid item xs={12}>
                   <Typography variant="h6" color="primary" sx={{ mb: 1, mt: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <LocationIcon />
-                    Asignación y Ubicación
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
+                    Asignación y Ubicación
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                    <InputLabel>Sede</InputLabel>
-                    <Select
-                      value={formData.sedeId}
-                      onChange={(e) => setFormData({ ...formData, sedeId: e.target.value })}
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                    <InputLabel>Sede</InputLabel>
+                    <Select
+                      value={formData.sedeId}
+                      onChange={(e) => setFormData({ ...formData, sedeId: e.target.value })}
                       label="Sede"
                       sx={{ borderRadius: 2 }}
-                    >
+                    >
                       <MenuItem value=""><em>Seleccionar sede</em></MenuItem>
-                      {sedes.map((sede) => (
-                        <MenuItem key={sede.sedeId} value={sede.sedeId}>
-                          {sede.nombre}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                      {sedes.map((sede) => (
+                        <MenuItem key={sede.sedeId} value={sede.sedeId}>
+                          {sede.nombre}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Ubicación Detallada"
-                    value={formData.ubicacionDetallada}
-                    onChange={(e) => setFormData({ ...formData, ubicacionDetallada: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Ubicación Detallada"
+                    value={formData.ubicacionDetallada}
+                    onChange={(e) => setFormData({ ...formData, ubicacionDetallada: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     helperText="Ej: Oficina 201 - Escritorio 3"
-                    InputProps={{
+                    InputProps={{
                       startAdornment: <InputAdornment position="start"><LocationIcon color="action" /></InputAdornment>
-                    }}
+                    }}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
+                  />
+                </Grid>
 
-                <Grid item xs={12}>
-                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
                     <InputLabel>Empleado Asignado</InputLabel>
-                    <Select
-                      value={formData.empleadoAsignadoId}
-                      onChange={(e) => setFormData({ ...formData, empleadoAsignadoId: e.target.value })}
-                      disabled={formData.estado !== 'ASIGNADO'}
+                    <Select
+                      value={formData.empleadoAsignadoId}
+                      onChange={(e) => setFormData({ ...formData, empleadoAsignadoId: e.target.value })}
+                      disabled={formData.estado !== 'ASIGNADO'}
                       label="Empleado Asignado"
                       sx={{ borderRadius: 2 }}
-                    >
-                      <MenuItem value=""><em>No asignado</em></MenuItem>
-                      {empleados.map((empleado) => (
-                        <MenuItem key={empleado.empleadoId} value={empleado.empleadoId}>
+                    >
+                      <MenuItem value=""><em>No asignado</em></MenuItem>
+                      {empleados.map((empleado) => (
+                        <MenuItem key={empleado.empleadoId} value={empleado.empleadoId}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <PersonIcon color="action" />
-                            {empleado.nombreCompleto} ({empleado.cedula})
+                          {empleado.nombreCompleto} ({empleado.cedula})
                           </Box>
-                        </MenuItem>
-                      ))}
-                    </Select>
+                        </MenuItem>
+                      ))}
+                    </Select>
                     {formData.estado !== 'ASIGNADO' && (
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
                         Solo disponible cuando el estado es "Asignado"
                       </Typography>
                     )}
-                  </FormControl>
-                </Grid>
+                  </FormControl>
+                </Grid>
 
-                {/* Sección: Información Financiera */}
-                <Grid item xs={12}>
+                {/* Sección: Información Financiera */}
+                <Grid item xs={12}>
                   <Typography variant="h6" color="primary" sx={{ mb: 1, mt: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <MoneyIcon />
-                    Información de Compra y Financiera
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Proveedor"
-                    value={formData.proveedor}
-                    onChange={(e) => setFormData({ ...formData, proveedor: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
-                    InputProps={{
+                    Información de Compra y Financiera
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Proveedor"
+                    value={formData.proveedor}
+                    onChange={(e) => setFormData({ ...formData, proveedor: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
+                    InputProps={{
                       startAdornment: <InputAdornment position="start"><ProviderIcon color="action" /></InputAdornment>
-                    }}
+                    }}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Número de Factura"
-                    value={formData.numeroFactura}
-                    onChange={(e) => setFormData({ ...formData, numeroFactura: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
-                    InputProps={{
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Número de Factura"
+                    value={formData.numeroFactura}
+                    onChange={(e) => setFormData({ ...formData, numeroFactura: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
+                    InputProps={{
                       startAdornment: <InputAdornment position="start"><InvoiceIcon color="action" /></InputAdornment>
-                    }}
+                    }}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <DatePicker
-                    label="Fecha de Adquisición"
-                    value={formData.fechaAdquisicion}
-                    onChange={(date) => setFormData({ ...formData, fechaAdquisicion: date })}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <DatePicker
+                    label="Fecha de Adquisición"
+                    value={formData.fechaAdquisicion}
+                    onChange={(date) => setFormData({ ...formData, fechaAdquisicion: date })}
                     renderInput={(params) => 
                       <TextField 
                         {...params} 
@@ -1821,14 +2076,14 @@ function GestionarDispositivos() {
                         }}
                       />
                     }
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <DatePicker
-                    label="Fin de Garantía"
-                    value={formData.fechaFinGarantia}
-                    onChange={(date) => setFormData({ ...formData, fechaFinGarantia: date })}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <DatePicker
+                    label="Fin de Garantía"
+                    value={formData.fechaFinGarantia}
+                    onChange={(date) => setFormData({ ...formData, fechaFinGarantia: date })}
                     renderInput={(params) => 
                       <TextField 
                         {...params} 
@@ -1841,49 +2096,49 @@ function GestionarDispositivos() {
                         }}
                       />
                     }
-                  />
-                </Grid>
-                
+                  />
+                </Grid>
+                
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Costo"
-                    type="number"
-                    value={formData.costo}
-                    onChange={(e) => setFormData({ ...formData, costo: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                  <TextField
+                    fullWidth
+                    label="Costo"
+                    type="number"
+                    value={formData.costo}
+                    onChange={(e) => setFormData({ ...formData, costo: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     helperText="Valor en pesos colombianos (COP)"
-                    InputProps={{
+                    InputProps={{
                       startAdornment: <InputAdornment position="start"><MoneyIcon color="action" /></InputAdornment>,
-                    }}
+                    }}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-                
+                  />
+                </Grid>
+                
                 {/* Sección: Observaciones */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" color="primary" sx={{ mb: 1, mt: 2, fontWeight: 600 }}>
+                <Grid item xs={12}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1, mt: 2, fontWeight: 600 }}>
                     Observaciones Adicionales
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Observaciones"
-                    multiline
-                    rows={4}
-                    value={formData.observaciones}
-                    onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-                    size={isMobile ? "small" : "medium"}
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Observaciones"
+                    multiline
+                    rows={4}
+                    value={formData.observaciones}
+                    onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+                    size={isMobile ? "small" : "medium"}
                     helperText="Notas adicionales sobre el estado, mantenimiento, configuración especial, etc."
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Grid>
-              </Grid>
-            </LocalizationProvider>
-          </DialogContent>
+                  />
+                </Grid>
+              </Grid>
+            </LocalizationProvider>
+          </DialogContent>
           
           <DialogActions sx={{ 
             p: { xs: 2, sm: 3 }, 
@@ -1897,8 +2152,8 @@ function GestionarDispositivos() {
               color="inherit"
               disabled={submitting}
             >
-              Cancelar
-            </Button>
+              Cancelar
+            </Button>
             <Button 
               onClick={handleSubmit} 
               variant="contained" 
@@ -1914,22 +2169,32 @@ function GestionarDispositivos() {
               }}
             >
               {submitting ? 'Guardando...' : (editingDispositivo ? 'Actualizar' : 'Crear')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Dialog de vista detallada */}
         <ViewDialog />
 
-        {/* FAB para móvil */}
-        {isMobile && (
+        {/* Dialog de asignaciones */}
+        <AsignacionesDialog
+          open={openAsignacionesDialog}
+          onClose={handleCloseAsignacionesDialog}
+          dispositivo={selectedDispositivoAsignaciones}
+          asignaciones={asignaciones}
+          loadingAsignaciones={loadingAsignaciones}
+          isMobile={isMobile}
+        />
+
+        {/* FAB para móvil */}
+        {isMobile && (
           <Tooltip title="Nuevo Dispositivo" arrow>
-            <Fab
-              color="primary"
-              aria-label="add"
-              onClick={() => handleOpenDialog()}
-              sx={{
-                position: 'fixed',
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={() => handleOpenDialog()}
+            sx={{
+              position: 'fixed',
                 bottom: 24,
                 right: 24,
                 background: 'linear-gradient(135deg, #0d47a1, #1976d2)',
@@ -1938,18 +2203,18 @@ function GestionarDispositivos() {
                   background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
                   boxShadow: '0 12px 32px rgba(13, 71, 161, 0.5)'
                 }
-              }}
-            >
-              <AddIcon />
-            </Fab>
+            }}
+          >
+            <AddIcon />
+          </Fab>
           </Tooltip>
-        )}
+        )}
 
         {/* Snackbar para notificaciones */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         >
           <Alert 
@@ -1960,12 +2225,12 @@ function GestionarDispositivos() {
               boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
             }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
-    </Box>
-  );
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </Box>
+  );
 }
 
 export default GestionarDispositivos;
