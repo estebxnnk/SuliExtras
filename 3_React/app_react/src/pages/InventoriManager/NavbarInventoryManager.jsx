@@ -28,6 +28,7 @@ function NavbarInventoryManager() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userRol');
+    localStorage.removeItem('userId');
     navigate('/');
   };
 

@@ -74,10 +74,7 @@ import {
   Build as BuildIcon
 } from '@mui/icons-material';
 
-// Simulación de componente Navbar
-const NavbarInventoryManager = () => (
-  <Box sx={{ height: 64, bgcolor: 'primary.main', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000 }} />
-);
+import NavbarInventoryManager from './NavbarInventoryManager';
 
 // Simulación de DatePicker
 const DatePicker = ({ value, onChange, label, renderInput }) => {
