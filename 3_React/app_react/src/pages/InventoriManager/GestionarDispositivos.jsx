@@ -82,7 +82,11 @@ import {
   Security as SecurityIcon,
   Mouse as MouseIcon,
   Keyboard as KeyboardIcon,
-  Headset as HeadsetIcon
+  Headset as HeadsetIcon,
+  Business as BusinessIcon,
+  PersonOutline as PersonOutlineIcon,
+  Place as PlaceIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 
 import NavbarInventoryManager from './NavbarInventoryManager';
@@ -572,6 +576,83 @@ function GestionarDispositivos() {
 
   const tiposDisponibles = getTiposDisponibles();
 
+  // Función para obtener colores dinámicos según tipo de dispositivo
+  const getDispositivoColor = (tipo) => {
+    const tipoString = typeof tipo === 'object' ? (tipo?.tipo || '') : tipo;
+    const tipoNormalizado = tipoString?.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    switch (tipoNormalizado) {
+      case 'laptop':
+      case 'computador':
+      case 'computadora':
+      case 'portatil':
+      case 'pc':
+      case 'desktop':
+        return '#1976d2'; // Azul
+      case 'impresora':
+      case 'printer':
+        return '#388e3c'; // Verde
+      case 'telefono':
+      case 'celular':
+      case 'movil':
+      case 'smartphone':
+        return '#f57c00'; // Naranja
+      case 'tablet':
+      case 'tableta':
+        return '#7b1fa2'; // Púrpura
+      case 'router':
+      case 'switch':
+      case 'modem':
+        return '#d32f2f'; // Rojo
+      case 'servidor':
+      case 'server':
+        return '#455a64'; // Gris azulado
+      case 'monitor':
+      case 'pantalla':
+      case 'display':
+        return '#0288d1'; // Azul claro
+      case 'scanner':
+      case 'escaner':
+        return '#689f38'; // Verde lima
+      case 'camara':
+      case 'camera':
+        return '#e91e63'; // Rosa
+      case 'videocamara':
+      case 'videocam':
+        return '#ff5722'; // Naranja profundo
+      case 'televisor':
+      case 'tv':
+      case 'television':
+        return '#795548'; // Marrón
+      case 'parlante':
+      case 'altavoz':
+      case 'speaker':
+      case 'bocina':
+        return '#9c27b0'; // Púrpura vibrante
+      case 'camara de seguridad':
+      case 'security camera':
+      case 'cctv':
+      case 'security':
+      case 'biometrico':
+        return '#ff9800'; // Ámbar
+      case 'mouse':
+      case 'raton':
+        return '#607d8b'; // Gris azul
+      case 'teclado':
+      case 'keyboard':
+        return '#424242'; // Gris oscuro
+      case 'audifonos':
+      case 'headset':
+        return '#8bc34a'; // Verde claro
+      case 'pda':
+        return '#ff6f00'; // Naranja oscuro
+      case 'intercomunicador':
+        return '#3f51b5'; // Índigo
+      default:
+        return '#666666'; // Gris por defecto
+    }
+  };
+
   // Función SIMPLE para iconos - NO usa la detección compleja
   const getDispositivoIcon = (tipo) => {
     // Validar entrada
@@ -655,11 +736,12 @@ function GestionarDispositivos() {
     setFilters({
       estado: '',
       sede: '',
-      funcional: ''
+      funcional: '',
+      tipoDispositivo: ''
     });
     setSearchTerm('');
     setPage(0);
-  };
+  };
 
   const handleToggleExpand = (dispositivoId) => {
     setExpandedDispositivo(expandedDispositivo === dispositivoId ? null : dispositivoId);
@@ -671,30 +753,38 @@ function GestionarDispositivos() {
     const estadoInfo = getEstadoInfo(dispositivo.estado);
     
     return (
-      <Card sx={{ 
-        mb: 2, 
+      <Card sx={{ 
+        mb: 1.5, 
+        mx: { xs: 0, sm: 0.5 },
+        maxWidth: { xs: '100%', sm: 380, md: 360 },
         background: 'rgba(255,255,255,0.98)', 
-        backdropFilter: 'blur(10px)',
-        borderRadius: 4,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: 3,
+        boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
         border: '1px solid rgba(255,255,255,0.2)',
         overflow: 'hidden',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.15)'
+        }
       }}>
         <CardContent sx={{ p: 0 }}>
           {/* Header de la tarjeta */}
           <Box sx={{ 
             background: `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
             color: 'white',
-            p: 2,
+            p: 1,
             position: 'relative'
           }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               <Avatar sx={{ 
-                bgcolor: 'rgba(255,255,255,0.2)', 
+                bgcolor: getDispositivoColor(dispositivo.tipo), 
                 color: 'white',
-                width: 48,
-                height: 48
+                width: 44,
+                height: 44,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                border: '2px solid rgba(255,255,255,0.3)'
               }}>
                 {getDispositivoIcon(dispositivo.tipo)}
               </Avatar>
@@ -702,8 +792,9 @@ function GestionarDispositivos() {
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="h6" fontWeight={700} sx={{ 
                   color: 'white',
-                  mb: 0.5,
-                  wordBreak: 'break-word'
+                  mb: 0.25,
+                  wordBreak: 'break-word',
+                  lineHeight: 1.2 // Ajustar interlineado
                 }}>
                 {dispositivo.item}
               </Typography>
@@ -750,25 +841,57 @@ function GestionarDispositivos() {
           </Box>
           
           {/* Información básica siempre visible */}
-          <Box sx={{ p: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LocationIcon color="action" fontSize="small" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Ubicación</Typography>
-                    <Typography variant="body2" fontWeight={500}>
+          <Box sx={{ p: 2, pt: 1.5 }}>
+            <Grid container spacing={1.5}>
+              <Grid item xs={6}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1,
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(0,0,0,0.02)',
+                  border: '1px solid rgba(0,0,0,0.06)'
+                }}>
+                  <Avatar sx={{ 
+                    bgcolor: '#2196f3', 
+                    width: 28, 
+                    height: 28 
+                  }}>
+                    <PlaceIcon fontSize="small" />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                      Ubicación
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500} noWrap>
                       {dispositivo.sede?.nombre || 'No asignada'}
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
-                            <Grid item xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PersonIcon color="action" fontSize="small" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Asignado a</Typography>
-                    <Typography variant="body2" fontWeight={500}>
+              </Grid>
+              <Grid item xs={6}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1,
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(0,0,0,0.02)',
+                  border: '1px solid rgba(0,0,0,0.06)'
+                }}>
+                  <Avatar sx={{ 
+                    bgcolor: dispositivo.empleadoAsignado ? '#4caf50' : '#9e9e9e', 
+                    width: 28, 
+                    height: 28 
+                  }}>
+                    <PersonOutlineIcon fontSize="small" />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                      Asignado a
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500} noWrap>
                       {dispositivo.empleadoAsignado?.nombreCompleto || 'No asignado'}
                     </Typography>
                   </Box>
@@ -1436,11 +1559,19 @@ function GestionarDispositivos() {
               </Card>
             ))}
           </Box>
-        ) : isMobile ? (
-          <Box>
+        ) : isMobile ? (
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fit, minmax(350px, 1fr))' 
+            },
+            gap: 2,
+            alignItems: 'start'
+          }}>
             {paginatedDispositivos.map((dispositivo) => (
-              <MobileDispositivoCard key={dispositivo.dispositivoId} dispositivo={dispositivo} />
-            ))}
+              <MobileDispositivoCard key={dispositivo.dispositivoId} dispositivo={dispositivo} />
+            ))}
             
             {filteredDispositivos.length === 0 && (
               <Card sx={{ 
@@ -1534,10 +1665,11 @@ function GestionarDispositivos() {
                         <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Avatar sx={{ 
-                                bgcolor: theme.palette.primary.light,
+                                bgcolor: getDispositivoColor(dispositivo.tipo),
                                 color: 'white',
-                                width: 40,
-                                height: 40
+                                width: 42,
+                                height: 42,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                               }}>
                                 {getDispositivoIcon(dispositivo.tipo)}
                               </Avatar>
