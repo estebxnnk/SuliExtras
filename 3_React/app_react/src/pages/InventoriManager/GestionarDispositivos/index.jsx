@@ -51,6 +51,7 @@ function GestionarDispositivos() {
     selectedDispositivoAsignaciones,
     asignaciones,
     loadingAsignaciones,
+    asignacionesActivas,
     page,
     rowsPerPage,
     filters,
@@ -172,6 +173,7 @@ function GestionarDispositivos() {
             handleDelete={handleDelete}
             handleOpenAsignacionesDialog={handleOpenAsignacionesDialog}
             totalCount={filteredDispositivos.length} // Pasar el total de registros filtrados
+            asignacionesActivas={asignacionesActivas}
           />
         )}
 

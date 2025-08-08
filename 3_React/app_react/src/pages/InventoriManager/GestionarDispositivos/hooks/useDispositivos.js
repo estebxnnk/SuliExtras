@@ -21,6 +21,9 @@ export const useDispositivos = () => {
   const [selectedDispositivoAsignaciones, setSelectedDispositivoAsignaciones] = useState(null);
   const [asignaciones, setAsignaciones] = useState([]);
   const [loadingAsignaciones, setLoadingAsignaciones] = useState(false);
+  
+  // Nuevo estado para asignaciones activas de dispositivos
+  const [asignacionesActivas, setAsignacionesActivas] = useState({});
 
   // Estados de paginación y filtros
   const [page, setPage] = useState(0);
@@ -76,6 +79,43 @@ export const useDispositivos = () => {
       setSnackbar({ open: true, message: 'Error al cargar los datos', severity: 'error' });
     }
     setLoading(false);
+  };
+
+  // Cargar asignaciones activas para todos los dispositivos
+  const fetchAsignacionesActivas = async () => {
+    try {
+      const dispositivosAsignados = dispositivos.filter(d => d.estado === 'ASIGNADO');
+      
+      // Solo cargar asignaciones si hay dispositivos asignados
+      if (dispositivosAsignados.length === 0) {
+        setAsignacionesActivas({});
+        return;
+      }
+      
+      // Cargar asignaciones en paralelo
+      const asignacionesPromises = dispositivosAsignados.map(async (dispositivo) => {
+        try {
+          const asignaciones = await dispositivosService.fetchAsignaciones(dispositivo.dispositivoId);
+          const asignacionActiva = asignaciones.find(a => a.estado === 'ACTIVA');
+          return { dispositivoId: dispositivo.dispositivoId, asignacion: asignacionActiva };
+        } catch (error) {
+          console.error(`Error fetching asignaciones for dispositivo ${dispositivo.dispositivoId}:`, error);
+          return { dispositivoId: dispositivo.dispositivoId, asignacion: null };
+        }
+      });
+
+      const resultados = await Promise.all(asignacionesPromises);
+      const asignacionesActivasMap = {};
+      resultados.forEach(({ dispositivoId, asignacion }) => {
+        if (asignacion) {
+          asignacionesActivasMap[dispositivoId] = asignacion;
+        }
+      });
+      
+      setAsignacionesActivas(asignacionesActivasMap);
+    } catch (error) {
+      console.error('Error fetching asignaciones activas:', error);
+    }
   };
 
   // Cargar asignaciones
@@ -249,6 +289,13 @@ export const useDispositivos = () => {
     fetchData();
   }, []);
 
+  // Cargar asignaciones activas cuando cambien los dispositivos
+  useEffect(() => {
+    if (dispositivos.length > 0) {
+      fetchAsignacionesActivas();
+    }
+  }, [dispositivos]);
+
   return {
     // Estados
     dispositivos,
@@ -265,6 +312,7 @@ export const useDispositivos = () => {
     selectedDispositivoAsignaciones,
     asignaciones,
     loadingAsignaciones,
+    asignacionesActivas,
     page,
     rowsPerPage,
     filters,

@@ -41,8 +41,48 @@ const DispositivoTable = ({
   handleOpenDialog,
   handleDelete,
   handleOpenAsignacionesDialog,
-  totalCount // Agregar el total de registros filtrados
+  totalCount,
+  asignacionesActivas
 }) => {
+  // Función para obtener la información del empleado asignado
+  const getEmpleadoAsignado = (dispositivo) => {
+    if (dispositivo.estado !== 'ASIGNADO') {
+      return null;
+    }
+    
+    const asignacionActiva = asignacionesActivas[dispositivo.dispositivoId];
+    if (!asignacionActiva) {
+      return null;
+    }
+    
+    const empleado = asignacionActiva.empleado;
+    if (!empleado) {
+      return null;
+    }
+    
+    return empleado;
+  };
+
+  // Función para obtener el nombre completo del empleado
+  const getNombreCompleto = (empleado) => {
+    if (!empleado) return 'No asignado';
+    
+    // Si tiene nombreCompleto, usarlo
+    if (empleado.nombreCompleto) {
+      return empleado.nombreCompleto;
+    }
+    
+    // Si no, construir el nombre con nombres y apellidos
+    if (empleado.nombres || empleado.apellidos) {
+      const nombres = empleado.nombres || '';
+      const apellidos = empleado.apellidos || '';
+      return `${nombres} ${apellidos}`.trim() || 'Sin nombre';
+    }
+    
+    // Si no tiene ninguno, usar un valor por defecto
+    return empleado.cedula || empleado.empleadoId || 'Empleado sin identificar';
+  };
+
   return (
     <Card sx={{ 
       background: 'rgba(255,255,255,0.98)', 
@@ -82,6 +122,8 @@ const DispositivoTable = ({
             <TableBody>
               {dispositivos.map((dispositivo, index) => {
                 const estadoInfo = getEstadoInfo(dispositivo.estado);
+                const empleadoAsignado = getEmpleadoAsignado(dispositivo);
+                
                 return (
                   <TableRow 
                     key={dispositivo.dispositivoId}
@@ -165,7 +207,7 @@ const DispositivoTable = ({
                     <TableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {dispositivo.empleadoAsignado?.nombreCompleto || 'No asignado'}
+                          {getNombreCompleto(empleadoAsignado)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {dispositivo.sede?.nombre || 'Sin sede'}
@@ -229,10 +271,10 @@ const DispositivoTable = ({
           </Box>
         )}
         
-        {/* Paginación corregida */}
+        {/* Paginación */}
         <TablePagination
           component="div"
-          count={totalCount || dispositivos.length} // Usar totalCount si está disponible
+          count={totalCount || dispositivos.length}
           page={page}
           onPageChange={handleChangePage}
           rowsPerPage={rowsPerPage}
