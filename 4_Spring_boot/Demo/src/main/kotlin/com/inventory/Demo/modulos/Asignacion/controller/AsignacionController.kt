@@ -209,4 +209,23 @@ class AsignacionController(
         }
         return ResponseEntity.ok(asignaciones)
     }
+
+    @Operation(summary = "Buscar asignaciones por dispositivoId", description = "Retorna todas las asignaciones asociadas a un dispositivo específico.")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Asignaciones encontradas",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = Asignacion::class))]),
+            ApiResponse(responseCode = "404", description = "No se encontraron asignaciones para el dispositivo",
+                content = [Content()])
+        ]
+    )
+    @GetMapping("/dispositivo/{dispositivoId}")
+    fun getAsignacionesByDispositivoId(
+        @Parameter(description = "ID del dispositivo")
+        @PathVariable dispositivoId: Long
+    ): ResponseEntity<List<Asignacion>> {
+        val asignaciones = asignacionService.findByDispositivoId(dispositivoId)
+        return if (asignaciones.isNotEmpty()) ResponseEntity.ok(asignaciones)
+        else ResponseEntity.notFound().build()
+    }
 } 
