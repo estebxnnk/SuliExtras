@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardContent,
+  Typography,
   TextField,
   InputAdornment
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 export const FiltrosUsuarios = ({
   search,
@@ -14,39 +14,49 @@ export const FiltrosUsuarios = ({
   isMobile
 }) => {
   return (
-    <Card
-      sx={{
-        mb: 3,
-        background: 'rgba(255,255,255,0.98)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: 2,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-        p: { xs: 1, sm: 2 }
-      }}
-    >
-      <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-        <TextField
-          fullWidth
-          size={isMobile ? 'small' : 'medium'}
-          variant="outlined"
-          placeholder="Buscar usuarios..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" fontSize={isMobile ? 'small' : 'medium'} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <FilterListIcon sx={{ color: '#1976d2', fontSize: 28 }} />
+        <Typography variant="h6" fontWeight={600} color="#1976d2">
+          Filtros de Búsqueda
+        </Typography>
+      </Box>
+      
+      <TextField
+        fullWidth
+        size={isMobile ? 'small' : 'medium'}
+        variant="outlined"
+        placeholder="Buscar usuarios por nombre, email o documento..."
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            background: 'rgba(255,255,255,0.9)',
+            '&:hover': {
+              background: 'rgba(255,255,255,1)',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+                borderWidth: 2
+              }
+            },
+            '&.Mui-focused': {
+              background: 'rgba(255,255,255,1)',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+                borderWidth: 2
+              }
             }
-          }}
-        />
-      </CardContent>
-    </Card>
-
+          }
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon sx={{ color: '#1976d2' }} />
+            </InputAdornment>
+          ),
+        }}
+      />
+    </Box>
   );
 }; 

@@ -64,6 +64,9 @@ function NavbarSubAdmin() {
         </Link>
         <Link to="/panel-sub-admin?tab=solicitudes" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Solicitudes</Typography>
+        </Link> 
+        <Link to="/gestionar-registros-horas-extra" style={{ textDecoration: 'none' }}>
+          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Registros de horas extra</Typography>
         </Link>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

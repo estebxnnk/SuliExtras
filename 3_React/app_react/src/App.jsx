@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import PanelSubAdmin from './pages/SubAdministrador/PanelSubAdmin';
 import RegistrarUsuarioSubAdmin from './pages/SubAdministrador/RegistrarUsuarioSubAdmin';
 import PanelUsuariosSubAdmin from './pages/SubAdministrador/PanelUsuariosSubAdmin';
+import GestionarRegistrosHorasExtra from './pages/SubAdministrador/GestionarRegistrosHorasExtra';
 
 //Rol Administrador
 import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
@@ -145,6 +146,11 @@ function App() {
         <Route path="/estadisticas-dispositivos" element={
           <ProtectedRoute allowedRoles={['InventoryManager']}>
             <EstadisticasDispositivos />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-registros-horas-extra" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <GestionarRegistrosHorasExtra />
           </ProtectedRoute>
         } />
       </Routes>
