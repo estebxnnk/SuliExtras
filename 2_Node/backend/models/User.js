@@ -1,7 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../configDb/db');
-const Rol = require('./Roles');
-const Persona = require('./Persona');
 
 const User = sequelize.define('User', {
   email: {
@@ -14,14 +12,17 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  sedeId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'sedes',
+      key: 'id'
+    },
+    comment: 'ID de la sede asignada al usuario'
+  },
 }, {
   timestamps: true,
 });
-
-// Relación 1 a 1: Un usuario tiene una persona
-User.belongsTo(Persona, { foreignKey: 'personaId', as: 'persona' });
-// Relación: Un usuario pertenece a un rol
-User.belongsTo(Rol, { foreignKey: 'rolId', as: 'rol' });
-Rol.hasMany(User, { foreignKey: 'rolId', as: 'usuarios' });
 
 module.exports = User; 
