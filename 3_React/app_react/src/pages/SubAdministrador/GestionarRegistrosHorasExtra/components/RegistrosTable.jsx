@@ -1,15 +1,17 @@
+import React from 'react';  // Añade esta línea
 import { 
   Table, 
   TableBody, 
   TableCell, 
-  TableContainer, 
+ TableContainer, 
   TableHead, 
   TableRow, 
   IconButton, 
   Typography, 
   Box,
   Chip,
-  Paper
+  Paper,
+  Button
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -17,7 +19,10 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import CancelIcon from '@mui/icons-material/Cancel';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import LoadingSpinner from './LoadingSpinner';
+import { RegistroDialog } from './RegistroDialog';
+import { CrearRegistroDialog } from './CrearRegistroDialog';
 
 function RegistrosTable({ 
   registros, 
@@ -28,8 +33,87 @@ function RegistrosTable({
   handleEditar, 
   handleAprobar, 
   handleRechazar, 
-  handleEliminar 
+  handleEliminar,
+  onCrearRegistro
 }) {
+  // Estados para los diálogos
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [openCrearDialog, setOpenCrearDialog] = React.useState(false);
+  const [registroSeleccionado, setRegistroSeleccionado] = React.useState(null);
+  const [modo, setModo] = React.useState('ver');
+  const [editData, setEditData] = React.useState({});
+  const [nuevoEstado, setNuevoEstado] = React.useState('');
+
+  // Handlers para los diálogos
+  const handleVerRegistro = (registro) => {
+    setModo('ver');
+    setRegistroSeleccionado(registro);
+    setOpenDialog(true);
+  };
+
+  const handleEditarRegistro = (registro) => {
+    // Si el estado ya fue modificado (no es pendiente), mostrar solo edición de estado
+    if (registro.estado !== 'pendiente') {
+      setModo('estado');
+      setRegistroSeleccionado(registro);
+      setNuevoEstado(registro.estado);
+      setOpenDialog(true);
+    } else {
+      // Si es pendiente, mostrar edición completa
+      setModo('editar');
+      setRegistroSeleccionado(registro);
+      setEditData({
+        fecha: registro.fecha,
+        horaIngreso: registro.horaIngreso,
+        horaSalida: registro.horaSalida,
+        ubicacion: registro.ubicacion,
+        cantidadHorasExtra: registro.cantidadHorasExtra,
+        justificacionHoraExtra: registro.justificacionHoraExtra || '',
+        horas_extra_divididas: registro.horas_extra_divididas ?? 0,
+        bono_salarial: registro.bono_salarial ?? 0,
+        tipoHora: (registro.Horas && registro.Horas.length > 0) ? registro.Horas[0].id : '',
+      });
+      setOpenDialog(true);
+    }
+  };
+
+  const handleGuardarEdicion = async (data) => {
+    try {
+      const dataToSend = {
+        ...data,
+        horas: [
+          {
+            id: data.tipoHora,
+            cantidad: data.cantidadHorasExtra
+          }
+        ]
+      };
+      delete dataToSend.tipoHora;
+      delete dataToSend.bono_salarial;
+
+      await handleEditar(registroSeleccionado.id, dataToSend);
+      setOpenDialog(false);
+    } catch (error) {
+      console.error('Error al guardar edición:', error);
+    }
+  };
+
+  const handleGuardarEstado = async (estado) => {
+    try {
+      await handleEditar(registroSeleccionado.id, { estado });
+      setOpenDialog(false);
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setRegistroSeleccionado(null);
+    setModo('ver');
+    setEditData({});
+    setNuevoEstado('');
+  };
   const getEstadoChip = (estado) => {
     const estados = {
       pendiente: { 
@@ -105,8 +189,33 @@ function RegistrosTable({
   }
 
   return (
-    <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden',  }}>
-      <TableContainer>
+    <Box>
+      {/* Botón para crear nuevo registro */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          variant="contained"
+          startIcon={<AddCircleIcon />}
+          onClick={() => setOpenCrearDialog(true)}
+          sx={{ 
+            fontWeight: 700, 
+            borderRadius: 3, 
+            fontSize: 16,
+            background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
+            boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)'
+            },
+            transition: 'all 0.3s ease'
+          }}
+        >
+          Crear Nuevo Registro
+        </Button>
+      </Box>
+
+      <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+        <TableContainer>
         <Table>
           <TableHead>
             <TableRow sx={{ 
@@ -168,7 +277,7 @@ function RegistrosTable({
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <IconButton 
-                      onClick={() => handleVer(registro)} 
+                      onClick={() => handleVerRegistro(registro)} 
                       title="Ver detalles" 
                       sx={{ 
                         color: '#4caf50',
@@ -183,7 +292,7 @@ function RegistrosTable({
                       <VisibilityIcon />
                     </IconButton>
                     <IconButton 
-                      onClick={() => handleEditar(registro)} 
+                      onClick={() => handleEditarRegistro(registro)} 
                       title="Editar" 
                       sx={{ 
                         color: '#1976d2',
@@ -254,7 +363,33 @@ function RegistrosTable({
         </TableBody>
       </Table>
     </TableContainer>
-    </Paper>
+      </Paper>
+
+      {/* Diálogo para ver/editar/cambiar estado de registro */}
+      <RegistroDialog
+        open={openDialog}
+        modo={modo}
+        registro={registroSeleccionado}
+        editData={editData}
+        nuevoEstado={nuevoEstado}
+        tiposHora={tiposHora}
+        usuarios={usuarios}
+        onClose={handleCloseDialog}
+        onGuardarEdicion={handleGuardarEdicion}
+        onGuardarEstado={handleGuardarEstado}
+        isMobile={false}
+      />
+
+      {/* Diálogo para crear nuevo registro */}
+      <CrearRegistroDialog
+        open={openCrearDialog}
+        onClose={() => setOpenCrearDialog(false)}
+        tiposHora={tiposHora}
+        usuarios={usuarios}
+        onCrearRegistro={onCrearRegistro}
+        isMobile={false}
+      />
+    </Box>
   );
 }
 

@@ -64,17 +64,19 @@ function GestionarRegistrosHorasExtra() {
   const registrosPaginados = registrosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box minHeight="100vh" width="100vw" sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
+    <Box width="100vw"  sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
       <NavbarSubAdmin />
       <Paper elevation={8} sx={{ 
         borderRadius: 4, 
         p: 4, 
-        maxWidth: 1400, 
+        width: '93vw',  // Cambiado de maxWidth a width
         margin: '120px auto 40px auto', 
         background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,248,255,0.98) 100%)',
         border: '1px solid rgba(25, 118, 210, 0.2)',
-        position: 'relative',
-        backdropFilter: 'blur(10px)', 
+        backdropFilter: 'blur(5px)', 
+        display: 'flex',          // Añadido
+        flexDirection: 'column',  // Añadido
+        overflow: 'hidden'        // Añadido para manejar el contenido que exceda
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <AccessTimeIcon sx={{ fontSize: 48, color: '#1976d2' }} />

@@ -68,6 +68,9 @@ function NavbarSubAdmin() {
         <Link to="/gestionar-registros-horas-extra" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Registros de horas extra</Typography>
         </Link>
+        <Link to="/gestionar-reportes-horas-extra" style={{ textDecoration: 'none' }}>
+          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Reportes de horas extra</Typography>
+        </Link>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <IconButton onClick={handleProfileClick} size="large" sx={{ ml: 2 }}>

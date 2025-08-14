@@ -1,4 +1,4 @@
 // Importar el componente optimizado
-import PanelUsuariosSubAdmin from './PanelUsuariosSubAdmin/index';
+import PanelUsuariosSubAdmin from './GestionarUsuarios/index';
 
 export default PanelUsuariosSubAdmin;
