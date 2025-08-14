@@ -9,7 +9,7 @@ class HorarioSedeLogic {
    * @returns {Object} - Horario creado
    */
   async crearHorario(data) {
-    const { sedeId, nombre, tipo, diaSemana, horaEntrada, horaSalida, horasJornada, toleranciaEntrada, toleranciaSalida, descripcion } = data;
+    const { sedeId, nombre, tipo, diaSemana, horaEntrada, horaSalida, tiempoAlmuerzo = 60, diasTrabajados = 5, descripcion } = data;
     
     // Verificar que la sede existe
     const sede = await Sede.findByPk(sedeId);
@@ -31,8 +31,10 @@ class HorarioSedeLogic {
       throw new Error('La hora de salida debe ser posterior a la hora de entrada');
     }
     
-    // Calcular horas de jornada si no se proporciona
-    const horasCalculadas = horasJornada || this.calcularHorasJornada(horaEntrada, horaSalida);
+    // Calcular horas base y reales de la jornada
+    const horasBase = this.calcularHorasJornada(horaEntrada, horaSalida);
+    const almuerzoHoras = Math.max(0, Number(tiempoAlmuerzo)) / 60;
+    const horasReales = parseFloat(Math.max(0, horasBase - almuerzoHoras).toFixed(2));
     
     const horario = await HorarioSede.create({
       sedeId,
@@ -41,9 +43,10 @@ class HorarioSedeLogic {
       diaSemana,
       horaEntrada,
       horaSalida,
-      horasJornada: horasCalculadas,
-      toleranciaEntrada: toleranciaEntrada || 15,
-      toleranciaSalida: toleranciaSalida || 15,
+      horasJornada: horasBase,
+      horasJornadaReal: horasReales,
+      tiempoAlmuerzo: Math.max(0, Number(tiempoAlmuerzo)),
+      diasTrabajados,
       descripcion
     });
     
@@ -122,12 +125,27 @@ class HorarioSedeLogic {
       if (data.horaEntrada >= data.horaSalida) {
         throw new Error('La hora de salida debe ser posterior a la hora de entrada');
       }
-      
-      // Recalcular horas de jornada
-      data.horasJornada = this.calcularHorasJornada(data.horaEntrada, data.horaSalida);
     }
     
-    await horario.update(data);
+    // Recalcular horas reales si cambian horas o tiempo de almuerzo
+    const nuevaHoraEntrada = data.horaEntrada || horario.horaEntrada;
+    const nuevaHoraSalida = data.horaSalida || horario.horaSalida;
+    const nuevoTiempoAlmuerzo =
+      data.tiempoAlmuerzo !== undefined
+        ? Math.max(0, Number(data.tiempoAlmuerzo))
+        : (horario.tiempoAlmuerzo || 60);
+    
+    const horasBase = this.calcularHorasJornada(nuevaHoraEntrada, nuevaHoraSalida);
+    const almuerzoHoras = nuevoTiempoAlmuerzo / 60;
+    const horasReales = parseFloat(Math.max(0, horasBase - almuerzoHoras).toFixed(2));
+    
+    await horario.update({
+      ...data,
+      tiempoAlmuerzo: nuevoTiempoAlmuerzo,
+      horasJornada: horasBase,
+      horasJornadaReal: horasReales,
+    });
+    
     return horario;
   }
   
@@ -174,9 +192,8 @@ class HorarioSedeLogic {
     const {
       horaEntrada = '08:00',
       horaSalida = '17:00',
-      horasJornada = 8,
-      toleranciaEntrada = 15,
-      toleranciaSalida = 15
+      tiempoAlmuerzo = 60,
+      diasTrabajados = 5
     } = config;
     
     // Verificar que la sede existe
@@ -197,9 +214,8 @@ class HorarioSedeLogic {
           diaSemana: dia,
           horaEntrada,
           horaSalida,
-          horasJornada,
-          toleranciaEntrada,
-          toleranciaSalida,
+          tiempoAlmuerzo,
+          diasTrabajados,
           descripcion: `Horario por defecto para ${this.obtenerNombreDia(dia)}`
         });
         
@@ -278,4 +294,4 @@ class HorarioSedeLogic {
   }
 }
 
-module.exports = new HorarioSedeLogic(); 
+module.exports = new HorarioSedeLogic();

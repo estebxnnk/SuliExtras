@@ -54,17 +54,30 @@ const HorarioSede = sequelize.define('HorarioSede', {
     allowNull: false,
     comment: 'Horas de la jornada normal para este día'
   },
-  toleranciaEntrada: {
-    type: DataTypes.INTEGER,
+  horasJornadaReal: {
+    type: DataTypes.FLOAT,
     allowNull: false,
-    defaultValue: 15,
-    comment: 'Tolerancia en minutos para la entrada'
+    comment: 'Horas reales trabajadas (horasJornada - tiempo de almuerzo)'
   },
-  toleranciaSalida: {
+  tiempoAlmuerzo: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 15,
-    comment: 'Tolerancia en minutos para la salida'
+    defaultValue: 60,
+    validate: {
+      min: 0,
+      max: 180
+    },
+    comment: 'Tiempo de almuerzo en minutos'
+  },
+  diasTrabajados: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 5,
+    validate: {
+      min: 0,
+      max: 7
+    },
+    comment: 'Cantidad de días trabajados en la semana para este horario'
   },
   activo: {
     type: DataTypes.BOOLEAN,

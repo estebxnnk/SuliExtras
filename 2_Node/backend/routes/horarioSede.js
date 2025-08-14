@@ -59,19 +59,18 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *                 type: string
  *                 description: Hora de salida en formato HH:mm
  *                 example: "17:00"
- *               horasJornada:
- *                 type: number
- *                 format: float
- *                 description: Horas de la jornada normal
- *                 example: 8
- *               toleranciaEntrada:
+ *               tiempoAlmuerzo:
  *                 type: integer
- *                 description: Tolerancia en minutos para la entrada
- *                 example: 15
- *               toleranciaSalida:
+ *                 minimum: 0
+ *                 maximum: 180
+ *                 description: Tiempo de almuerzo en minutos (opcional)
+ *                 example: 60
+ *               diasTrabajados:
  *                 type: integer
- *                 description: Tolerancia en minutos para la salida
- *                 example: 15
+ *                 minimum: 0
+ *                 maximum: 7
+ *                 description: Días trabajados en la semana para este horario (opcional)
+ *                 example: 5
  *               descripcion:
  *                 type: string
  *                 description: Descripción adicional
@@ -290,19 +289,18 @@ router.patch('/:horarioId/estado', authMiddleware, soloAdministradores, horarioS
  *                 type: string
  *                 description: Hora de salida por defecto
  *                 example: "17:00"
- *               horasJornada:
- *                 type: number
- *                 format: float
- *                 description: Horas de jornada por defecto
- *                 example: 8
- *               toleranciaEntrada:
+ *               tiempoAlmuerzo:
  *                 type: integer
- *                 description: Tolerancia de entrada en minutos
- *                 example: 15
- *               toleranciaSalida:
+ *                 minimum: 0
+ *                 maximum: 180
+ *                 description: Tiempo de almuerzo por defecto en minutos (opcional)
+ *                 example: 60
+ *               diasTrabajados:
  *                 type: integer
- *                 description: Tolerancia de salida en minutos
- *                 example: 15
+ *                 minimum: 0
+ *                 maximum: 7
+ *                 description: Días trabajados por defecto en la semana (opcional)
+ *                 example: 5
  *     responses:
  *       201:
  *         description: Horarios por defecto creados exitosamente
@@ -349,13 +347,17 @@ module.exports = router;
  *         horasJornada:
  *           type: number
  *           format: float
- *           description: Horas de la jornada normal
- *         toleranciaEntrada:
+ *           description: Horas base de la jornada (horaSalida - horaEntrada)
+ *         horasJornadaReal:
+ *           type: number
+ *           format: float
+ *           description: Horas reales trabajadas (horasJornada - tiempo de almuerzo)
+ *         tiempoAlmuerzo:
  *           type: integer
- *           description: Tolerancia de entrada en minutos
- *         toleranciaSalida:
+ *           description: Tiempo de almuerzo en minutos
+ *         diasTrabajados:
  *           type: integer
- *           description: Tolerancia de salida en minutos
+ *           description: Días trabajados en la semana para este horario
  *         activo:
  *           type: boolean
  *           description: Si el horario está activo

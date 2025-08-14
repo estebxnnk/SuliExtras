@@ -5,7 +5,7 @@ const horarioSedeLogic = require('../logic/HorarioSedeLogic');
  */
 const crearHorario = async (req, res) => {
   try {
-    const { sedeId, nombre, tipo, diaSemana, horaEntrada, horaSalida, horasJornada, toleranciaEntrada, toleranciaSalida, descripcion } = req.body;
+    const { sedeId, nombre, tipo, diaSemana, horaEntrada, horaSalida, tiempoAlmuerzo, diasTrabajados, descripcion } = req.body;
     
     // Validaciones básicas
     if (!sedeId || !nombre || !diaSemana || !horaEntrada || !horaSalida) {
@@ -29,6 +29,22 @@ const crearHorario = async (req, res) => {
       });
     }
     
+    // Validar tiempo de almuerzo si viene
+    if (tiempoAlmuerzo !== undefined) {
+      const ta = Number(tiempoAlmuerzo);
+      if (Number.isNaN(ta) || ta < 0 || ta > 180) {
+        return res.status(400).json({ error: 'tiempoAlmuerzo debe estar entre 0 y 180 minutos' });
+      }
+    }
+    
+    // Validar diasTrabajados si viene
+    if (diasTrabajados !== undefined) {
+      const dt = Number(diasTrabajados);
+      if (Number.isNaN(dt) || dt < 0 || dt > 7) {
+        return res.status(400).json({ error: 'diasTrabajados debe estar entre 0 y 7' });
+      }
+    }
+    
     const horario = await horarioSedeLogic.crearHorario({
       sedeId,
       nombre,
@@ -36,9 +52,8 @@ const crearHorario = async (req, res) => {
       diaSemana,
       horaEntrada,
       horaSalida,
-      horasJornada,
-      toleranciaEntrada,
-      toleranciaSalida,
+      tiempoAlmuerzo,
+      diasTrabajados,
       descripcion
     });
     
@@ -152,6 +167,22 @@ const actualizarHorario = async (req, res) => {
       }
     }
     
+    // Validar tiempoAlmuerzo si viene
+    if (datosActualizacion.tiempoAlmuerzo !== undefined) {
+      const ta = Number(datosActualizacion.tiempoAlmuerzo);
+      if (Number.isNaN(ta) || ta < 0 || ta > 180) {
+        return res.status(400).json({ error: 'tiempoAlmuerzo debe estar entre 0 y 180 minutos' });
+      }
+    }
+    
+    // Validar diasTrabajados si viene
+    if (datosActualizacion.diasTrabajados !== undefined) {
+      const dt = Number(datosActualizacion.diasTrabajados);
+      if (Number.isNaN(dt) || dt < 0 || dt > 7) {
+        return res.status(400).json({ error: 'diasTrabajados debe estar entre 0 y 7' });
+      }
+    }
+    
     const horario = await horarioSedeLogic.actualizarHorario(horarioId, datosActualizacion);
     
     res.status(200).json({
@@ -230,6 +261,20 @@ const crearHorariosPorDefecto = async (req, res) => {
       return res.status(400).json({
         error: 'ID de sede requerido'
       });
+    }
+    
+    // Validaciones opcionales de config
+    if (config?.tiempoAlmuerzo !== undefined) {
+      const ta = Number(config.tiempoAlmuerzo);
+      if (Number.isNaN(ta) || ta < 0 || ta > 180) {
+        return res.status(400).json({ error: 'tiempoAlmuerzo debe estar entre 0 y 180 minutos' });
+      }
+    }
+    if (config?.diasTrabajados !== undefined) {
+      const dt = Number(config.diasTrabajados);
+      if (Number.isNaN(dt) || dt < 0 || dt > 7) {
+        return res.status(400).json({ error: 'diasTrabajados debe estar entre 0 y 7' });
+      }
     }
     
     const horariosCreados = await horarioSedeLogic.crearHorariosPorDefecto(sedeId, config);
