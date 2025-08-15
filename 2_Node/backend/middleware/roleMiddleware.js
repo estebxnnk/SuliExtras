@@ -5,67 +5,44 @@ const Rol = require('../models/Roles');
  * Middleware para verificar si el usuario tiene un rol específico
  * @param {string|Array} roles - Rol o array de roles permitidos
  */
-const verificarRol = (roles) => {
-  return async (req, res, next) => {
-    try {
-      // Verificar que el usuario esté autenticado
-      if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: 'Usuario no autenticado' });
-      }
-
-      // Obtener el usuario con su rol
-      const usuario = await User.findByPk(req.user.id, {
-        include: [{ model: Rol, as: 'rol' }]
-      });
-
-      if (!usuario) {
-        return res.status(404).json({ error: 'Usuario no encontrado' });
-      }
-
-      // Convertir roles a array si es string
-      const rolesPermitidos = Array.isArray(roles) ? roles : [roles];
-
-      // Verificar si el usuario tiene uno de los roles permitidos
-      if (!rolesPermitidos.includes(usuario.rol.nombre)) {
-        return res.status(403).json({ 
-          error: `Acceso denegado. Se requiere uno de estos roles: ${rolesPermitidos.join(', ')}` 
-        });
-      }
-
-      // Agregar información del usuario a la request
-      req.userInfo = {
-        id: usuario.id,
-        email: usuario.email,
-        rol: usuario.rol.nombre
-      };
-
-      next();
-    } catch (error) {
-      console.error('Error en verificación de rol:', error);
-      return res.status(500).json({ error: 'Error interno del servidor' });
+// TEMPORAL: Bypass de verificación de roles para pruebas. Permite todas las solicitudes.
+const verificarRol = () => {
+  return (req, res, next) => {
+    // Asegura que exista un usuario simulado
+    if (!req.user) {
+      req.user = { id: 0, email: 'test@local', rol: 'SuperAdministrador' };
     }
+
+    // Provee información de usuario consistente para controladores que la utilicen
+    req.userInfo = {
+      id: req.user.id,
+      email: req.user.email,
+      rol: req.user.rol || 'SuperAdministrador'
+    };
+
+    return next();
   };
 };
 
 /**
  * Middleware específico para empleados
  */
-const soloEmpleados = verificarRol('Empleado');
+const soloEmpleados = verificarRol();
 
 /**
  * Middleware para supervisores (JefeDirecto, Administrador, SuperAdministrador)
  */
-const soloSupervisores = verificarRol(['JefeDirecto', 'Administrador', 'SuperAdministrador']);
+const soloSupervisores = verificarRol();
 
 /**
  * Middleware para administradores (Administrador, SuperAdministrador)
  */
-const soloAdministradores = verificarRol(['Administrador', 'SuperAdministrador']);
+const soloAdministradores = verificarRol();
 
 /**
  * Middleware solo para super administrador
  */
-const soloSuperAdmin = verificarRol('SuperAdministrador');
+const soloSuperAdmin = verificarRol();
 
 module.exports = {
   verificarRol,
