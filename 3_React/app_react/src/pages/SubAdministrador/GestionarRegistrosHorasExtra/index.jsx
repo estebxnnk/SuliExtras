@@ -41,12 +41,33 @@ function GestionarRegistrosHorasExtra() {
     handleChangeRowsPerPage,
     showConfirmDialog,
     handleConfirmAction,
+    onCrearRegistro,
     setSearch,
     setFiltroEstado,
-    setMensaje
+    setMensaje,
+    setOpenDialog,
+    fetchRegistros
   } = useGestionarRegistrosHorasExtra();
 
   const navigate = useNavigate();
+
+  const getEstadoChip = (estado) => {
+    const estados = {
+      pendiente: { color: 'warning', icon: <PendingIcon />, label: 'Pendiente' },
+      aprobado: { color: 'success', icon: <CheckCircleIcon />, label: 'Aprobado' },
+      rechazado: { color: 'error', icon: <CancelIcon />, label: 'Rechazado' }
+    };
+    const config = estados[estado] || estados.pendiente;
+    return (
+      <Chip
+        icon={config.icon}
+        label={config.label}
+        color={config.color}
+        variant="outlined"
+        sx={{ fontWeight: 600 }}
+      />
+    );
+  };
 
   // Filtro de búsqueda y estado
   const registrosFiltrados = registros.filter(r => {
@@ -141,6 +162,9 @@ function GestionarRegistrosHorasExtra() {
           handleAprobar={handleAprobar}
           handleRechazar={handleRechazar}
           handleEliminar={handleEliminar}
+          handleGuardarEstado={handleGuardarEstado}
+          onDataChange={fetchRegistros}
+          onCrearRegistro={onCrearRegistro}
         />
         <Paper elevation={2} sx={{ 
           mt: 3, 
@@ -174,7 +198,7 @@ function GestionarRegistrosHorasExtra() {
       </Paper>
 
       {/* Dialogo para ver/editar registro */}
-      <Dialog open={openDialog} onClose={() => setMensaje('')} maxWidth="md" fullWidth>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {modo === 'ver' && <AccessTimeIcon sx={{ fontSize: 36, color: '#1976d2' }} />}
           {modo === 'ver' ? 'Detalles del Registro' : modo === 'editar' ? 'Editar Registro' : 'Cambiar Estado del Registro'}
@@ -298,7 +322,7 @@ function GestionarRegistrosHorasExtra() {
                 select
                 label="Nuevo Estado"
                 value={nuevoEstado}
-                onChange={e => setMensaje(e.target.value)}
+                onChange={e => setNuevoEstado(e.target.value)}
                 fullWidth
                 required
               >
@@ -321,7 +345,7 @@ function GestionarRegistrosHorasExtra() {
                       label="Fecha"
                       type="date"
                       value={editData.fecha}
-                      onChange={e => setMensaje({ ...editData, fecha: e.target.value })}
+                      onChange={e => setEditData({ ...editData, fecha: e.target.value })}
                       InputLabelProps={{ shrink: true }}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
@@ -331,7 +355,7 @@ function GestionarRegistrosHorasExtra() {
                     <TextField
                       label="Ubicación"
                       value={editData.ubicacion}
-                      onChange={e => setMensaje({ ...editData, ubicacion: e.target.value })}
+                      onChange={e => setEditData({ ...editData, ubicacion: e.target.value })}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
                     />
@@ -341,7 +365,7 @@ function GestionarRegistrosHorasExtra() {
                       label="Hora de Ingreso"
                       type="time"
                       value={editData.horaIngreso}
-                      onChange={e => setMensaje({ ...editData, horaIngreso: e.target.value })}
+                      onChange={e => setEditData({ ...editData, horaIngreso: e.target.value })}
                       InputLabelProps={{ shrink: true }}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
@@ -352,7 +376,7 @@ function GestionarRegistrosHorasExtra() {
                       label="Hora de Salida"
                       type="time"
                       value={editData.horaSalida}
-                      onChange={e => setMensaje({ ...editData, horaSalida: e.target.value })}
+                      onChange={e => setEditData({ ...editData, horaSalida: e.target.value })}
                       InputLabelProps={{ shrink: true }}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
@@ -363,7 +387,7 @@ function GestionarRegistrosHorasExtra() {
                       label="Cantidad de Horas Extra"
                       type="number"
                       value={editData.cantidadHorasExtra}
-                      onChange={e => setMensaje({ ...editData, cantidadHorasExtra: parseFloat(e.target.value) })}
+                      onChange={e => setEditData({ ...editData, cantidadHorasExtra: parseFloat(e.target.value) })}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
                       inputProps={{ min: 1, step: 1 }}
@@ -374,7 +398,7 @@ function GestionarRegistrosHorasExtra() {
                       select
                       label="Tipo de Hora Extra"
                       value={editData.tipoHora || ''}
-                      onChange={e => setMensaje({ ...editData, tipoHora: e.target.value })}
+                      onChange={e => setEditData({ ...editData, tipoHora: e.target.value })}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
                     >
@@ -390,7 +414,7 @@ function GestionarRegistrosHorasExtra() {
                       label="Horas Extra (reporte)"
                       type="number"
                       value={editData.horas_extra_divididas ?? 0}
-                      onChange={e => setMensaje({ ...editData, horas_extra_divididas: parseFloat(e.target.value) })}
+                      onChange={e => setEditData({ ...editData, horas_extra_divididas: parseFloat(e.target.value) })}
                       fullWidth
                       sx={{ background: '#fff', borderRadius: 2 }}
                       inputProps={{ min: 0, step: 0.01 }}
@@ -401,7 +425,7 @@ function GestionarRegistrosHorasExtra() {
                     <TextField
                       label="Justificación"
                       value={editData.justificacionHoraExtra}
-                      onChange={e => setMensaje({ ...editData, justificacionHoraExtra: e.target.value })}
+                      onChange={e => setEditData({ ...editData, justificacionHoraExtra: e.target.value })}
                       multiline
                       rows={3}
                       fullWidth
@@ -414,7 +438,7 @@ function GestionarRegistrosHorasExtra() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMensaje('')}>Cerrar</Button>
+          <Button onClick={() => setOpenDialog(false)}>Cerrar</Button>
           {modo === 'editar' && (
             <Button onClick={handleGuardarEdicion} variant="contained" color="success">
               Guardar
@@ -431,7 +455,7 @@ function GestionarRegistrosHorasExtra() {
       {/* Diálogo de Confirmación Personalizado */}
       <Dialog 
         open={confirmDialog.open} 
-        onClose={() => setMensaje('')}
+        onClose={() => setConfirmDialog({ open: false, action: '', registro: null })}
         maxWidth="sm" 
         fullWidth
       >
@@ -487,7 +511,7 @@ function GestionarRegistrosHorasExtra() {
               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => setMensaje('')}
+                  onClick={() => setConfirmDialog({ open: false, action: '', registro: null })}
                   sx={{ px: 4, py: 1.5, fontWeight: 600 }}
                 >
                   Cancelar

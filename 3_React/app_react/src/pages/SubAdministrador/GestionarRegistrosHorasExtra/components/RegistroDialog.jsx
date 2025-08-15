@@ -240,18 +240,6 @@ export const RegistroDialog = ({
               ))}
             </TextField>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Horas Extra (reporte)"
-              type="number"
-              value={localEditData.horas_extra_divididas ?? 0}
-              onChange={(e) => setLocalEditData({...localEditData, horas_extra_divididas: parseFloat(e.target.value)})}
-              fullWidth
-              sx={{ background: '#fff', borderRadius: 2 }}
-              inputProps={{ min: 0, step: 0.01 }}
-              helperText="Máximo 2 horas por registro para reporte"
-            />
-          </Grid>
           <Grid item xs={12}>
             <TextField
               label="Justificación"

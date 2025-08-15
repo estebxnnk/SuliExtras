@@ -177,6 +177,16 @@ export const useGestionarRegistrosHorasExtra = () => {
     }
   };
 
+  const onCrearRegistro = async (registroData) => {
+    try {
+      await gestionarRegistrosHorasExtraService.createRegistro(registroData);
+      setMensaje('Registro creado exitosamente.');
+      fetchRegistros();
+    } catch (error) {
+      setMensaje('No se pudo crear el registro.');
+    }
+  };
+
   return {
     registros,
     tiposHora,
@@ -204,8 +214,11 @@ export const useGestionarRegistrosHorasExtra = () => {
     handleChangeRowsPerPage,
     showConfirmDialog,
     handleConfirmAction,
+    onCrearRegistro,
     setSearch,
     setFiltroEstado,
-    setMensaje
+    setMensaje,
+    setOpenDialog,
+    fetchRegistros
   };
 }; 

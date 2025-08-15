@@ -34,6 +34,8 @@ function RegistrosTable({
   handleAprobar, 
   handleRechazar, 
   handleEliminar,
+  handleGuardarEstado,
+  onDataChange,
   onCrearRegistro
 }) {
   // Estados para los diálogos
@@ -53,7 +55,7 @@ function RegistrosTable({
 
   const handleEditarRegistro = (registro) => {
     // Si el estado ya fue modificado (no es pendiente), mostrar solo edición de estado
-    if (registro.estado !== 'pendiente') {
+    if (registro.estado !== 'pendiente'|| registro.estado === 'rechazado') {
       setModo('estado');
       setRegistroSeleccionado(registro);
       setNuevoEstado(registro.estado);
@@ -91,17 +93,45 @@ function RegistrosTable({
       delete dataToSend.tipoHora;
       delete dataToSend.bono_salarial;
 
-      await handleEditar(registroSeleccionado.id, dataToSend);
+      // Usar directamente el servicio para actualizar el registro
+      const response = await fetch(`http://localhost:3000/api/registros/${registroSeleccionado.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend),
+      });
+      
+      if (!response.ok) {
+        throw new Error('No se pudo actualizar el registro.');
+      }
+      
       setOpenDialog(false);
+      // Recargar los datos
+      if (onDataChange) {
+        onDataChange();
+      }
     } catch (error) {
       console.error('Error al guardar edición:', error);
     }
   };
 
-  const handleGuardarEstado = async (estado) => {
+  const handleGuardarEstadoLocal = async (estado) => {
     try {
-      await handleEditar(registroSeleccionado.id, { estado });
+      // Usar directamente el servicio para actualizar el estado
+      const response = await fetch(`http://localhost:3000/api/registros/${registroSeleccionado.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('No se pudo actualizar el estado del registro.');
+      }
+      
       setOpenDialog(false);
+      // Recargar los datos llamando a la función del hook
+      if (onDataChange) {
+        onDataChange();
+      }
     } catch (error) {
       console.error('Error al cambiar estado:', error);
     }
@@ -376,7 +406,7 @@ function RegistrosTable({
         usuarios={usuarios}
         onClose={handleCloseDialog}
         onGuardarEdicion={handleGuardarEdicion}
-        onGuardarEstado={handleGuardarEstado}
+                    onGuardarEstado={handleGuardarEstadoLocal}
         isMobile={false}
       />
 

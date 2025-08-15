@@ -88,7 +88,7 @@ export const gestionarRegistrosHorasExtraService = {
   // Crear un nuevo registro
   async createRegistro(data) {
     try {
-      const response = await fetch(`${API_BASE_URL}/registros`, {
+      const response = await fetch(`${API_BASE_URL}/registros/dividir-horas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
