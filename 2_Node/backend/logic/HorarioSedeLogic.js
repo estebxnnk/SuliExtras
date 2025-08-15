@@ -9,7 +9,7 @@ class HorarioSedeLogic {
    * @returns {Object} - Horario creado
    */
   async crearHorario(data) {
-    const { sedeId, nombre, tipo, diaSemana, horaEntrada, horaSalida, tiempoAlmuerzo = 60, diasTrabajados = 5, descripcion } = data;
+    const { sedeId, nombre, tipo, horaEntrada, horaSalida, tiempoAlmuerzo = 60, diasTrabajados = 5, descripcion } = data;
     
     // Verificar que la sede existe
     const sede = await Sede.findByPk(sedeId);
@@ -17,13 +17,13 @@ class HorarioSedeLogic {
       throw new Error('Sede no encontrada');
     }
     
-    // Verificar que no exista un horario para el mismo día y tipo
+    // Verificar que no exista un horario para el mismo tipo
     const horarioExistente = await HorarioSede.findOne({
-      where: { sedeId, diaSemana, tipo }
+      where: { sedeId, tipo }
     });
     
     if (horarioExistente) {
-      throw new Error(`Ya existe un horario de tipo '${tipo}' para el día ${this.obtenerNombreDia(diaSemana)}`);
+      throw new Error(`Ya existe un horario de tipo '${tipo}' para esta sede`);
     }
     
     // Validar que la hora de salida sea posterior a la de entrada
@@ -40,7 +40,6 @@ class HorarioSedeLogic {
       sedeId,
       nombre,
       tipo,
-      diaSemana,
       horaEntrada,
       horaSalida,
       horasJornada: horasBase,
@@ -67,24 +66,23 @@ class HorarioSedeLogic {
     
     return await HorarioSede.findAll({
       where: { sedeId },
-      order: [['diaSemana', 'ASC'], ['tipo', 'ASC']]
+      order: [['tipo', 'ASC']]
     });
   }
   
   /**
-   * Obtener horario específico de una sede para un día
+   * Obtener horario específico de una sede por tipo
    * @param {number} sedeId - ID de la sede
-   * @param {number} diaSemana - Día de la semana (0-6)
    * @param {string} tipo - Tipo de horario
    * @returns {Object} - Horario encontrado
    */
-  async obtenerHorarioPorDia(sedeId, diaSemana, tipo = 'normal') {
+  async obtenerHorarioPorDia(sedeId, tipo = 'normal') {
     const horario = await HorarioSede.findOne({
-      where: { sedeId, diaSemana, tipo, activo: true }
+      where: { sedeId, tipo, activo: true }
     });
     
     if (!horario) {
-      throw new Error(`No se encontró horario para el día ${this.obtenerNombreDia(diaSemana)} en la sede`);
+      throw new Error(`No se encontró horario de tipo '${tipo}' en la sede`);
     }
     
     return horario;
@@ -103,20 +101,18 @@ class HorarioSedeLogic {
       throw new Error('Horario no encontrado');
     }
     
-    // Si se está cambiando el día o tipo, verificar que no exista conflicto
-    if ((data.diaSemana && data.diaSemana !== horario.diaSemana) || 
-        (data.tipo && data.tipo !== horario.tipo)) {
+    // Si se está cambiando el tipo, verificar que no exista conflicto
+    if (data.tipo && data.tipo !== horario.tipo) {
       const horarioExistente = await HorarioSede.findOne({
         where: {
           sedeId: horario.sedeId,
-          diaSemana: data.diaSemana || horario.diaSemana,
-          tipo: data.tipo || horario.tipo,
+          tipo: data.tipo,
           id: { [Op.ne]: horarioId }
         }
       });
       
       if (horarioExistente) {
-        throw new Error(`Ya existe un horario para el día ${this.obtenerNombreDia(data.diaSemana || horario.diaSemana)}`);
+        throw new Error(`Ya existe un horario de tipo '${data.tipo}' para esta sede`);
       }
     }
     
@@ -183,7 +179,7 @@ class HorarioSedeLogic {
   }
   
   /**
-   * Crear horarios por defecto para una sede (lunes a viernes, 8 horas)
+   * Crear horarios por defecto para una sede
    * @param {number} sedeId - ID de la sede
    * @param {Object} config - Configuración del horario por defecto
    * @returns {Array} - Horarios creados
@@ -203,27 +199,26 @@ class HorarioSedeLogic {
     }
     
     const horariosCreados = [];
-    const diasSemana = [1, 2, 3, 4, 5]; // Lunes a viernes
+    const tiposHorario = ['normal']; // Solo crear horario normal por defecto
     
-    for (const dia of diasSemana) {
+    for (const tipo of tiposHorario) {
       try {
         const horario = await this.crearHorario({
           sedeId,
-          nombre: `Horario ${this.obtenerNombreDia(dia)}`,
-          tipo: 'normal',
-          diaSemana: dia,
+          nombre: `Horario ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
+          tipo,
           horaEntrada,
           horaSalida,
           tiempoAlmuerzo,
           diasTrabajados,
-          descripcion: `Horario por defecto para ${this.obtenerNombreDia(dia)}`
+          descripcion: `Horario por defecto de tipo ${tipo}`
         });
         
         horariosCreados.push(horario);
       } catch (error) {
-        // Si ya existe un horario para ese día, continuar
+        // Si ya existe un horario para ese tipo, continuar
         if (error.message.includes('Ya existe un horario')) {
-          console.log(`Horario para ${this.obtenerNombreDia(dia)} ya existe, saltando...`);
+          console.log(`Horario de tipo ${tipo} ya existe, saltando...`);
         } else {
           throw error;
         }
@@ -236,29 +231,19 @@ class HorarioSedeLogic {
   /**
    * Obtener horario completo de una semana para una sede
    * @param {number} sedeId - ID de la sede
-   * @returns {Object} - Horarios organizados por día
+   * @returns {Object} - Horarios organizados por tipo
    */
   async obtenerHorarioSemanal(sedeId) {
     const horarios = await this.obtenerHorariosPorSede(sedeId);
     
-    const horarioSemanal = {};
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const horariosPorTipo = {};
     
-    // Inicializar estructura
-    dias.forEach((dia, index) => {
-      horarioSemanal[dia] = {
-        diaSemana: index,
-        horarios: []
-      };
-    });
-    
-    // Organizar horarios por día
+    // Organizar horarios por tipo
     horarios.forEach(horario => {
-      const nombreDia = this.obtenerNombreDia(horario.diaSemana);
-      horarioSemanal[nombreDia].horarios.push(horario);
+      horariosPorTipo[horario.tipo] = horario;
     });
     
-    return horarioSemanal;
+    return horariosPorTipo;
   }
   
   /**
@@ -281,16 +266,6 @@ class HorarioSedeLogic {
     
     const totalMinutos = salidaMinutos - entradaMinutos;
     return parseFloat((totalMinutos / 60).toFixed(2));
-  }
-  
-  /**
-   * Obtener nombre del día de la semana
-   * @param {number} diaSemana - Día de la semana (0-6)
-   * @returns {string} - Nombre del día
-   */
-  obtenerNombreDia(diaSemana) {
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return dias[diaSemana] || 'Desconocido';
   }
 }
 

@@ -31,20 +31,15 @@ module.exports = {
         defaultValue: 'normal',
         comment: 'Tipo de horario (normal, nocturno, especial, festivo)',
       },
-      diaSemana: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        comment: 'Día de la semana (0=Domingo, ..., 6=Sábado)',
-      },
       horaEntrada: {
         type: Sequelize.TIME,
         allowNull: false,
-        comment: 'Hora de entrada para este día',
+        comment: 'Hora de entrada para este horario',
       },
       horaSalida: {
         type: Sequelize.TIME,
         allowNull: false,
-        comment: 'Hora de salida para este día',
+        comment: 'Hora de salida para este horario',
       },
       horasJornada: {
         type: Sequelize.FLOAT,
@@ -91,10 +86,10 @@ module.exports = {
       },
     });
 
-    // Índice único como en el modelo
-    await queryInterface.addIndex('horarios_sede', ['sedeId', 'diaSemana', 'tipo'], {
+    // Índice único actualizado
+    await queryInterface.addIndex('horarios_sede', ['sedeId', 'tipo'], {
       unique: true,
-      name: 'ux_horarios_sede_sede_dia_tipo',
+      name: 'ux_horarios_sede_sede_tipo',
     });
   },
 

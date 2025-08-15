@@ -30,29 +30,20 @@ const HorarioSede = sequelize.define('HorarioSede', {
     },
     comment: 'Tipo de horario'
   },
-  diaSemana: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 0,
-      max: 6
-    },
-    comment: 'Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado)'
-  },
   horaEntrada: {
     type: DataTypes.TIME,
     allowNull: false,
-    comment: 'Hora de entrada para este día'
+    comment: 'Hora de entrada para este horario'
   },
   horaSalida: {
     type: DataTypes.TIME,
     allowNull: false,
-    comment: 'Hora de salida para este día'
+    comment: 'Hora de salida para este horario'
   },
   horasJornada: {
     type: DataTypes.FLOAT,
     allowNull: false,
-    comment: 'Horas de la jornada normal para este día'
+    comment: 'Horas de la jornada normal para este horario'
   },
   horasJornadaReal: {
     type: DataTypes.FLOAT,
@@ -96,7 +87,7 @@ const HorarioSede = sequelize.define('HorarioSede', {
   indexes: [
     {
       unique: true,
-      fields: ['sedeId', 'diaSemana', 'tipo']
+      fields: ['sedeId', 'tipo']
     }
   ]
 });

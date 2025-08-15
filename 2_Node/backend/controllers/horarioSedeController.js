@@ -5,12 +5,12 @@ const horarioSedeLogic = require('../logic/HorarioSedeLogic');
  */
 const crearHorario = async (req, res) => {
   try {
-    const { sedeId, nombre, tipo, diaSemana, horaEntrada, horaSalida, tiempoAlmuerzo, diasTrabajados, descripcion } = req.body;
+    const { sedeId, nombre, tipo, horaEntrada, horaSalida, tiempoAlmuerzo, diasTrabajados, descripcion } = req.body;
     
     // Validaciones básicas
-    if (!sedeId || !nombre || !diaSemana || !horaEntrada || !horaSalida) {
+    if (!sedeId || !nombre || !horaEntrada || !horaSalida) {
       return res.status(400).json({
-        error: 'Faltan campos requeridos: sedeId, nombre, diaSemana, horaEntrada, horaSalida'
+        error: 'Faltan campos requeridos: sedeId, nombre, horaEntrada, horaSalida'
       });
     }
     
@@ -19,13 +19,6 @@ const crearHorario = async (req, res) => {
     if (!horaRegex.test(horaEntrada) || !horaRegex.test(horaSalida)) {
       return res.status(400).json({
         error: 'Formato de hora inválido. Use HH:mm'
-      });
-    }
-    
-    // Validar día de la semana
-    if (diaSemana < 0 || diaSemana > 6) {
-      return res.status(400).json({
-        error: 'Día de la semana debe estar entre 0 (Domingo) y 6 (Sábado)'
       });
     }
     
@@ -49,7 +42,6 @@ const crearHorario = async (req, res) => {
       sedeId,
       nombre,
       tipo: tipo || 'normal',
-      diaSemana,
       horaEntrada,
       horaSalida,
       tiempoAlmuerzo,
@@ -114,23 +106,16 @@ const obtenerHorarioSemanal = async (req, res) => {
  */
 const obtenerHorarioPorDia = async (req, res) => {
   try {
-    const { sedeId, diaSemana } = req.params;
+    const { sedeId } = req.params;
     const { tipo } = req.query;
     
-    if (!sedeId || diaSemana === undefined) {
+    if (!sedeId) {
       return res.status(400).json({
-        error: 'ID de sede y día de la semana son requeridos'
+        error: 'ID de sede requerido'
       });
     }
     
-    const dia = parseInt(diaSemana);
-    if (isNaN(dia) || dia < 0 || dia > 6) {
-      return res.status(400).json({
-        error: 'Día de la semana debe estar entre 0 y 6'
-      });
-    }
-    
-    const horario = await horarioSedeLogic.obtenerHorarioPorDia(sedeId, dia, tipo);
+    const horario = await horarioSedeLogic.obtenerHorarioPorDia(sedeId, tipo);
     res.status(200).json(horario);
   } catch (error) {
     console.error('Error al obtener horario por día:', error);
@@ -299,4 +284,4 @@ module.exports = {
   eliminarHorario,
   cambiarEstadoHorario,
   crearHorariosPorDefecto
-}; 
+};

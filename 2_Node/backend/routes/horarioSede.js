@@ -28,7 +28,6 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *             required:
  *               - sedeId
  *               - nombre
- *               - diaSemana
  *               - horaEntrada
  *               - horaSalida
  *             properties:
@@ -39,18 +38,12 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *               nombre:
  *                 type: string
  *                 description: Nombre del horario
- *                 example: "Horario Lunes"
+ *                 example: "Horario Normal"
  *               tipo:
  *                 type: string
  *                 enum: [normal, nocturno, especial, festivo]
  *                 default: normal
  *                 description: Tipo de horario
- *               diaSemana:
- *                 type: integer
- *                 minimum: 0
- *                 maximum: 6
- *                 description: Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado)
- *                 example: 1
  *               horaEntrada:
  *                 type: string
  *                 description: Hora de entrada en formato HH:mm
@@ -129,43 +122,6 @@ router.get('/sede/:sedeId', authMiddleware, horarioSedeController.obtenerHorario
  *         description: Sede no encontrada
  */
 router.get('/sede/:sedeId/semanal', authMiddleware, horarioSedeController.obtenerHorarioSemanal);
-
-/**
- * @swagger
- * /api/horarios-sede/sede/{sedeId}/dia/{diaSemana}:
- *   get:
- *     summary: Obtener horario específico por día
- *     tags: [Horarios de Sede]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: sedeId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de la sede
- *       - in: path
- *         name: diaSemana
- *         required: true
- *         schema:
- *           type: integer
- *           minimum: 0
- *           maximum: 6
- *         description: Día de la semana (0-6)
- *       - in: query
- *         name: tipo
- *         schema:
- *           type: string
- *           enum: [normal, nocturno, especial, festivo]
- *         description: Tipo de horario
- *     responses:
- *       200:
- *         description: Horario del día específico
- *       404:
- *         description: Horario no encontrado
- */
-router.get('/sede/:sedeId/dia/:diaSemana', authMiddleware, horarioSedeController.obtenerHorarioPorDia);
 
 /**
  * @swagger
@@ -333,11 +289,6 @@ module.exports = router;
  *           type: string
  *           enum: [normal, nocturno, especial, festivo]
  *           description: Tipo de horario
- *         diaSemana:
- *           type: integer
- *           minimum: 0
- *           maximum: 6
- *           description: Día de la semana
  *         horaEntrada:
  *           type: string
  *           description: Hora de entrada
@@ -372,4 +323,4 @@ module.exports = router;
  *           format: date-time
  *         sede:
  *           $ref: '#/components/schemas/Sede'
- */ 
+ */
