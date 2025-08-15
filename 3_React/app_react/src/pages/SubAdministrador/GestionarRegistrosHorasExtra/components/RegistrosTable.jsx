@@ -253,8 +253,10 @@ function RegistrosTable({
               '& th': {
                 color: 'white',
                 fontWeight: 700,
-                fontSize: '0.95rem',
-                borderBottom: '2px solid rgba(255,255,255,0.2)'
+                fontSize: '0.60rem',
+                borderBottom: '2px solid rgba(255,255,255,0.2)',
+                padding: '10px', // Ajusta el padding si necesitas más altura
+                height: '10px'
               }
             }}>
               <TableCell>Nombres</TableCell>

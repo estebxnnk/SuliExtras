@@ -1,108 +1,437 @@
-import { Box, Paper, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, MenuItem, Avatar, Divider, Chip, Card, CardContent, Grid, TablePagination } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  Grid,
+  useTheme,
+  useMediaQuery,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  IconButton,
+  Tooltip,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  InputAdornment,
+  Avatar,
+  Divider,
+  Card,
+  CardContent,
+  Alert
+} from '@mui/material';
+import {
+  AccessTime as AccessTimeIcon,
+  Add as AddIcon,
+  FilterList as FilterIcon,
+  Refresh as RefreshIcon,
+  Visibility as ViewIcon,
+  Edit as EditIcon,
+  CheckCircle as ApproveIcon,
+  Cancel as RechazarIcon,
+  Delete as DeleteIcon,
+  Person as PersonIcon,
+  LocationOn as LocationIcon,
+  Schedule as ScheduleIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import PersonIcon from '@mui/icons-material/Person';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingIcon from '@mui/icons-material/Pending';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import WarningIcon from '@mui/icons-material/Warning';
 import NavbarSubAdmin from '../NavbarSubAdmin';
-import { useGestionarRegistrosHorasExtra } from './hooks/useGestionarRegistrosHorasExtra';
-import Filtros from './components/Filtros';
-import RegistrosTable from './components/RegistrosTable';
-import LoadingSpinner from './components/LoadingSpinner';
+import { 
+  LoadingSpinner, 
+  UniversalAlert, 
+  SuccessSpinner,
+  DeleteSuccessSpinner,
+  EditSuccessSpinner,
+  ApproveSuccessSpinner,
+  RejectSuccessSpinner,
+  CreateSuccessSpinner,
+  StateChangeSuccessSpinner,
+  FiltrosAvanzados,
+  ConfirmDialogWithLogo
+} from './components';
+import { useUniversalAlerts, useFiltrosAvanzados } from './hooks';
+import { gestionarRegistrosHorasExtraService } from './services/gestionarRegistrosHorasExtraService';
 
 function GestionarRegistrosHorasExtra() {
-  const {
-    registros,
-    tiposHora,
-    usuarios,
-    loading,
-    mensaje,
-    openDialog,
-    registroSeleccionado,
-    modo,
-    editData,
-    nuevoEstado,
-    search,
-    filtroEstado,
-    confirmDialog,
-    page,
-    rowsPerPage,
-    handleVer,
-    handleEditar,
-    handleAprobar,
-    handleRechazar,
-    handleEliminar,
-    handleGuardarEdicion,
-    handleGuardarEstado,
-    handleChangePage,
-    handleChangeRowsPerPage,
-    showConfirmDialog,
-    handleConfirmAction,
-    onCrearRegistro,
-    setSearch,
-    setFiltroEstado,
-    setMensaje,
-    setOpenDialog,
-    fetchRegistros
-  } = useGestionarRegistrosHorasExtra();
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
+  
+  // Estados principales
+  const [registros, setRegistros] = useState([]);
+  const [tiposHora, setTiposHora] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Estados para diálogos
+  const [openDialog, setOpenDialog] = useState(false);
+  const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
+  const [modo, setModo] = useState('ver'); // 'ver', 'editar'
+  const [editData, setEditData] = useState({});
+
+  // Estados para confirmaciones
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    action: '',
+    registro: null,
+    title: '',
+    message: ''
+  });
+
+  // Hooks personalizados
+  const { 
+    alertState, 
+    showSuccess, 
+    showError, 
+    showInfo,
+    hideAlert 
+  } = useUniversalAlerts();
+
+  const {
+    filtros,
+    registrosFiltrados,
+    actualizarFiltro,
+    limpiarFiltros,
+    estadisticasFiltros,
+    hayFiltrosActivos
+  } = useFiltrosAvanzados(registros);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      
+      // Cargar registros y tipos de hora en paralelo
+      const [registrosData, tiposHoraData, usuariosData] = await Promise.all([
+        gestionarRegistrosHorasExtraService.getRegistros(),
+        gestionarRegistrosHorasExtraService.getTiposHora(),
+        gestionarRegistrosHorasExtraService.getUsuarios()
+      ]);
+
+      setRegistros(registrosData);
+      setTiposHora(tiposHoraData);
+      setUsuarios(usuariosData);
+      
+      showSuccess(`Datos cargados exitosamente: ${registrosData.length} registros, ${tiposHoraData.length} tipos de hora y ${usuariosData.length} usuarios`);
+      
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+      showError('Error al cargar los datos: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refrescarDatos = async () => {
+    try {
+      setRefreshing(true);
+      await cargarDatos();
+      showSuccess('Datos actualizados correctamente');
+    } catch (error) {
+      showError('Error al refrescar los datos');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const irACrearRegistro = () => {
+    navigate('/crear-registro-horas-extra-subadmin');
+  };
+
+  // Calcular estadísticas adicionales
+  const estadisticasAdicionales = {
+    totalRegistros: registros.length,
+    registrosFiltrados: registrosFiltrados.length,
+    registrosPendientes: registros.filter(r => r.estado === 'pendiente').length,
+    registrosAprobados: registros.filter(r => r.estado === 'aprobado').length,
+    registrosRechazados: registros.filter(r => r.estado === 'rechazado').length,
+    filtrosActivos: estadisticasFiltros.filtrosActivos
+  };
+
+  // Paginación
+  const registrosPaginados = registrosFiltrados.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Funciones de acción
+  const handleVer = (registro) => {
+    setModo('ver');
+    setRegistroSeleccionado(registro);
+    setOpenDialog(true);
+  };
+
+  const handleEditar = (registro) => {
+    // Si el registro está aprobado, solo permitir cambiar el estado
+    if (registro.estado === 'aprobado') {
+      setModo('editar');
+      setRegistroSeleccionado(registro);
+      setEditData({
+        estado: 'pendiente' // Solo permitir cambiar a pendiente
+      });
+      setOpenDialog(true);
+      return;
+    }
+
+    // Para registros no aprobados, permitir edición completa
+    setModo('editar');
+    setRegistroSeleccionado(registro);
+    
+    // Obtener el tipo de hora del registro (como en PanelRegistrosHorasExtra.jsx)
+    const tipoHoraId = (registro.Horas && registro.Horas.length > 0) ? registro.Horas[0].id : '';
+    
+    setEditData({
+      fecha: registro.fecha,
+      horaIngreso: registro.horaIngreso,
+      horaSalida: registro.horaSalida,
+      ubicacion: registro.ubicacion,
+      cantidadHorasExtra: registro.cantidadHorasExtra,
+      justificacionHoraExtra: registro.justificacionHoraExtra || '',
+      tipoHoraId: tipoHoraId
+    });
+    setOpenDialog(true);
+  };
+
+  const handleAprobar = (registro) => {
+    setConfirmDialog({
+      open: true,
+      action: 'aprobar',
+      registro: registro,
+      title: 'Confirmar Aprobación',
+      message: `¿Estás seguro que deseas APROBAR el registro ${registro.numRegistro}?`
+    });
+  };
+
+  const handleRechazar = (registro) => {
+    setConfirmDialog({
+      open: true,
+      action: 'rechazar',
+      registro: registro,
+      title: 'Confirmar Rechazo',
+      message: `¿Estás seguro que deseas RECHAZAR el registro ${registro.numRegistro}?`
+    });
+  };
+
+  const handleEliminar = (registro) => {
+    setConfirmDialog({
+      open: true,
+      action: 'eliminar',
+      registro: registro,
+      title: 'Confirmar Eliminación',
+      message: `¿Estás seguro que deseas ELIMINAR el registro ${registro.numRegistro}?`
+    });
+  };
+
+  // Guardar edición
+  const handleGuardarEdicion = async () => {
+    try {
+      // Si solo se está editando el estado (registro aprobado)
+      if (registroSeleccionado.estado === 'aprobado' && Object.keys(editData).length === 1 && editData.estado) {
+        await gestionarRegistrosHorasExtraService.updateRegistro(registroSeleccionado.id, { estado: editData.estado });
+        showSuccess('Estado del registro cambiado exitosamente');
+        setOpenDialog(false);
+        await cargarDatos();
+        return;
+      }
+
+      // Para edición completa de registros no aprobados
+      const dataToSend = {
+        ...editData,
+        horas: [
+          {
+            id: editData.tipoHoraId,
+            cantidad: editData.cantidadHorasExtra
+          }
+        ]
+      };
+      delete dataToSend.tipoHoraId;
+
+      await gestionarRegistrosHorasExtraService.updateRegistro(registroSeleccionado.id, dataToSend);
+      showSuccess('Registro editado exitosamente');
+      setOpenDialog(false);
+      await cargarDatos();
+    } catch (error) {
+      showError('Error al actualizar el registro: ' + error.message);
+    }
+  };
+
+  // Confirmar acción
+  const confirmarAccion = async () => {
+    const { action, registro } = confirmDialog;
+    
+    try {
+      // Cerrar el diálogo de confirmación primero
+      setConfirmDialog({ open: false, action: '', registro: null, title: '', message: '' });
+      
+      // Pequeña pausa para que se cierre el diálogo antes de mostrar el éxito
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      switch (action) {
+        case 'aprobar':
+          await gestionarRegistrosHorasExtraService.aprobarRegistro(registro.id);
+          showSuccess('Registro aprobado exitosamente');
+          break;
+        case 'rechazar':
+          await gestionarRegistrosHorasExtraService.rechazarRegistro(registro.id);
+          showSuccess('Registro rechazado exitosamente');
+          break;
+        case 'eliminar':
+          await gestionarRegistrosHorasExtraService.deleteRegistro(registro.id);
+          showSuccess('Registro eliminado exitosamente');
+          break;
+        default:
+          showError('Acción no reconocida');
+          return;
+      }
+      
+      // Recargar datos después de la acción
+      await cargarDatos();
+      
+    } catch (error) {
+      console.error(`Error al ${action} registro:`, error);
+      showError(`Error al ${action} el registro: ${error.message}`);
+    }
+  };
+
+  // Cerrar diálogo de confirmación
+  const cerrarConfirmDialog = () => {
+    setConfirmDialog({ open: false, action: '', registro: null, title: '', message: '' });
+  };
+
+  // Cerrar diálogo principal
+  const cerrarDialog = () => {
+    setOpenDialog(false);
+    setRegistroSeleccionado(null);
+    setEditData({});
+  };
+
+  // Obtener chip de estado
   const getEstadoChip = (estado) => {
     const estados = {
-      pendiente: { color: 'warning', icon: <PendingIcon />, label: 'Pendiente' },
-      aprobado: { color: 'success', icon: <CheckCircleIcon />, label: 'Aprobado' },
-      rechazado: { color: 'error', icon: <CancelIcon />, label: 'Rechazado' }
+      pendiente: { color: 'warning', label: 'Pendiente' },
+      aprobado: { color: 'success', label: 'Aprobado' },
+      rechazado: { color: 'error', label: 'Rechazado' }
     };
     const config = estados[estado] || estados.pendiente;
+    
     return (
       <Chip
-        icon={config.icon}
         label={config.label}
         color={config.color}
         variant="outlined"
+        size="small"
         sx={{ fontWeight: 600 }}
       />
     );
   };
 
-  // Filtro de búsqueda y estado
-  const registrosFiltrados = registros.filter(r => {
-    const cumpleBusqueda = 
-      (r.usuario && r.usuario.toLowerCase().includes(search.toLowerCase())) ||
-      (r.numRegistro && r.numRegistro.toLowerCase().includes(search.toLowerCase())) ||
-      (r.ubicacion && r.ubicacion.toLowerCase().includes(search.toLowerCase()));
-    
-    const cumpleEstado = filtroEstado === 'todos' || r.estado === filtroEstado;
-    
-    return cumpleBusqueda && cumpleEstado;
-  });
+  // Obtener nombre del tipo de hora (como en PanelRegistrosHorasExtra.jsx)
+  const getTipoHoraNombre = (registro) => {
+    if (registro.Horas && registro.Horas.length > 0) {
+      return (
+        <Box>
+          {registro.Horas.map(hora => (
+            <Box key={hora.id}>
+              <Typography variant="body2" fontWeight={600} color="#9c27b0">
+                {hora.tipo}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {hora.denominacion}
+              </Typography>
+              {hora.RegistroHora && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Cantidad: {hora.RegistroHora.cantidad}
+                </Typography>
+              )}
+            </Box>
+          ))}
+        </Box>
+      );
+    }
+    return (
+      <Typography variant="body2" color="text.secondary">
+        No asignado
+      </Typography>
+    );
+  };
 
-  // Paginación
-  const registrosPaginados = registrosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Obtener usuario por email (como en PanelRegistrosHorasExtra.jsx)
+  const getUsuario = (email) => {
+    return usuarios.find(u => u.email === email);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        minHeight: '100vh', 
+        width: '100vw',
+        background: "url('/img/Recepcion.jpg') no-repeat center center", 
+        backgroundSize: 'cover',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <LoadingSpinner message="Cargando módulo de gestión de registros..." size="large" />
+      </Box>
+    );
+  }
 
   return (
-    <Box width="100vw"  sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      width: '100vw',
+      background: "url('/img/Recepcion.jpg') no-repeat center center", 
+      backgroundSize: 'cover',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <NavbarSubAdmin />
+      
       <Paper elevation={8} sx={{ 
         borderRadius: 4, 
-        p: 4, 
-        width: '93vw',  // Cambiado de maxWidth a width
+        p: 4,
         margin: '120px auto 40px auto', 
         background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,248,255,0.98) 100%)',
         border: '1px solid rgba(25, 118, 210, 0.2)',
-        backdropFilter: 'blur(5px)', 
-        display: 'flex',          // Añadido
-        flexDirection: 'column',  // Añadido
-        overflow: 'hidden'        // Añadido para manejar el contenido que exceda
+        position: 'relative',
+        backdropFilter: 'blur(10px)',
+        width: '95vw',
+        maxWidth: 1400,
+        overflow: 'hidden'
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
           <AccessTimeIcon sx={{ fontSize: 48, color: '#1976d2' }} />
-          <Box>
-            <Typography variant="h3" fontWeight={800} color="#1976d2" sx={{ 
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h3" component="h1" fontWeight={800} color="#1976d2" sx={{ 
               textShadow: '0 2px 4px rgba(0,0,0,0.1)',
               background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
               backgroundClip: 'text',
@@ -115,93 +444,307 @@ function GestionarRegistrosHorasExtra() {
               Administra y gestiona todos los registros de horas extra del sistema
             </Typography>
           </Box>
+          
+          {/* Botones de acción */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={refrescarDatos}
+              disabled={refreshing}
+              sx={{ 
+                fontWeight: 600,
+                borderRadius: 2,
+                borderWidth: 2
+              }}
+            >
+              {refreshing ? 'Actualizando...' : 'Actualizar'}
+            </Button>
+            
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={irACrearRegistro}
+              sx={{ 
+                fontWeight: 700,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
+                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)'
+                }
+              }}
+            >
+              Crear Registro
+            </Button>
+          </Box>
         </Box>
-        
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddCircleIcon />}
-          sx={{ 
-            position: 'absolute', 
-            right: 32, 
-            top: 32, 
-            fontWeight: 700, 
-            borderRadius: 3, 
-            fontSize: 16, 
-            zIndex: 10,
-            background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
-            boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)'
-            },
-            transition: 'all 0.3s ease'
-          }}
-          onClick={() => navigate('/subadmin/crear-registros-horas-extra')}
-        >
-          Crear Nuevo Registro
-        </Button>
-        
-        <Filtros 
-          search={search} 
-          setSearch={setSearch} 
-          filtroEstado={filtroEstado} 
-          setFiltroEstado={setFiltroEstado} 
+
+        {/* Estadísticas */}
+        <Paper elevation={2} sx={{ 
+          p: 3, 
+          mb: 3, 
+          background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)',
+          border: '2px solid rgba(25, 118, 210, 0.2)',
+          borderRadius: 3
+        }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={2}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="#1976d2">
+                  {estadisticasAdicionales.totalRegistros}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total de Registros
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="#4caf50">
+                  {estadisticasAdicionales.registrosFiltrados}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Registros Filtrados
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="#ff9800">
+                  {estadisticasAdicionales.registrosPendientes}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Por Aprobar
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="#4caf50">
+                  {estadisticasAdicionales.registrosAprobados}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Aprobados
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="#f44336">
+                  {estadisticasAdicionales.registrosRechazados}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Rechazados
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="#9c27b0">
+                  {tiposHora.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Tipos de Hora
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Filtros Avanzados */}
+        <FiltrosAvanzados
+          search={filtros.search}
+          onSearchChange={(valor) => actualizarFiltro('search', valor)}
+          tipoHoraId={filtros.tipoHoraId}
+          onTipoHoraChange={(valor) => actualizarFiltro('tipoHoraId', valor)}
+          fechaInicio={filtros.fechaInicio}
+          onFechaInicioChange={(valor) => actualizarFiltro('fechaInicio', valor)}
+          fechaFin={filtros.fechaFin}
+          onFechaFinChange={(valor) => actualizarFiltro('fechaFin', valor)}
+          estado={filtros.estado}
+          onEstadoChange={(valor) => actualizarFiltro('estado', valor)}
+          tiposHora={tiposHora}
+          onClearFilters={limpiarFiltros}
+          isMobile={isMobile}
         />
 
-        {mensaje && <Alert severity="info" sx={{ mb: 2 }}>{mensaje}</Alert>}
-        
-        <RegistrosTable
-          registros={registrosPaginados}
-          tiposHora={tiposHora}
-          usuarios={usuarios}
-          loading={loading}
-          handleVer={handleVer}
-          handleEditar={handleEditar}
-          handleAprobar={handleAprobar}
-          handleRechazar={handleRechazar}
-          handleEliminar={handleEliminar}
-          handleGuardarEstado={handleGuardarEstado}
-          onDataChange={fetchRegistros}
-          onCrearRegistro={onCrearRegistro}
-        />
-        <Paper elevation={2} sx={{ 
-          mt: 3, 
-          borderRadius: 2, 
-          background: 'rgba(255,255,255,0.9)',
-          border: '1px solid rgba(25, 118, 210, 0.1)'
+        {/* Tabla de Registros */}
+        <Paper elevation={3} sx={{ 
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: 3,
+          overflow: 'hidden'
         }}>
-          <TablePagination
-            component="div"
-            count={registrosFiltrados.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Filas por página"
-            rowsPerPageOptions={[5, 10, 25, 50]}
-            sx={{
-              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                fontWeight: 600,
-                color: '#1976d2'
-              },
-              '& .MuiTablePagination-select': {
-                borderRadius: 1,
-                '&:focus': {
-                  background: 'rgba(25, 118, 210, 0.1)'
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Ubicación</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Empleado</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Fecha</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Horas Extra</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Tipo de Hora</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Estado</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {registrosPaginados.length > 0 ? (
+                  registrosPaginados.map((registro) => {
+                    const usuario = getUsuario(registro.usuario);
+                    return (
+                      <TableRow key={registro.id} hover>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LocationIcon sx={{ fontSize: 16, color: '#666' }} />
+                            <Typography variant="body2" fontWeight={600} color="#1976d2">
+                              {registro.ubicacion}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PersonIcon sx={{ fontSize: 16, color: '#666' }} />
+                            <Typography variant="body2">
+                              {usuario?.persona?.nombres || registro.nombres || 'N/A'} {usuario?.persona?.apellidos || registro.apellidos || ''}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {registro.fecha}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ScheduleIcon sx={{ fontSize: 16, color: '#666' }} />
+                            <Typography variant="body2" fontWeight={600}>
+                              {registro.cantidadHorasExtra} hrs
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          {getTipoHoraNombre(registro)}
+                        </TableCell>
+                        <TableCell>
+                          {getEstadoChip(registro.estado)}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Tooltip title="Ver detalles">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleVer(registro)}
+                                sx={{ color: '#1976d2' }}
+                              >
+                                <ViewIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={registro.estado === 'aprobado' ? 'Cambiar Estado' : 'Editar'}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEditar(registro)}
+                                sx={{ color: '#ff9800' }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                            {registro.estado === 'pendiente' && (
+                              <>
+                                <Tooltip title="Aprobar">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleAprobar(registro)}
+                                    sx={{ color: '#4caf50' }}
+                                  >
+                                    <ApproveIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Rechazar">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleRechazar(registro)}
+                                    sx={{ color: '#f44336' }}
+                                  >
+                                    <RechazarIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            )}
+                            <Tooltip title="Eliminar">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEliminar(registro)}
+                                sx={{ color: '#f44336' }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>
+                      <Typography variant="h6" color="text.secondary">
+                        {hayFiltrosActivos 
+                          ? 'No se encontraron registros con los filtros aplicados'
+                          : 'No hay registros de horas extra disponibles'
+                        }
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Paginación */}
+          {registrosFiltrados.length > 0 && (
+            <TablePagination
+              component="div"
+              count={registrosFiltrados.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Filas por página"
+              rowsPerPageOptions={[5, 10, 25, 50]}
+              sx={{
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  fontWeight: 600,
+                  color: '#1976d2'
                 }
-              }
-            }}
-          />
+              }}
+            />
+          )}
         </Paper>
+
+        {/* Información de filtros */}
+        {hayFiltrosActivos && (
+          <Paper elevation={1} sx={{ 
+            mt: 3, 
+            p: 2, 
+            background: 'rgba(25, 118, 210, 0.1)',
+            borderRadius: 2
+          }}>
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+              🔍 Filtros aplicados: {estadisticasFiltros.porcentajeFiltrado}% de registros ocultados
+            </Typography>
+          </Paper>
+        )}
       </Paper>
 
-      {/* Dialogo para ver/editar registro */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+      {/* Diálogo para ver/editar registro */}
+      <Dialog open={openDialog} onClose={cerrarDialog} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {modo === 'ver' && <AccessTimeIcon sx={{ fontSize: 36, color: '#1976d2' }} />}
-          {modo === 'ver' ? 'Detalles del Registro' : modo === 'editar' ? 'Editar Registro' : 'Cambiar Estado del Registro'}
+          {modo === 'ver' ? 'Detalles del Registro' : 
+            (registroSeleccionado?.estado === 'aprobado' ? 'Cambiar Estado del Registro' : 'Editar Registro')}
         </DialogTitle>
         <DialogContent sx={{ background: modo === 'ver' ? '#f3f7fa' : 'inherit', borderRadius: 2 }}>
           {registroSeleccionado && modo === 'ver' && (
@@ -214,15 +757,15 @@ function GestionarRegistrosHorasExtra() {
               </Typography>
               <Divider sx={{ width: '100%', mb: 2 }} />
               
-              {/* Buscar el usuario correspondiente */}
+              {/* Información del usuario */}
               {(() => {
-                const usuario = usuarios.find(u => u.email === registroSeleccionado.usuario);
+                const usuario = getUsuario(registroSeleccionado.usuario);
                 return (
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, width: '100%' }}>
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">Empleado</Typography>
                       <Typography variant="body1" fontWeight={600}>
-                        {usuario?.persona?.nombres || registroSeleccionado.nombres || 'N/A'} {usuario?.persona?.apellidos || registroSeleccionado.apellidos || 'N/A'}
+                        {usuario?.persona?.nombres || registroSeleccionado.nombres || 'N/A'} {usuario?.persona?.apellidos || registroSeleccionado.apellidos || ''}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {usuario?.persona?.tipoDocumento || registroSeleccionado.tipoDocumento || 'N/A'}: {usuario?.persona?.numeroDocumento || registroSeleccionado.numeroDocumento || 'N/A'}
@@ -256,27 +799,28 @@ function GestionarRegistrosHorasExtra() {
                       {registroSeleccionado.Horas && registroSeleccionado.Horas.length > 0 ? (
                         registroSeleccionado.Horas.map(hora => (
                           <Box key={hora.id}>
-                            <Typography variant="body1" fontWeight={600}>{hora.tipo}</Typography>
-                            <Typography variant="caption" color="text.secondary">{hora.denominacion} ({(hora.valor - 1) * 100}% recargo)</Typography>
-                            <Typography variant="caption" color="text.secondary">Cantidad: {hora.RegistroHora.cantidad}</Typography>
+                            <Typography variant="body1" fontWeight={600} color="#9c27b0">
+                              {hora.tipo}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {hora.denominacion} ({(hora.valor - 1) * 100}% recargo)
+                            </Typography>
+                            {hora.RegistroHora && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                Cantidad: {hora.RegistroHora.cantidad}
+                              </Typography>
+                            )}
                           </Box>
                         ))
                       ) : (
-                        <Typography variant="body1" fontWeight={600} color="text.secondary">No asignado</Typography>
+                        <Typography variant="body1" fontWeight={600} color="text.secondary">
+                          No asignado
+                        </Typography>
                       )}
                     </Box>
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">Estado</Typography>
                       {getEstadoChip(registroSeleccionado.estado)}
-                    </Box>
-                    {/* CAMPOS NUEVOS CON EL MISMO DISEÑO */}
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">Horas Extra (reporte)</Typography>
-                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horas_extra_divididas ?? 0} horas</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">Bono Salarial</Typography>
-                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.bono_salarial ?? 0} horas</Typography>
                     </Box>
                   </Box>
                 );
@@ -292,259 +836,226 @@ function GestionarRegistrosHorasExtra() {
               )}
             </Box>
           )}
-          {registroSeleccionado && modo === 'estado' && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <Typography variant="h6" fontWeight={600} color="#1976d2" mb={2}>
-                Registro #{registroSeleccionado.numRegistro}
-              </Typography>
-              {(() => {
-                const usuario = usuarios.find(u => u.email === registroSeleccionado.usuario);
-                return (
-                  <>
-                    <Typography variant="body1" mb={2}>
-                      <strong>Empleado:</strong> {usuario?.persona?.nombres || registroSeleccionado.nombres || 'N/A'} {usuario?.persona?.apellidos || registroSeleccionado.apellidos || 'N/A'}
-                    </Typography>
-                    <Typography variant="body2" mb={1} color="text.secondary">
-                      <strong>Documento:</strong> {usuario?.persona?.tipoDocumento || registroSeleccionado.tipoDocumento || 'N/A'}: {usuario?.persona?.numeroDocumento || registroSeleccionado.numeroDocumento || 'N/A'}
-                    </Typography>
-                    <Typography variant="body2" mb={2} color="text.secondary">
-                      <strong>Email:</strong> {registroSeleccionado.usuario}
-                    </Typography>
-                  </>
-                );
-              })()}
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Typography variant="body2">
-                  Este registro ya ha sido procesado. Solo puedes cambiar su estado.
-                </Typography>
-              </Alert>
-              <TextField
-                select
-                label="Nuevo Estado"
-                value={nuevoEstado}
-                onChange={e => setNuevoEstado(e.target.value)}
-                fullWidth
-                required
-              >
-                <MenuItem value="pendiente">Pendiente</MenuItem>
-                <MenuItem value="aprobado">Aprobado</MenuItem>
-                <MenuItem value="rechazado">Rechazado</MenuItem>
-              </TextField>
-            </Box>
-          )}
           
           {registroSeleccionado && modo === 'editar' && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-              <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%)', border: '1px solid #dee2e6' }}>
-                <Typography variant="h6" fontWeight={700} color="#495057" sx={{ mb: 3 }}>
-                  Información del Registro
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Fecha"
-                      type="date"
-                      value={editData.fecha}
-                      onChange={e => setEditData({ ...editData, fecha: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                    />
+              {/* Si el registro está aprobado, solo mostrar cambio de estado */}
+              {registroSeleccionado.estado === 'aprobado' ? (
+                <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%)', border: '1px solid #dee2e6' }}>
+                  <Typography variant="h6" fontWeight={700} color="#495057" sx={{ mb: 3 }}>
+                    Cambiar Estado del Registro
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Este registro está aprobado. Solo puedes cambiar su estado a pendiente para permitir futuras ediciones.
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        select
+                        label="Nuevo Estado"
+                        value={editData.estado || 'pendiente'}
+                        onChange={e => setEditData({ ...editData, estado: e.target.value })}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      >
+                        <MenuItem value="pendiente">Pendiente</MenuItem>
+                      </TextField>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Ubicación"
-                      value={editData.ubicacion}
-                      onChange={e => setEditData({ ...editData, ubicacion: e.target.value })}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                    />
+                </Card>
+              ) : (
+                /* Para registros no aprobados, mostrar edición completa */
+                <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%)', border: '1px solid #dee2e6' }}>
+                  <Typography variant="h6" fontWeight={700} color="#495057" sx={{ mb: 3 }}>
+                    Información del Registro
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Fecha"
+                        type="date"
+                        value={editData.fecha}
+                        onChange={e => setEditData({ ...editData, fecha: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Ubicación"
+                        value={editData.ubicacion}
+                        onChange={e => setEditData({ ...editData, ubicacion: e.target.value })}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Hora de Ingreso"
+                        type="time"
+                        value={editData.horaIngreso}
+                        onChange={e => setEditData({ ...editData, horaIngreso: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Hora de Salida"
+                        type="time"
+                        value={editData.horaSalida}
+                        onChange={e => setEditData({ ...editData, horaSalida: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Cantidad de Horas Extra"
+                        type="number"
+                        value={editData.cantidadHorasExtra}
+                        onChange={e => setEditData({ ...editData, cantidadHorasExtra: parseFloat(e.target.value) })}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                        inputProps={{ min: 1, step: 1 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        select
+                        label="Tipo de Hora Extra"
+                        value={editData.tipoHoraId || ''}
+                        onChange={e => setEditData({ ...editData, tipoHoraId: e.target.value })}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      >
+                        {tiposHora.map(tipo => (
+                          <MenuItem key={tipo.id} value={tipo.id}>
+                            {tipo.tipo} - {tipo.denominacion} ({(tipo.valor - 1) * 100}% recargo)
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Justificación"
+                        value={editData.justificacionHoraExtra}
+                        onChange={e => setEditData({ ...editData, justificacionHoraExtra: e.target.value })}
+                        multiline
+                        rows={3}
+                        fullWidth
+                        sx={{ background: '#fff', borderRadius: 2 }}
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Hora de Ingreso"
-                      type="time"
-                      value={editData.horaIngreso}
-                      onChange={e => setEditData({ ...editData, horaIngreso: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Hora de Salida"
-                      type="time"
-                      value={editData.horaSalida}
-                      onChange={e => setEditData({ ...editData, horaSalida: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Cantidad de Horas Extra"
-                      type="number"
-                      value={editData.cantidadHorasExtra}
-                      onChange={e => setEditData({ ...editData, cantidadHorasExtra: parseFloat(e.target.value) })}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                      inputProps={{ min: 1, step: 1 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      label="Tipo de Hora Extra"
-                      value={editData.tipoHora || ''}
-                      onChange={e => setEditData({ ...editData, tipoHora: e.target.value })}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                    >
-                      {tiposHora.map(tipo => (
-                        <MenuItem key={tipo.id} value={tipo.id}>
-                          {tipo.tipo} - {tipo.denominacion} ({(tipo.valor - 1) * 100}% recargo)
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Horas Extra (reporte)"
-                      type="number"
-                      value={editData.horas_extra_divididas ?? 0}
-                      onChange={e => setEditData({ ...editData, horas_extra_divididas: parseFloat(e.target.value) })}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                      inputProps={{ min: 0, step: 0.01 }}
-                      helperText="Máximo 2 horas por registro para reporte"
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Justificación"
-                      value={editData.justificacionHoraExtra}
-                      onChange={e => setEditData({ ...editData, justificacionHoraExtra: e.target.value })}
-                      multiline
-                      rows={3}
-                      fullWidth
-                      sx={{ background: '#fff', borderRadius: 2 }}
-                    />
-                  </Grid>
-                </Grid>
-              </Card>
+                </Card>
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cerrar</Button>
+          <Button onClick={cerrarDialog}>Cerrar</Button>
           {modo === 'editar' && (
             <Button onClick={handleGuardarEdicion} variant="contained" color="success">
-              Guardar
-            </Button>
-          )}
-          {modo === 'estado' && (
-            <Button onClick={handleGuardarEstado} variant="contained" color="primary">
-              Cambiar Estado
+              {registroSeleccionado?.estado === 'aprobado' ? 'Cambiar Estado' : 'Guardar'}
             </Button>
           )}
         </DialogActions>
       </Dialog>
 
-      {/* Diálogo de Confirmación Personalizado */}
-      <Dialog 
-        open={confirmDialog.open} 
-        onClose={() => setConfirmDialog({ open: false, action: '', registro: null })}
-        maxWidth="sm" 
-        fullWidth
-      >
-        <DialogContent sx={{ p: 0 }}>
-          <Card sx={{ 
-            background: confirmDialog.action === 'eliminar' 
-              ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' 
-              : confirmDialog.action === 'aprobar'
-              ? 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)'
-              : 'linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%)',
-            border: confirmDialog.action === 'eliminar' 
-              ? '2px solid #f44336' 
-              : confirmDialog.action === 'aprobar'
-              ? '2px solid #4caf50'
-              : '2px solid #ff9800'
-          }}>
-            <CardContent sx={{ p: 4, textAlign: 'center' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                {confirmDialog.action === 'eliminar' ? (
-                  <WarningIcon sx={{ fontSize: 64, color: '#f44336' }} />
-                ) : confirmDialog.action === 'aprobar' ? (
-                  <CheckCircleIcon sx={{ fontSize: 64, color: '#4caf50' }} />
-                ) : (
-                  <CancelIcon sx={{ fontSize: 64, color: '#ff9800' }} />
-                )}
-              </Box>
-              
-              <Typography variant="h5" fontWeight={700} mb={2} color="#333">
-                {confirmDialog.action === 'eliminar' ? 'Confirmar Eliminación' :
-                 confirmDialog.action === 'aprobar' ? 'Confirmar Aprobación' : 'Confirmar Rechazo'}
-              </Typography>
-              
-              <Typography variant="body1" mb={3} color="#666">
-                ¿Estás seguro que deseas{' '}
-                <strong>
-                  {confirmDialog.action === 'eliminar' ? 'ELIMINAR' :
-                   confirmDialog.action === 'aprobar' ? 'APROBAR' : 'RECHAZAR'}
-                </strong>{' '}
-                el registro del empleado{' '}
-                <strong>
-                  {confirmDialog.registro?.persona?.nombres} {confirmDialog.registro?.persona?.apellidos}
-                </strong>?
-              </Typography>
-              
-              {confirmDialog.action === 'eliminar' && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                  <Typography variant="body2" fontWeight={600}>
-                    ⚠️ Esta acción no se puede deshacer
-                  </Typography>
-                </Alert>
-              )}
-              
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => setConfirmDialog({ open: false, action: '', registro: null })}
-                  sx={{ px: 4, py: 1.5, fontWeight: 600 }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleConfirmAction}
-                  sx={{ 
-                    px: 4, 
-                    py: 1.5, 
-                    fontWeight: 600,
-                    background: confirmDialog.action === 'eliminar' 
-                      ? '#f44336' 
-                      : confirmDialog.action === 'aprobar'
-                      ? '#4caf50'
-                      : '#ff9800',
-                    '&:hover': {
-                      background: confirmDialog.action === 'eliminar' 
-                        ? '#d32f2f' 
-                        : confirmDialog.action === 'aprobar'
-                        ? '#388e3c'
-                        : '#f57c00'
-                    }
-                  }}
-                >
-                  {confirmDialog.action === 'eliminar' ? 'Eliminar' :
-                   confirmDialog.action === 'aprobar' ? 'Aprobar' : 'Rechazar'}
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </DialogContent>
-      </Dialog>
+      {/* Alertas Universales */}
+      <UniversalAlert
+        open={alertState.open}
+        type={alertState.type}
+        message={alertState.message}
+        title={alertState.title}
+        onClose={hideAlert}
+        autoHideDuration={alertState.autoHideDuration}
+        showLogo={true}
+      />
+
+      {/* Spinners de Éxito Específicos */}
+      {/* Spinner de Cambio de Estado Exitoso (debe ir primero para evitar conflictos) */}
+      <StateChangeSuccessSpinner
+        open={alertState.type === 'success' && alertState.open && alertState.message.includes('Estado del registro cambiado') && !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Spinner de Eliminación Exitosa */}
+      <DeleteSuccessSpinner
+        open={alertState.type === 'success' && alertState.open && alertState.message.includes('eliminado') && !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Spinner de Edición Exitosa */}
+      <EditSuccessSpinner
+        open={alertState.type === 'success' && alertState.open && alertState.message.includes('editado') && !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Spinner de Aprobación Exitosa */}
+      <ApproveSuccessSpinner
+        open={alertState.type === 'success' && alertState.open && alertState.message.includes('aprobado') && !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Spinner de Rechazo Exitoso */}
+      <RejectSuccessSpinner
+        open={alertState.type === 'success' && alertState.open && alertState.message.includes('rechazado') && !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Spinner de Creación Exitosa */}
+      <CreateSuccessSpinner
+        open={alertState.type === 'success' && alertState.open && alertState.message.includes('creado') && !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Spinner de Éxito General (para otros casos) */}
+      <SuccessSpinner
+        open={alertState.type === 'success' && alertState.open && 
+              !alertState.message.includes('eliminado') && 
+              !alertState.message.includes('editado') && 
+              !alertState.message.includes('aprobado') && 
+              !alertState.message.includes('rechazado') && 
+              !alertState.message.includes('creado') &&
+              !alertState.message.includes('Estado del registro cambiado') &&
+              !confirmDialog.open}
+        message={alertState.message}
+        showLogo={true}
+        onComplete={hideAlert}
+      />
+
+      {/* Diálogo de Confirmación */}
+      <ConfirmDialogWithLogo
+        open={confirmDialog.open}
+        action={confirmDialog.action}
+        data={confirmDialog.registro}
+        onClose={cerrarConfirmDialog}
+        onConfirm={confirmarAccion}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmButtonText={
+          confirmDialog.action === 'aprobar' ? 'Aprobar' :
+          confirmDialog.action === 'rechazar' ? 'Rechazar' :
+          confirmDialog.action === 'eliminar' ? 'Eliminar' : 'Confirmar'
+        }
+      />
     </Box>
   );
 }

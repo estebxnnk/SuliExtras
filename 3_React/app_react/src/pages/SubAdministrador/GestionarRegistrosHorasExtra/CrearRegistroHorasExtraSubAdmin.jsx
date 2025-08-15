@@ -12,9 +12,9 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import WorkIcon from '@mui/icons-material/Work';
 import NavbarSubAdmin from '../NavbarSubAdmin';
 import { gestionarRegistrosHorasExtraService } from './services/gestionarRegistrosHorasExtraService';
-import LoadingSpinner from './components/LoadingSpinner';
+import { LoadingSpinner, UniversalAlert, SuccessSpinner } from './components';
 
-function CrearRegistroHorasExtra() {
+function CrearRegistroHorasExtraSubAdmin() {
   const [formData, setFormData] = useState({
     fecha: '',
     horaIngreso: '',
@@ -30,9 +30,15 @@ function CrearRegistroHorasExtra() {
   const [usuarios, setUsuarios] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState('success');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (field, value) => {
+    console.log(`🔄 Campo ${field} cambiado a:`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -40,12 +46,34 @@ function CrearRegistroHorasExtra() {
   };
 
   const handleUsuarioChange = (usuarioId) => {
+    console.log('👤 Usuario seleccionado ID:', usuarioId);
     const usuario = usuarios.find(u => u.id === usuarioId);
+    console.log('👤 Usuario encontrado:', usuario);
     setFormData(prev => ({
       ...prev,
       usuario: usuario?.email || '',
       usuarioSeleccionado: usuario || null
     }));
+  };
+
+  const handleTipoHoraChange = (tipoHoraId) => {
+    console.log('⏰ Tipo de hora seleccionado ID:', tipoHoraId);
+    const tipoHora = tiposHora.find(t => t.id === tipoHoraId);
+    console.log('⏰ Tipo de hora encontrado:', tipoHora);
+    
+    if (tipoHora) {
+      console.log('✅ Tipo de hora válido seleccionado:', tipoHora);
+      setFormData(prev => ({
+        ...prev,
+        tipoHoraId: tipoHoraId
+      }));
+    } else {
+      console.warn('⚠️ Tipo de hora no encontrado en la lista');
+      setFormData(prev => ({
+        ...prev,
+        tipoHoraId: tipoHoraId
+      }));
+    }
   };
 
   const calcularHorasExtra = () => {
@@ -63,12 +91,20 @@ function CrearRegistroHorasExtra() {
       // Restar 8 horas de trabajo normal
       horasExtra = Math.max(0, horasExtra - 8);
       
+      console.log('⏰ Horas extra calculadas:', horasExtra);
       setFormData(prev => ({
         ...prev,
         cantidadHorasExtra: horasExtra > 0 ? horasExtra.toFixed(2) : '0.00'
       }));
     }
   };
+
+  // Calcular horas extra cuando cambien las horas
+  useEffect(() => {
+    if (formData.horaIngreso && formData.horaSalida) {
+      calcularHorasExtra();
+    }
+  }, [formData.horaIngreso, formData.horaSalida]);
 
   useEffect(() => {
     fetchTiposHora();
@@ -77,64 +113,138 @@ function CrearRegistroHorasExtra() {
 
   const fetchTiposHora = async () => {
     try {
+      console.log('🔄 Obteniendo tipos de hora...');
       const data = await gestionarRegistrosHorasExtraService.getTiposHora();
-      setTiposHora(data);
+      console.log('✅ Tipos de hora obtenidos:', data);
+      
+      // Verificar que los datos tengan la estructura esperada
+      if (Array.isArray(data)) {
+        console.log('✅ Datos de tipos de hora son un array válido');
+        setTiposHora(data);
+      } else {
+        console.error('❌ Los tipos de hora no son un array:', typeof data);
+        setTiposHora([]);
+        throw new Error('Formato de datos inválido para tipos de hora');
+      }
     } catch (error) {
-      setMensaje('No se pudieron cargar los tipos de hora.');
+      console.error('❌ Error al obtener tipos de hora:', error);
+      setAlertType('error');
+      setAlertMessage('No se pudieron cargar los tipos de hora: ' + error.message);
+      setShowAlert(true);
+      setTiposHora([]);
     }
   };
 
   const fetchUsuarios = async () => {
     try {
+      console.log('🔄 Obteniendo usuarios...');
       const data = await gestionarRegistrosHorasExtraService.getUsuarios();
-      setUsuarios(data);
+      console.log('✅ Usuarios obtenidos:', data);
+      
+      if (Array.isArray(data)) {
+        console.log('✅ Datos de usuarios son un array válido');
+        setUsuarios(data);
+      } else {
+        console.error('❌ Los usuarios no son un array:', typeof data);
+        setUsuarios([]);
+        throw new Error('Formato de datos inválido para usuarios');
+      }
     } catch (error) {
-      setMensaje('No se pudieron cargar los usuarios.');
+      console.error('❌ Error al obtener usuarios:', error);
+      setAlertType('error');
+      setAlertMessage('No se pudieron cargar los usuarios: ' + error.message);
+      setShowAlert(true);
+      setUsuarios([]);
     }
+  };
+
+  const mostrarAlerta = (tipo, mensaje) => {
+    setAlertType(tipo);
+    setAlertMessage(mensaje);
+    setShowAlert(true);
+  };
+
+  const mostrarExito = (mensaje) => {
+    setSuccessMessage(mensaje);
+    setShowSuccess(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    console.log('📝 Iniciando envío del formulario...');
+    console.log('📝 Datos del formulario:', formData);
+    console.log('📝 Tipos de hora disponibles:', tiposHora);
+    console.log('📝 Tipo de hora seleccionado ID:', formData.tipoHoraId);
+    
     try {
       // Validar que se ingresen las horas extra
-      if (!formData.cantidadHorasExtra || parseInt(formData.cantidadHorasExtra) < 1) {
-        setMensaje('Error: Debes ingresar una cantidad válida de horas extra (mínimo 1 hora).');
+      if (!formData.cantidadHorasExtra || parseFloat(formData.cantidadHorasExtra) < 1) {
+        mostrarAlerta('warning', 'Debes ingresar una cantidad válida de horas extra (mínimo 1 hora).');
         setLoading(false);
         return;
       }
+      
       // Validar que todos los campos requeridos estén completos
-      if (!formData.fecha || !formData.usuario || !formData.horaIngreso || !formData.horaSalida || !formData.ubicacion || !formData.tipoHoraId) {
-        setMensaje('Error: Debes completar todos los campos requeridos.');
+      if (!formData.fecha || !formData.usuarioSeleccionado || !formData.horaIngreso || !formData.horaSalida || !formData.ubicacion || !formData.tipoHoraId) {
+        console.log('❌ Campos faltantes:', {
+          fecha: !!formData.fecha,
+          usuario: !!formData.usuarioSeleccionado,
+          horaIngreso: !!formData.horaIngreso,
+          horaSalida: !!formData.horaSalida,
+          ubicacion: !!formData.ubicacion,
+          tipoHoraId: !!formData.tipoHoraId
+        });
+        mostrarAlerta('warning', 'Debes completar todos los campos requeridos.');
         setLoading(false);
         return;
       }
+      
+      // Validar que el tipo de hora sea válido
+      const tipoHoraSeleccionado = tiposHora.find(t => t.id === formData.tipoHoraId);
+      if (!tipoHoraSeleccionado) {
+        console.error('❌ Tipo de hora no válido:', formData.tipoHoraId);
+        mostrarAlerta('error', 'El tipo de hora seleccionado no es válido. Por favor, selecciona otro tipo.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('✅ Tipo de hora válido:', tipoHoraSeleccionado);
+      
       // Generar número de registro único
       const numRegistro = `REG-${Date.now()}`;
-      // Enviar el array 'horas' al backend
-      const registroData = {
-        ...formData,
-        numRegistro,
-        estado: 'pendiente',
-        usuarioId: formData.usuarioSeleccionado?.id,
-        horas: [
-          {
-            id: formData.tipoHoraId,
-            cantidad: parseInt(formData.cantidadHorasExtra)
-          }
-        ]
-      };
-      // Eliminar campos innecesarios
-      delete registroData.tipoHoraId;
-      delete registroData.usuarioSeleccionado;
       
-      await gestionarRegistrosHorasExtraService.createRegistro(registroData);
-      setMensaje('¡Registro creado exitosamente! Redirigiendo al panel de registros...');
+      // Preparar datos para enviar
+      const registroData = {
+        fecha: formData.fecha,
+        horaIngreso: formData.horaIngreso,
+        horaSalida: formData.horaSalida,
+        ubicacion: formData.ubicacion,
+        usuarioId: formData.usuarioSeleccionado.id,
+        cantidadHorasExtra: parseFloat(formData.cantidadHorasExtra),
+        justificacionHoraExtra: formData.justificacionHoraExtra,
+        tipoHoraId: formData.tipoHoraId,
+        numRegistro,
+        estado: 'pendiente'
+      };
+      
+      console.log('📤 Datos a enviar:', registroData);
+      
+      // Enviar al backend
+      const resultado = await gestionarRegistrosHorasExtraService.createRegistro(registroData);
+      console.log('✅ Registro creado exitosamente:', resultado);
+      
+      // Mostrar éxito
+      mostrarExito('¡Registro creado exitosamente! Redirigiendo al panel de registros...');
+      
       setTimeout(() => {
         navigate('/subadmin/gestionar-registros-horas-extra');
-      }, 1500);
+      }, 3000);
+      
     } catch (error) {
-      setMensaje('Error al crear el registro: ' + error.message);
+      console.error('❌ Error al crear el registro:', error);
+      mostrarAlerta('error', 'Error al crear el registro: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -190,14 +300,12 @@ function CrearRegistroHorasExtra() {
           </Box>
         </Box>
 
-        {mensaje && (
-          <Alert 
-            severity={mensaje.includes('exitosamente') ? 'success' : 'error'} 
-            sx={{ mb: 3 }}
-            onClose={() => setMensaje('')}
-          >
-            {mensaje}
-          </Alert>
+        {showAlert && (
+          <UniversalAlert 
+            severity={alertType} 
+            message={alertMessage} 
+            onClose={() => setShowAlert(false)}
+          />
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -482,8 +590,35 @@ function CrearRegistroHorasExtra() {
                   <InputLabel>Tipo de Hora Extra</InputLabel>
                   <Select
                     value={formData.tipoHoraId}
-                    onChange={(e) => handleInputChange('tipoHoraId', e.target.value)}
+                    onChange={(e) => handleTipoHoraChange(e.target.value)}
                     label="Tipo de Hora Extra"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        background: 'rgba(255,255,255,0.9)',
+                        '&:hover': {
+                          background: 'rgba(255,255,255,1)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#f57f17',
+                            borderWidth: 2
+                          }
+                        },
+                        '&.Mui-focused': {
+                          background: 'rgba(255,255,255,1)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#f57f17',
+                            borderWidth: 2
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccessTimeIcon sx={{ color: '#f57f17' }} />
+                        </InputAdornment>
+                      ),
+                    }}
                   >
                     {tiposHora.map(tipo => (
                       <MenuItem key={tipo.id} value={tipo.id}>
@@ -491,6 +626,11 @@ function CrearRegistroHorasExtra() {
                       </MenuItem>
                     ))}
                   </Select>
+                  {tiposHora.length === 0 && (
+                    <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                      No hay tipos de hora disponibles
+                    </Typography>
+                  )}
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
@@ -579,8 +719,26 @@ function CrearRegistroHorasExtra() {
           </Box>
         </Box>
       </Paper>
+      
+      {/* Alerta Universal */}
+      <UniversalAlert
+        open={showAlert}
+        type={alertType}
+        message={alertMessage}
+        onClose={() => setShowAlert(false)}
+        autoHideDuration={alertType === 'success' ? 3000 : 5000}
+        showLogo={true}
+      />
+
+      {/* Alerta de Éxito */}
+      <SuccessSpinner
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+        autoHideDuration={3000}
+      />
     </Box>
   );
 }
 
-export default CrearRegistroHorasExtra; 
+export default CrearRegistroHorasExtraSubAdmin; 
