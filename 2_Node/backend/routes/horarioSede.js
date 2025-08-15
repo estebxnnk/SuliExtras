@@ -28,7 +28,6 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *             required:
  *               - sedeId
  *               - nombre
- *               - diaSemana
  *               - horaEntrada
  *               - horaSalida
  *             properties:
@@ -39,18 +38,12 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *               nombre:
  *                 type: string
  *                 description: Nombre del horario
- *                 example: "Horario Lunes"
+ *                 example: "Horario Normal"
  *               tipo:
  *                 type: string
  *                 enum: [normal, nocturno, especial, festivo]
  *                 default: normal
  *                 description: Tipo de horario
- *               diaSemana:
- *                 type: integer
- *                 minimum: 0
- *                 maximum: 6
- *                 description: Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado)
- *                 example: 1
  *               horaEntrada:
  *                 type: string
  *                 description: Hora de entrada en formato HH:mm
@@ -59,19 +52,18 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *                 type: string
  *                 description: Hora de salida en formato HH:mm
  *                 example: "17:00"
- *               horasJornada:
- *                 type: number
- *                 format: float
- *                 description: Horas de la jornada normal
- *                 example: 8
- *               toleranciaEntrada:
+ *               tiempoAlmuerzo:
  *                 type: integer
- *                 description: Tolerancia en minutos para la entrada
- *                 example: 15
- *               toleranciaSalida:
+ *                 minimum: 0
+ *                 maximum: 180
+ *                 description: Tiempo de almuerzo en minutos (opcional)
+ *                 example: 60
+ *               diasTrabajados:
  *                 type: integer
- *                 description: Tolerancia en minutos para la salida
- *                 example: 15
+ *                 minimum: 0
+ *                 maximum: 7
+ *                 description: Días trabajados en la semana para este horario (opcional)
+ *                 example: 5
  *               descripcion:
  *                 type: string
  *                 description: Descripción adicional
@@ -130,43 +122,6 @@ router.get('/sede/:sedeId', authMiddleware, horarioSedeController.obtenerHorario
  *         description: Sede no encontrada
  */
 router.get('/sede/:sedeId/semanal', authMiddleware, horarioSedeController.obtenerHorarioSemanal);
-
-/**
- * @swagger
- * /api/horarios-sede/sede/{sedeId}/dia/{diaSemana}:
- *   get:
- *     summary: Obtener horario específico por día
- *     tags: [Horarios de Sede]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: sedeId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de la sede
- *       - in: path
- *         name: diaSemana
- *         required: true
- *         schema:
- *           type: integer
- *           minimum: 0
- *           maximum: 6
- *         description: Día de la semana (0-6)
- *       - in: query
- *         name: tipo
- *         schema:
- *           type: string
- *           enum: [normal, nocturno, especial, festivo]
- *         description: Tipo de horario
- *     responses:
- *       200:
- *         description: Horario del día específico
- *       404:
- *         description: Horario no encontrado
- */
-router.get('/sede/:sedeId/dia/:diaSemana', authMiddleware, horarioSedeController.obtenerHorarioPorDia);
 
 /**
  * @swagger
@@ -290,19 +245,18 @@ router.patch('/:horarioId/estado', authMiddleware, soloAdministradores, horarioS
  *                 type: string
  *                 description: Hora de salida por defecto
  *                 example: "17:00"
- *               horasJornada:
- *                 type: number
- *                 format: float
- *                 description: Horas de jornada por defecto
- *                 example: 8
- *               toleranciaEntrada:
+ *               tiempoAlmuerzo:
  *                 type: integer
- *                 description: Tolerancia de entrada en minutos
- *                 example: 15
- *               toleranciaSalida:
+ *                 minimum: 0
+ *                 maximum: 180
+ *                 description: Tiempo de almuerzo por defecto en minutos (opcional)
+ *                 example: 60
+ *               diasTrabajados:
  *                 type: integer
- *                 description: Tolerancia de salida en minutos
- *                 example: 15
+ *                 minimum: 0
+ *                 maximum: 7
+ *                 description: Días trabajados por defecto en la semana (opcional)
+ *                 example: 5
  *     responses:
  *       201:
  *         description: Horarios por defecto creados exitosamente
@@ -335,11 +289,6 @@ module.exports = router;
  *           type: string
  *           enum: [normal, nocturno, especial, festivo]
  *           description: Tipo de horario
- *         diaSemana:
- *           type: integer
- *           minimum: 0
- *           maximum: 6
- *           description: Día de la semana
  *         horaEntrada:
  *           type: string
  *           description: Hora de entrada
@@ -349,13 +298,17 @@ module.exports = router;
  *         horasJornada:
  *           type: number
  *           format: float
- *           description: Horas de la jornada normal
- *         toleranciaEntrada:
+ *           description: Horas base de la jornada (horaSalida - horaEntrada)
+ *         horasJornadaReal:
+ *           type: number
+ *           format: float
+ *           description: Horas reales trabajadas (horasJornada - tiempo de almuerzo)
+ *         tiempoAlmuerzo:
  *           type: integer
- *           description: Tolerancia de entrada en minutos
- *         toleranciaSalida:
+ *           description: Tiempo de almuerzo en minutos
+ *         diasTrabajados:
  *           type: integer
- *           description: Tolerancia de salida en minutos
+ *           description: Días trabajados en la semana para este horario
  *         activo:
  *           type: boolean
  *           description: Si el horario está activo
@@ -370,4 +323,4 @@ module.exports = router;
  *           format: date-time
  *         sede:
  *           $ref: '#/components/schemas/Sede'
- */ 
+ */
