@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -23,17 +23,13 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  InputAdornment,
   Avatar,
   Divider,
-  Card,
-  CardContent,
-  Alert
+  Card
 } from '@mui/material';
 import {
   AccessTime as AccessTimeIcon,
   Add as AddIcon,
-  FilterList as FilterIcon,
   Refresh as RefreshIcon,
   Visibility as ViewIcon,
   Edit as EditIcon,
@@ -42,12 +38,21 @@ import {
   Delete as DeleteIcon,
   Person as PersonIcon,
   LocationOn as LocationIcon,
-  Schedule as ScheduleIcon,
-  Search as SearchIcon,
-  Clear as ClearIcon
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import NavbarSubAdmin from '../NavbarSubAdmin';
+
+// Hooks personalizados optimizados
+import { 
+  useGestionarRegistros, 
+  useAccionesRegistros, 
+  useEstadosRegistros,
+  useUniversalAlerts,
+  useFiltrosAvanzados
+} from './hooks';
+
+// Componentes optimizados
 import { 
   UniversalAlert, 
   SuccessSpinner,
@@ -60,111 +65,68 @@ import {
   FiltrosAvanzados,
   ConfirmDialogWithLogo
 } from './components';
-import { useUniversalAlerts, useFiltrosAvanzados } from './hooks';
-import { gestionarRegistrosHorasExtraService } from './services/gestionarRegistrosHorasExtraService';
+
+// Utilidades
+import { getEstadoChip, getTipoHoraNombre, getUsuario, calcularEstadisticas } from './utils/registrosUtils';
 
 function GestionarRegistrosHorasExtra() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   
-  // Estados principales
-  const [registros, setRegistros] = useState([]);
-  const [tiposHora, setTiposHora] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  // Hooks personalizados optimizados
+  const {
+    registros,
+    tiposHora,
+    usuarios,
+    loading,
+    refreshing,
+    cargarDatos,
+    refrescarDatos
+  } = useGestionarRegistros();
 
-  // Estados para diálogos
-  const [openDialog, setOpenDialog] = useState(false);
-  const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
-  const [modo, setModo] = useState('ver'); // 'ver', 'editar'
-  const [editData, setEditData] = useState({});
-
-  // Estados para confirmaciones
-  const [confirmDialog, setConfirmDialog] = useState({
-    open: false,
-    action: '',
-    registro: null,
-    title: '',
-    message: ''
-  });
-
-  // Hooks personalizados
-  const { 
-    alertState, 
-    showSuccess, 
-    showError, 
-    showInfo,
-    hideAlert 
+  const {
+    alertState,
+    showSuccess,
+    showError,
+    hideAlert
   } = useUniversalAlerts();
+
+  const {
+    aprobarRegistro,
+    rechazarRegistro,
+    eliminarRegistro,
+    editarRegistro
+  } = useAccionesRegistros(cargarDatos, showSuccess, showError);
+
+  const {
+    openDialog,
+    registroSeleccionado,
+    modo,
+    editData,
+    confirmDialog,
+    page,
+    rowsPerPage,
+    setEditData,
+    abrirDialog,
+    cerrarDialog,
+    abrirConfirmDialog,
+    cerrarConfirmDialog,
+    handleChangePage,
+    handleChangeRowsPerPage
+  } = useEstadosRegistros();
 
   const {
     filtros,
     registrosFiltrados,
-    actualizarFiltro,
-    limpiarFiltros,
     estadisticasFiltros,
-    hayFiltrosActivos
+    hayFiltrosActivos,
+    actualizarFiltro,
+    limpiarFiltros
   } = useFiltrosAvanzados(registros);
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const cargarDatos = async () => {
-    try {
-      setLoading(true);
-      
-      // Cargar registros y tipos de hora en paralelo
-      const [registrosData, tiposHoraData, usuariosData] = await Promise.all([
-        gestionarRegistrosHorasExtraService.getRegistros(),
-        gestionarRegistrosHorasExtraService.getTiposHora(),
-        gestionarRegistrosHorasExtraService.getUsuarios()
-      ]);
-
-      setRegistros(registrosData);
-      setTiposHora(tiposHoraData);
-      setUsuarios(usuariosData);
-      
-      showSuccess(`Datos cargados exitosamente: ${registrosData.length} registros, ${tiposHoraData.length} tipos de hora y ${usuariosData.length} usuarios`);
-      
-    } catch (error) {
-      console.error('Error al cargar datos:', error);
-      showError('Error al cargar los datos: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refrescarDatos = async () => {
-    try {
-      setRefreshing(true);
-      await cargarDatos();
-      showSuccess('Datos actualizados correctamente');
-    } catch (error) {
-      showError('Error al refrescar los datos');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const irACrearRegistro = () => {
-    navigate('/crear-registro-horas-extra-subadmin');
-  };
-
-  // Calcular estadísticas adicionales
-  const estadisticasAdicionales = {
-    totalRegistros: registros.length,
-    registrosFiltrados: registrosFiltrados.length,
-    registrosPendientes: registros.filter(r => r.estado === 'pendiente').length,
-    registrosAprobados: registros.filter(r => r.estado === 'aprobado').length,
-    registrosRechazados: registros.filter(r => r.estado === 'rechazado').length,
-    filtrosActivos: estadisticasFiltros.filtrosActivos
-  };
+  // Calcular estadísticas
+  const estadisticasAdicionales = calcularEstadisticas(registros, registrosFiltrados, estadisticasFiltros);
 
   // Paginación
   const registrosPaginados = registrosFiltrados.slice(
@@ -172,220 +134,60 @@ function GestionarRegistrosHorasExtra() {
     page * rowsPerPage + rowsPerPage
   );
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // Funciones de acción optimizadas
+  const handleVer = (registro) => abrirDialog(registro, 'ver');
+  const handleEditar = (registro) => abrirDialog(registro, 'editar');
+  const handleAprobar = (registro) => abrirConfirmDialog('aprobar', registro, 'Confirmar Aprobación', `¿Estás seguro que deseas APROBAR el registro ${registro.numRegistro}?`);
+  const handleRechazar = (registro) => abrirConfirmDialog('rechazar', registro, 'Confirmar Rechazo', `¿Estás seguro que deseas RECHAZAR el registro ${registro.numRegistro}?`);
+  const handleEliminar = (registro) => abrirConfirmDialog('eliminar', registro, 'Confirmar Eliminación', `¿Estás seguro que deseas ELIMINAR el registro ${registro.numRegistro}?`);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  // Funciones de acción
-  const handleVer = (registro) => {
-    setModo('ver');
-    setRegistroSeleccionado(registro);
-    setOpenDialog(true);
-  };
-
-  const handleEditar = (registro) => {
-    // Si el registro está aprobado, solo permitir cambiar el estado
-    if (registro.estado === 'aprobado') {
-      setModo('editar');
-      setRegistroSeleccionado(registro);
-      setEditData({
-        estado: 'pendiente' // Solo permitir cambiar a pendiente
-      });
-      setOpenDialog(true);
-      return;
-    }
-
-    // Para registros no aprobados, permitir edición completa
-    setModo('editar');
-    setRegistroSeleccionado(registro);
-    
-    // Obtener el tipo de hora del registro (como en PanelRegistrosHorasExtra.jsx)
-    const tipoHoraId = (registro.Horas && registro.Horas.length > 0) ? registro.Horas[0].id : '';
-    
-    setEditData({
-      fecha: registro.fecha,
-      horaIngreso: registro.horaIngreso,
-      horaSalida: registro.horaSalida,
-      ubicacion: registro.ubicacion,
-      cantidadHorasExtra: registro.cantidadHorasExtra,
-      justificacionHoraExtra: registro.justificacionHoraExtra || '',
-      tipoHoraId: tipoHoraId
-    });
-    setOpenDialog(true);
-  };
-
-  const handleAprobar = (registro) => {
-    setConfirmDialog({
-      open: true,
-      action: 'aprobar',
-      registro: registro,
-      title: 'Confirmar Aprobación',
-      message: `¿Estás seguro que deseas APROBAR el registro ${registro.numRegistro}?`
-    });
-  };
-
-  const handleRechazar = (registro) => {
-    setConfirmDialog({
-      open: true,
-      action: 'rechazar',
-      registro: registro,
-      title: 'Confirmar Rechazo',
-      message: `¿Estás seguro que deseas RECHAZAR el registro ${registro.numRegistro}?`
-    });
-  };
-
-  const handleEliminar = (registro) => {
-    setConfirmDialog({
-      open: true,
-      action: 'eliminar',
-      registro: registro,
-      title: 'Confirmar Eliminación',
-      message: `¿Estás seguro que deseas ELIMINAR el registro ${registro.numRegistro}?`
-    });
-  };
-
-  // Guardar edición
   const handleGuardarEdicion = async () => {
     try {
-      // Si solo se está editando el estado (registro aprobado)
-      if (registroSeleccionado.estado === 'aprobado' && Object.keys(editData).length === 1 && editData.estado) {
-        await gestionarRegistrosHorasExtraService.updateRegistro(registroSeleccionado.id, { estado: editData.estado });
-        showSuccess('Estado del registro cambiado exitosamente');
-        setOpenDialog(false);
-        await cargarDatos();
-        return;
-      }
-
-      // Para edición completa de registros no aprobados
-      const dataToSend = {
-        ...editData,
-        horas: [
-          {
-            id: editData.tipoHoraId,
-            cantidad: editData.cantidadHorasExtra
-          }
-        ]
-      };
-      delete dataToSend.tipoHoraId;
-
-      await gestionarRegistrosHorasExtraService.updateRegistro(registroSeleccionado.id, dataToSend);
-      showSuccess('Registro editado exitosamente');
-      setOpenDialog(false);
-      await cargarDatos();
+      const soloEstado = registroSeleccionado.estado === 'aprobado' && Object.keys(editData).length === 1 && editData.estado;
+      await editarRegistro(registroSeleccionado.id, editData, soloEstado);
+      cerrarDialog();
     } catch (error) {
-      showError('Error al actualizar el registro: ' + error.message);
+      // El error ya se maneja en el hook
     }
   };
 
-  // Confirmar acción
   const confirmarAccion = async () => {
     const { action, registro } = confirmDialog;
     
     try {
-      // Cerrar el diálogo de confirmación primero
-      setConfirmDialog({ open: false, action: '', registro: null, title: '', message: '' });
-      
-      // Pequeña pausa para que se cierre el diálogo antes de mostrar el éxito
+      cerrarConfirmDialog();
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      let resultado = false;
       switch (action) {
         case 'aprobar':
-          await gestionarRegistrosHorasExtraService.aprobarRegistro(registro.id);
-          showSuccess('Registro aprobado exitosamente');
+          resultado = await aprobarRegistro(registro);
           break;
         case 'rechazar':
-          await gestionarRegistrosHorasExtraService.rechazarRegistro(registro.id);
-          showSuccess('Registro rechazado exitosamente');
+          resultado = await rechazarRegistro(registro);
           break;
         case 'eliminar':
-          await gestionarRegistrosHorasExtraService.deleteRegistro(registro.id);
-          showSuccess('Registro eliminado exitosamente');
+          resultado = await eliminarRegistro(registro);
           break;
         default:
           showError('Acción no reconocida');
           return;
       }
-      
-      // Recargar datos después de la acción
-      await cargarDatos();
-      
     } catch (error) {
-      console.error(`Error al ${action} registro:`, error);
-      showError(`Error al ${action} el registro: ${error.message}`);
+      // Los errores ya se manejan en los hooks
     }
   };
 
-  // Cerrar diálogo de confirmación
-  const cerrarConfirmDialog = () => {
-    setConfirmDialog({ open: false, action: '', registro: null, title: '', message: '' });
+  const irACrearRegistro = () => {
+    navigate('/crear-registro-horas-extra-subadmin');
   };
 
-  // Cerrar diálogo principal
-  const cerrarDialog = () => {
-    setOpenDialog(false);
-    setRegistroSeleccionado(null);
-    setEditData({});
-  };
-
-  // Obtener chip de estado
-  const getEstadoChip = (estado) => {
-    const estados = {
-      pendiente: { color: 'warning', label: 'Pendiente' },
-      aprobado: { color: 'success', label: 'Aprobado' },
-      rechazado: { color: 'error', label: 'Rechazado' }
-    };
-    const config = estados[estado] || estados.pendiente;
-    
-    return (
-      <Chip
-        label={config.label}
-        color={config.color}
-        variant="outlined"
-        size="small"
-        sx={{ fontWeight: 600 }}
-      />
-    );
-  };
-
-  // Obtener nombre del tipo de hora (como en PanelRegistrosHorasExtra.jsx)
-  const getTipoHoraNombre = (registro) => {
-    if (registro.Horas && registro.Horas.length > 0) {
-      return (
-        <Box>
-          {registro.Horas.map(hora => (
-            <Box key={hora.id}>
-              <Typography variant="body2" fontWeight={600} color="#9c27b0">
-                {hora.tipo}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {hora.denominacion}
-              </Typography>
-              {hora.RegistroHora && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Cantidad: {hora.RegistroHora.cantidad}
-                </Typography>
-              )}
-            </Box>
-          ))}
-        </Box>
-      );
-    }
-    return (
-      <Typography variant="body2" color="text.secondary">
-        No asignado
-      </Typography>
-    );
-  };
-
-  // Obtener usuario por email (como en PanelRegistrosHorasExtra.jsx)
-  const getUsuario = (email) => {
-    return usuarios.find(u => u.email === email);
-  };
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    cargarDatos().catch(error => {
+      showError('Error al cargar los datos: ' + error.message);
+    });
+  }, [cargarDatos, showError]);
 
   if (loading) {
     return (
@@ -398,7 +200,7 @@ function GestionarRegistrosHorasExtra() {
         justifyContent: 'center',
         alignItems: 'center'
       }}>
-        <SuccessSpinner message="Cargando módulo de gestión de registros..." size="large" />  
+        <SuccessSpinner message="Cargando módulo de gestión de registros..." size="large" />
       </Box>
     );
   }
@@ -426,7 +228,7 @@ function GestionarRegistrosHorasExtra() {
         maxWidth: 1400,
         overflow: 'hidden'
       }}>
-        {/* Header */}
+        {/* Header optimizado */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
           <AccessTimeIcon sx={{ fontSize: 48, color: '#1976d2' }} />
           <Box sx={{ flex: 1 }}>
@@ -444,7 +246,6 @@ function GestionarRegistrosHorasExtra() {
             </Typography>
           </Box>
           
-          {/* Botones de acción */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="outlined"
@@ -481,7 +282,7 @@ function GestionarRegistrosHorasExtra() {
           </Box>
         </Box>
 
-        {/* Estadísticas */}
+        {/* Estadísticas optimizadas */}
         <Paper elevation={2} sx={{ 
           p: 3, 
           mb: 3, 
@@ -490,66 +291,25 @@ function GestionarRegistrosHorasExtra() {
           borderRadius: 3
         }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="#1976d2">
-                  {estadisticasAdicionales.totalRegistros}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total de Registros
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="#4caf50">
-                  {estadisticasAdicionales.registrosFiltrados}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Registros Filtrados
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="#ff9800">
-                  {estadisticasAdicionales.registrosPendientes}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Por Aprobar
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="#4caf50">
-                  {estadisticasAdicionales.registrosAprobados}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Aprobados
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="#f44336">
-                  {estadisticasAdicionales.registrosRechazados}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Rechazados
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="#9c27b0">
-                  {tiposHora.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Tipos de Hora
-                </Typography>
-              </Box>
-            </Grid>
+            {[
+              { label: 'Total de Registros', value: estadisticasAdicionales.totalRegistros, color: '#1976d2' },
+              { label: 'Registros Filtrados', value: estadisticasAdicionales.registrosFiltrados, color: '#4caf50' },
+              { label: 'Por Aprobar', value: estadisticasAdicionales.registrosPendientes, color: '#ff9800' },
+              { label: 'Aprobados', value: estadisticasAdicionales.registrosAprobados, color: '#4caf50' },
+              { label: 'Rechazados', value: estadisticasAdicionales.registrosRechazados, color: '#f44336' },
+              { label: 'Tipos de Hora', value: tiposHora.length, color: '#9c27b0' }
+            ].map((stat, index) => (
+              <Grid item xs={12} md={2} key={index}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" fontWeight={700} sx={{ color: stat.color }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {stat.label}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
           </Grid>
         </Paper>
 
@@ -570,7 +330,7 @@ function GestionarRegistrosHorasExtra() {
           isMobile={isMobile}
         />
 
-        {/* Tabla de Registros */}
+        {/* Tabla de Registros optimizada */}
         <Paper elevation={3} sx={{ 
           background: 'rgba(255,255,255,0.95)',
           borderRadius: 3,
@@ -580,19 +340,17 @@ function GestionarRegistrosHorasExtra() {
             <Table>
               <TableHead>
                 <TableRow sx={{ background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' }}>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Ubicación</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Empleado</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Fecha</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Horas Extra</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Tipo de Hora</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Estado</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Acciones</TableCell>
+                  {['Ubicación', 'Empleado', 'Fecha', 'Horas Extra', 'Tipo de Hora', 'Estado', 'Acciones'].map((header, index) => (
+                    <TableCell key={index} sx={{ color: 'white', fontWeight: 700 }}>
+                      {header}
+                    </TableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {registrosPaginados.length > 0 ? (
                   registrosPaginados.map((registro) => {
-                    const usuario = getUsuario(registro.usuario);
+                    const usuario = getUsuario(registro.usuario, usuarios);
                     return (
                       <TableRow key={registro.id} hover>
                         <TableCell>
@@ -628,7 +386,17 @@ function GestionarRegistrosHorasExtra() {
                           {getTipoHoraNombre(registro)}
                         </TableCell>
                         <TableCell>
-                          {getEstadoChip(registro.estado)}
+                          {(() => {
+                            const estadoChip = getEstadoChip(registro.estado);
+                            return (
+                              <Chip
+                                label={estadoChip.label}
+                                color={estadoChip.color}
+                                size="small"
+                                sx={{ fontWeight: 600 }}
+                              />
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -758,7 +526,7 @@ function GestionarRegistrosHorasExtra() {
               
               {/* Información del usuario */}
               {(() => {
-                const usuario = getUsuario(registroSeleccionado.usuario);
+                const usuario = getUsuario(registroSeleccionado.usuario, usuarios);
                 return (
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, width: '100%' }}>
                     <Box>
@@ -827,7 +595,17 @@ function GestionarRegistrosHorasExtra() {
                     </Box>
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">Estado</Typography>
-                      {getEstadoChip(registroSeleccionado.estado)}
+                      {(() => {
+                        const estadoChip = getEstadoChip(registroSeleccionado.estado);
+                        return (
+                          <Chip
+                            label={estadoChip.label}
+                            color={estadoChip.color}
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        );
+                      })()}
                     </Box>
                   </Box>
                 );
@@ -975,7 +753,7 @@ function GestionarRegistrosHorasExtra() {
 
       {/* Alertas Universales */}
       <UniversalAlert
-        open={alertState.open}
+        open={alertState.open && !confirmDialog.open}
         type={alertState.type}
         message={alertState.message}
         title={alertState.title}
@@ -985,7 +763,6 @@ function GestionarRegistrosHorasExtra() {
       />
 
       {/* Spinners de Éxito Específicos */}
-      {/* Spinner de Cambio de Estado Exitoso (debe ir primero para evitar conflictos) */}
       <StateChangeSuccessSpinner
         open={alertState.type === 'success' && alertState.open && alertState.message.includes('Estado del registro cambiado') && !confirmDialog.open}
         message={alertState.message}
@@ -993,7 +770,6 @@ function GestionarRegistrosHorasExtra() {
         onComplete={hideAlert}
       />
 
-      {/* Spinner de Eliminación Exitosa */}
       <DeleteSuccessSpinner
         open={alertState.type === 'success' && alertState.open && alertState.message.includes('eliminado') && !confirmDialog.open}
         message={alertState.message}
@@ -1001,7 +777,6 @@ function GestionarRegistrosHorasExtra() {
         onComplete={hideAlert}
       />
 
-      {/* Spinner de Edición Exitosa */}
       <EditSuccessSpinner
         open={alertState.type === 'success' && alertState.open && alertState.message.includes('editado') && !confirmDialog.open}
         message={alertState.message}
@@ -1009,7 +784,6 @@ function GestionarRegistrosHorasExtra() {
         onComplete={hideAlert}
       />
 
-      {/* Spinner de Aprobación Exitosa */}
       <ApproveSuccessSpinner
         open={alertState.type === 'success' && alertState.open && alertState.message.includes('aprobado') && !confirmDialog.open}
         message={alertState.message}
@@ -1017,7 +791,6 @@ function GestionarRegistrosHorasExtra() {
         onComplete={hideAlert}
       />
 
-      {/* Spinner de Rechazo Exitoso */}
       <RejectSuccessSpinner
         open={alertState.type === 'success' && alertState.open && alertState.message.includes('rechazado') && !confirmDialog.open}
         message={alertState.message}
@@ -1025,7 +798,6 @@ function GestionarRegistrosHorasExtra() {
         onComplete={hideAlert}
       />
 
-      {/* Spinner de Creación Exitosa */}
       <CreateSuccessSpinner
         open={alertState.type === 'success' && alertState.open && alertState.message.includes('creado') && !confirmDialog.open}
         message={alertState.message}
@@ -1033,7 +805,6 @@ function GestionarRegistrosHorasExtra() {
         onComplete={hideAlert}
       />
 
-      {/* Spinner de Éxito General (para otros casos) */}
       <SuccessSpinner
         open={alertState.type === 'success' && alertState.open && 
               !alertState.message.includes('eliminado') && 
