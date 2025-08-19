@@ -1,138 +1,108 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
-export const useFiltrosAvanzados = (registros = []) => {
+export const useFiltrosAvanzados = (registros) => {
   const [filtros, setFiltros] = useState({
     search: '',
-    tipoHoraId: '',
+    tipoHoraId: 'todos',
     fechaInicio: '',
     fechaFin: '',
-    estado: ''
+    estado: 'todos',
+    ubicacion: ''
   });
 
-  // Actualizar un filtro específico
-  const actualizarFiltro = useCallback((campo, valor) => {
-    setFiltros(prev => ({
-      ...prev,
-      [campo]: valor
-    }));
-  }, []);
-
-  // Limpiar todos los filtros
-  const limpiarFiltros = useCallback(() => {
-    setFiltros({
-      search: '',
-      tipoHoraId: '',
-      fechaInicio: '',
-      fechaFin: '',
-      estado: ''
-    });
-  }, []);
-
-  // Aplicar filtros a los registros
   const registrosFiltrados = useMemo(() => {
     return registros.filter(registro => {
-      // Filtro de búsqueda
+      // Filtro de búsqueda general
       if (filtros.search) {
-        const searchLower = filtros.search.toLowerCase();
-        const matchSearch = 
-          (registro.usuario && registro.usuario.toLowerCase().includes(searchLower)) ||
-          (registro.nombres && registro.nombres.toLowerCase().includes(searchLower)) ||
-          (registro.apellidos && registro.apellidos.toLowerCase().includes(searchLower)) ||
-          (registro.ubicacion && registro.ubicacion.toLowerCase().includes(searchLower)) ||
-          (registro.numRegistro && registro.numRegistro.toLowerCase().includes(searchLower));
+        const searchTerm = filtros.search.toLowerCase();
+        const ubicacion = registro.ubicacion?.toLowerCase() || '';
+        const nombres = `${registro.nombres || ''} ${registro.apellidos || ''}`.toLowerCase();
         
-        if (!matchSearch) return false;
+        if (!ubicacion.includes(searchTerm) && !nombres.includes(searchTerm)) {
+          return false;
+        }
       }
 
-      // Filtro por tipo de hora (verificar en registro.Horas)
-      if (filtros.tipoHoraId) {
-        const tieneTipoHora = registro.Horas && registro.Horas.some(hora => hora.id === filtros.tipoHoraId);
-        if (!tieneTipoHora) return false;
+      // Filtro por tipo de hora
+      if (filtros.tipoHoraId && filtros.tipoHoraId !== 'todos') {
+        // Buscar en el array de Horas del registro
+        if (!registro.Horas || !registro.Horas.some(h => h.id === parseInt(filtros.tipoHoraId))) {
+          return false;
+        }
+      }
+
+      // Filtro por fecha
+      if (filtros.fechaInicio || filtros.fechaFin) {
+        const fechaRegistro = new Date(registro.fecha);
+        if (filtros.fechaInicio && fechaRegistro < new Date(filtros.fechaInicio)) {
+          return false;
+        }
+        if (filtros.fechaFin && fechaRegistro > new Date(filtros.fechaFin)) {
+          return false;
+        }
       }
 
       // Filtro por estado
-      if (filtros.estado) {
-        if (registro.estado !== filtros.estado) return false;
+      if (filtros.estado && filtros.estado !== 'todos' && registro.estado !== filtros.estado) {
+        return false;
       }
 
-      // Filtro por fecha de inicio
-      if (filtros.fechaInicio) {
-        const fechaRegistro = new Date(registro.fecha);
-        const fechaInicio = new Date(filtros.fechaInicio);
-        if (fechaRegistro < fechaInicio) return false;
-      }
-
-      // Filtro por fecha de fin
-      if (filtros.fechaFin) {
-        const fechaRegistro = new Date(registro.fecha);
-        const fechaFin = new Date(filtros.fechaFin);
-        if (fechaRegistro > fechaFin) return false;
+      // Filtro por ubicación
+      if (filtros.ubicacion && !registro.ubicacion?.toLowerCase().includes(filtros.ubicacion.toLowerCase())) {
+        return false;
       }
 
       return true;
     });
   }, [registros, filtros]);
 
-  // Obtener estadísticas de filtros
   const estadisticasFiltros = useMemo(() => {
-    const totalRegistros = registros.length;
-    const registrosFiltradosCount = registrosFiltrados.length;
+    const total = registros.length;
+    const filtrados = registrosFiltrados.length;
+    const ocultados = total - filtrados;
+    const porcentajeFiltrado = total > 0 ? Math.round((ocultados / total) * 100) : 0;
     const filtrosActivos = Object.values(filtros).filter(valor => valor !== '').length;
 
     return {
-      totalRegistros,
-      registrosFiltradosCount,
-      filtrosActivos,
-      porcentajeFiltrado: totalRegistros > 0 ? ((totalRegistros - registrosFiltradosCount) / totalRegistros * 100).toFixed(1) : 0
+      total,
+      filtrados,
+      ocultados,
+      porcentajeFiltrado,
+      filtrosActivos
     };
   }, [registros, registrosFiltrados, filtros]);
 
-  // Verificar si hay filtros activos
-  const hayFiltrosActivos = useMemo(() => {
-    return Object.values(filtros).some(valor => valor !== '');
-  }, [filtros]);
+  const hayFiltrosActivos = Object.entries(filtros).some(([key, valor]) => {
+    if (key === 'tipoHoraId' || key === 'estado') {
+      return valor !== 'todos' && valor !== '';
+    }
+    return valor !== '';
+  });
 
-  // Obtener resumen de filtros aplicados
-  const resumenFiltros = useMemo(() => {
-    const resumen = [];
-    
-    if (filtros.search) {
-      resumen.push(`Búsqueda: "${filtros.search}"`);
-    }
-    
-    if (filtros.tipoHoraId) {
-      resumen.push(`Tipo de hora: ${filtros.tipoHoraId}`);
-    }
+  const actualizarFiltro = (campo, valor) => {
+    setFiltros(prev => ({
+      ...prev,
+      [campo]: valor
+    }));
+  };
 
-    if (filtros.estado) {
-      resumen.push(`Estado: ${filtros.estado}`);
-    }
-    
-    if (filtros.fechaInicio) {
-      resumen.push(`Desde: ${filtros.fechaInicio}`);
-    }
-    
-    if (filtros.fechaFin) {
-      resumen.push(`Hasta: ${filtros.fechaFin}`);
-    }
-    
-    return resumen;
-  }, [filtros]);
+  const limpiarFiltros = () => {
+    setFiltros({
+      search: '',
+      tipoHoraId: 'todos',
+      fechaInicio: '',
+      fechaFin: '',
+      estado: 'todos',
+      ubicacion: ''
+    });
+  };
 
   return {
-    // Estado
     filtros,
-    
-    // Datos filtrados
     registrosFiltrados,
-    
-    // Funciones
-    actualizarFiltro,
-    limpiarFiltros,
-    
-    // Información
     estadisticasFiltros,
     hayFiltrosActivos,
-    resumenFiltros
+    actualizarFiltro,
+    limpiarFiltros
   };
 };

@@ -32,12 +32,13 @@ import {
   AddCircle as AddCircleIcon
 } from '@mui/icons-material';
 
-export const CrearRegistroDialog = ({
+const CrearRegistroDialog = ({
   open,
   onClose,
   tiposHora,
   usuarios,
   onCrearRegistro,
+  loading: loadingProp = false,
   isMobile
 }) => {
   const [formData, setFormData] = useState({
@@ -92,19 +93,19 @@ export const CrearRegistroDialog = ({
     }
   };
 
+  // Calcular horas extra automáticamente cuando cambien las horas
+  useEffect(() => {
+    if (formData.horaIngreso && formData.horaSalida) {
+      calcularHorasExtra();
+    }
+  }, [formData.horaIngreso, formData.horaSalida]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMensaje('');
 
     try {
-      // Validar que se ingresen las horas extra
-      if (!formData.cantidadHorasExtra || parseInt(formData.cantidadHorasExtra) < 1) {
-        setMensaje('Error: Debes ingresar una cantidad válida de horas extra (mínimo 1 hora).');
-        setLoading(false);
-        return;
-      }
-
       // Validar que todos los campos requeridos estén completos
       if (!formData.fecha || !formData.usuario || !formData.horaIngreso || !formData.horaSalida || !formData.ubicacion || !formData.tipoHoraId) {
         setMensaje('Error: Debes completar todos los campos requeridos.');
@@ -112,47 +113,77 @@ export const CrearRegistroDialog = ({
         return;
       }
 
+      // Validar que la fecha no sea futura
+      const fechaSeleccionada = new Date(formData.fecha);
+      const fechaActual = new Date();
+      fechaActual.setHours(0, 0, 0, 0);
+      
+      if (fechaSeleccionada > fechaActual) {
+        setMensaje('Error: No puedes crear registros para fechas futuras.');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que se ingresen las horas extra
+      if (!formData.cantidadHorasExtra || parseFloat(formData.cantidadHorasExtra) < 0.5) {
+        setMensaje('Error: Debes ingresar una cantidad válida de horas extra (mínimo 0.5 horas).');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que la hora de salida sea mayor que la de ingreso
+      if (formData.horaIngreso >= formData.horaSalida) {
+        setMensaje('Error: La hora de salida debe ser mayor que la hora de ingreso.');
+        setLoading(false);
+        return;
+      }
+
       // Generar número de registro único
       const numRegistro = `REG-${Date.now()}`;
       
-      // Enviar el array 'horas' al backend
+      // Preparar los datos para el backend
       const registroData = {
-        ...formData,
+        fecha: formData.fecha,
+        horaIngreso: formData.horaIngreso,
+        horaSalida: formData.horaSalida,
+        ubicacion: formData.ubicacion,
+        usuario: formData.usuario,
+        usuarioId: formData.usuarioSeleccionado?.id,
+        cantidadHorasExtra: parseFloat(formData.cantidadHorasExtra),
+        justificacionHoraExtra: formData.justificacionHoraExtra || '',
         numRegistro,
         estado: 'pendiente',
-        usuarioId: formData.usuarioSeleccionado?.id,
         horas: [
           {
-            id: formData.tipoHoraId,
-            cantidad: parseInt(formData.cantidadHorasExtra)
+            id: parseInt(formData.tipoHoraId),
+            cantidad: parseFloat(formData.cantidadHorasExtra)
           }
         ]
       };
 
-      // Eliminar campos innecesarios
-      delete registroData.tipoHoraId;
-      delete registroData.usuarioSeleccionado;
-
-      await onCrearRegistro(registroData);
+      const resultado = await onCrearRegistro(registroData);
       
-      // Limpiar formulario
-      setFormData({
-        fecha: '',
-        horaIngreso: '',
-        horaSalida: '',
-        ubicacion: '',
-        usuario: '',
-        usuarioSeleccionado: null,
-        cantidadHorasExtra: '',
-        justificacionHoraExtra: '',
-        tipoHoraId: ''
-      });
-      
-      setMensaje('¡Registro creado exitosamente!');
-      setTimeout(() => {
-        onClose();
-        setMensaje('');
-      }, 1500);
+      if (resultado) {
+        // Limpiar formulario
+        setFormData({
+          fecha: '',
+          horaIngreso: '',
+          horaSalida: '',
+          ubicacion: '',
+          usuario: '',
+          usuarioSeleccionado: null,
+          cantidadHorasExtra: '',
+          justificacionHoraExtra: '',
+          tipoHoraId: ''
+        });
+        
+        // Mostrar mensaje de éxito y cerrar diálogo
+        setMensaje('¡Registro creado exitosamente!');
+        setTimeout(() => {
+          onClose();
+          setMensaje('');
+        }, 1500);
+      }
 
     } catch (error) {
       setMensaje('Error al crear el registro: ' + error.message);
@@ -235,6 +266,9 @@ export const CrearRegistroDialog = ({
                   InputLabelProps={{ shrink: true }}
                   fullWidth
                   required
+                  inputProps={{
+                    max: new Date().toISOString().split('T')[0] // No permitir fechas futuras
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -242,7 +276,7 @@ export const CrearRegistroDialog = ({
                       </InputAdornment>
                     ),
                   }}
-                  helperText="Selecciona la fecha del registro"
+                  helperText="Selecciona la fecha del registro (no puede ser futura)"
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -373,24 +407,46 @@ export const CrearRegistroDialog = ({
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField
-                  label="Cantidad de Horas Extra"
-                  type="number"
-                  value={formData.cantidadHorasExtra}
-                  onChange={(e) => handleInputChange('cantidadHorasExtra', e.target.value)}
-                  fullWidth
-                  required
-                  inputProps={{ min: 1, step: 1 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <AccessTimeIcon />
-                      </InputAdornment>
-                    ),
-                    endAdornment: <InputAdornment position="end">horas</InputAdornment>,
-                  }}
-                  helperText="Ingresa la cantidad de horas extra trabajadas (números enteros)"
-                />
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                  <TextField
+                    label="Cantidad de Horas Extra"
+                    type="number"
+                    value={formData.cantidadHorasExtra}
+                    onChange={(e) => handleInputChange('cantidadHorasExtra', e.target.value)}
+                    fullWidth
+                    required
+                    inputProps={{ min: 0.5, step: 0.5, max: 24 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccessTimeIcon />
+                        </InputAdornment>
+                      ),
+                      endAdornment: <InputAdornment position="end">horas</InputAdornment>,
+                    }}
+                    helperText="Se calcula automáticamente o ingresa manualmente (mínimo 0.5 horas)"
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={calcularHorasExtra}
+                    disabled={!formData.horaIngreso || !formData.horaSalida}
+                    sx={{ 
+                      minWidth: 'auto', 
+                      px: 2, 
+                      py: 1.5,
+                      height: '56px',
+                      borderColor: '#1976d2',
+                      color: '#1976d2',
+                      '&:hover': {
+                        borderColor: '#1565c0',
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                      }
+                    }}
+                    title="Calcular horas extra automáticamente"
+                  >
+                    🔄
+                  </Button>
+                </Box>
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth required>
@@ -443,7 +499,7 @@ export const CrearRegistroDialog = ({
           onClick={handleSubmit}
           variant="contained"
           startIcon={<SaveIcon />}
-          disabled={loading}
+          disabled={loading || loadingProp}
           sx={{ 
             px: 4, 
             py: 1.5, 
@@ -452,9 +508,11 @@ export const CrearRegistroDialog = ({
             '&:hover': { background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)' }
           }}
         >
-          {loading ? 'Creando...' : 'Crear Registro'}
+          {loading || loadingProp ? 'Creando...' : 'Crear Registro'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
+
+export default CrearRegistroDialog;

@@ -30,7 +30,7 @@ import {
   Cancel as CancelIcon
 } from '@mui/icons-material';
 
-export const RegistroDialog = ({
+const RegistroDialog = ({
   open,
   modo,
   registro,
@@ -405,3 +405,5 @@ export const RegistroDialog = ({
     </Dialog>
   );
 };
+
+export default RegistroDialog;
