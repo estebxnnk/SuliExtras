@@ -4,3 +4,4 @@ export { useFiltrosAvanzados } from './useFiltrosAvanzados';
 export { useGestionarRegistros } from './useGestionarRegistros';
 export { useAccionesRegistros } from './useAccionesRegistros';
 export { useEstadosRegistros } from './useEstadosRegistros';
+export { useCrearRegistro } from './useCrearRegistro';

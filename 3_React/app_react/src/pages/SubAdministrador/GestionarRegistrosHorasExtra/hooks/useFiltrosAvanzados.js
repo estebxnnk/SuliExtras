@@ -3,10 +3,10 @@ import { useState, useMemo } from 'react';
 export const useFiltrosAvanzados = (registros) => {
   const [filtros, setFiltros] = useState({
     search: '',
-    tipoHoraId: '',
+    tipoHoraId: 'todos',
     fechaInicio: '',
     fechaFin: '',
-    estado: '',
+    estado: 'todos',
     ubicacion: ''
   });
 
@@ -24,8 +24,11 @@ export const useFiltrosAvanzados = (registros) => {
       }
 
       // Filtro por tipo de hora
-      if (filtros.tipoHoraId && registro.tipoHora !== filtros.tipoHoraId) {
-        return false;
+      if (filtros.tipoHoraId && filtros.tipoHoraId !== 'todos') {
+        // Buscar en el array de Horas del registro
+        if (!registro.Horas || !registro.Horas.some(h => h.id === parseInt(filtros.tipoHoraId))) {
+          return false;
+        }
       }
 
       // Filtro por fecha
@@ -40,7 +43,7 @@ export const useFiltrosAvanzados = (registros) => {
       }
 
       // Filtro por estado
-      if (filtros.estado && registro.estado !== filtros.estado) {
+      if (filtros.estado && filtros.estado !== 'todos' && registro.estado !== filtros.estado) {
         return false;
       }
 
@@ -69,7 +72,12 @@ export const useFiltrosAvanzados = (registros) => {
     };
   }, [registros, registrosFiltrados, filtros]);
 
-  const hayFiltrosActivos = Object.values(filtros).some(valor => valor !== '');
+  const hayFiltrosActivos = Object.entries(filtros).some(([key, valor]) => {
+    if (key === 'tipoHoraId' || key === 'estado') {
+      return valor !== 'todos' && valor !== '';
+    }
+    return valor !== '';
+  });
 
   const actualizarFiltro = (campo, valor) => {
     setFiltros(prev => ({
@@ -81,10 +89,10 @@ export const useFiltrosAvanzados = (registros) => {
   const limpiarFiltros = () => {
     setFiltros({
       search: '',
-      tipoHoraId: '',
+      tipoHoraId: 'todos',
       fechaInicio: '',
       fechaFin: '',
-      estado: '',
+      estado: 'todos',
       ubicacion: ''
     });
   };

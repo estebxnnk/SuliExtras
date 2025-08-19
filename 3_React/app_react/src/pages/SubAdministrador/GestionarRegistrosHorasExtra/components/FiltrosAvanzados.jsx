@@ -40,14 +40,14 @@ const FiltrosAvanzados = ({
   onClearFilters,
   isMobile = false
 }) => {
-  const hasActiveFilters = search || tipoHoraId || fechaInicio || fechaFin || estado;
+  const hasActiveFilters = search || (tipoHoraId && tipoHoraId !== 'todos') || fechaInicio || fechaFin || (estado && estado !== 'todos');
 
   const handleClearFilters = () => {
     onSearchChange('');
-    onTipoHoraChange('');
+    onTipoHoraChange('todos');
     onFechaInicioChange('');
     onFechaFinChange('');
-    onEstadoChange('');
+    onEstadoChange('todos');
     onClearFilters?.();
   };
 
@@ -71,7 +71,7 @@ const FiltrosAvanzados = ({
         </Typography>
         {hasActiveFilters && (
           <Chip
-            label={`${[search, tipoHoraId, fechaInicio, fechaFin, estado].filter(Boolean).length} filtros activos`}
+            label={`${[search, (tipoHoraId && tipoHoraId !== 'todos'), fechaInicio, fechaFin, (estado && estado !== 'todos')].filter(Boolean).length} filtros activos`}
             color="primary"
             size="small"
             sx={{ fontWeight: 600 }}
@@ -170,7 +170,7 @@ const FiltrosAvanzados = ({
                 }
               }}
             >
-              <MenuItem value="">
+              <MenuItem value="todos">
                 <em>Todos los tipos</em>
               </MenuItem>
               {tiposHora.map((tipo) => (
@@ -221,7 +221,7 @@ const FiltrosAvanzados = ({
                 }
               }}
             >
-              <MenuItem value="">
+              <MenuItem value="todos">
                 <em>Todos los estados</em>
               </MenuItem>
               <MenuItem value="pendiente">
@@ -347,27 +347,27 @@ const FiltrosAvanzados = ({
               />
             )}
             
-            {tipoHoraId && (
-              <Chip
-                label={`Tipo: ${tiposHora.find(t => t.id === tipoHoraId)?.tipo || tipoHoraId}`}
-                color="secondary"
-                variant="outlined"
-                size="small"
-                onDelete={() => onTipoHoraChange('')}
-                sx={{ '& .MuiChip-deleteIcon': { color: '#9c27b0' } }}
-              />
-            )}
+                         {tipoHoraId && tipoHoraId !== 'todos' && (
+               <Chip
+                 label={`Tipo: ${tiposHora.find(t => t.id === tipoHoraId)?.tipo || tipoHoraId}`}
+                 color="secondary"
+                 variant="outlined"
+                 size="small"
+                 onDelete={() => onTipoHoraChange('todos')}
+                 sx={{ '& .MuiChip-deleteIcon': { color: '#9c27b0' } }}
+               />
+             )}
 
-            {estado && (
-              <Chip
-                label={`Estado: ${estado}`}
-                color="info"
-                variant="outlined"
-                size="small"
-                onDelete={() => onEstadoChange('')}
-                sx={{ '& .MuiChip-deleteIcon': { color: '#2196f3' } }}
-              />
-            )}
+                         {estado && estado !== 'todos' && (
+               <Chip
+                 label={`Estado: ${estado}`}
+                 color="info"
+                 variant="outlined"
+                 size="small"
+                 onDelete={() => onEstadoChange('todos')}
+                 sx={{ '& .MuiChip-deleteIcon': { color: '#2196f3' } }}
+               />
+             )}
             
             {fechaInicio && (
               <Chip

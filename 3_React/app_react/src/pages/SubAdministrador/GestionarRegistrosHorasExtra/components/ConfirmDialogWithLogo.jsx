@@ -309,4 +309,4 @@ const ConfirmDialogWithLogo = ({
   );
 };
 
-export { ConfirmDialogWithLogo };
+export default ConfirmDialogWithLogo;
