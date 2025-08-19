@@ -49,7 +49,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import NavbarSubAdmin from '../NavbarSubAdmin';
 import { 
-  LoadingSpinner, 
   UniversalAlert, 
   SuccessSpinner,
   DeleteSuccessSpinner,
@@ -399,7 +398,7 @@ function GestionarRegistrosHorasExtra() {
         justifyContent: 'center',
         alignItems: 'center'
       }}>
-        <LoadingSpinner message="Cargando módulo de gestión de registros..." size="large" />
+        <SuccessSpinner message="Cargando módulo de gestión de registros..." size="large" />  
       </Box>
     );
   }
@@ -793,6 +792,14 @@ function GestionarRegistrosHorasExtra() {
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">Horas Extra</Typography>
                       <Typography variant="body1" fontWeight={600}>{registroSeleccionado.cantidadHorasExtra} horas</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Bono Salarial</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.bono_salarial} horas extra de bono</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">Horas a Mostrar</Typography>
+                      <Typography variant="body1" fontWeight={600}>{registroSeleccionado.horas_extra_divididas} horas extra a mostrar</Typography>
                     </Box>
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">Tipo(s) de Hora</Typography>
