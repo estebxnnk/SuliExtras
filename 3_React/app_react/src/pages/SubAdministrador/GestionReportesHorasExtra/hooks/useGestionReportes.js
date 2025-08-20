@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { gestionReportesService } from '../services/gestionReportesService';
 import { SalarioMinimoContext } from '../../../../providers/SalarioMinimoProvider';
-import { saveAs } from 'file-saver';
 
 export const useGestionReportes = () => {
   // Estados principales
@@ -81,7 +80,7 @@ export const useGestionReportes = () => {
   const handleVerReporte = async (usuario) => {
     try {
       const registrosAprobados = await gestionReportesService.fetchRegistrosAprobados(usuario.id);
-      const reporte = gestionReportesService.calcularReporte(registrosAprobados, salarioMinimo);
+      const reporte = calcularReporte(registrosAprobados, salarioMinimo);
       
       setReporteData(reporte);
       setUsuarioSeleccionado(usuario);
@@ -91,36 +90,54 @@ export const useGestionReportes = () => {
     }
   };
 
-  // Función para descargar documento Word
-  const handleDescargarWord = async () => {
-    try {
-      const blobWord = await gestionReportesService.generarDocumentoWord(
-        reporteData, 
-        usuarioSeleccionado
-      );
-      
-      const nombreArchivo = `Reportes de hora extra de ${usuarioSeleccionado.persona?.nombres || ''} ${usuarioSeleccionado.persona?.apellidos || ''}.docx`;
-      saveAs(blobWord, nombreArchivo);
-    } catch (error) {
-      console.error('Error al descargar Word:', error);
-    }
-  };
+  // Función para calcular reporte
+  const calcularReporte = (registros, salarioMinimo) => {
+    const valorHoraOrdinaria = salarioMinimo / 240;
+    let totalHorasDivididas = 0;
+    let totalPagarDivididas = 0;
+    let totalHorasBono = 0;
+    let totalPagarBono = 0;
+    let detalles = [];
 
-  // Función para descargar documento Excel
-  const handleDescargarExcel = async () => {
-    try {
-      const buffer = await gestionReportesService.generarDocumentoExcel(reporteData);
-      const nombreArchivo = `Reporte_horas_extra_${usuarioSeleccionado.persona?.nombres || ''}_${usuarioSeleccionado.persona?.apellidos || ''}.xlsx`;
-      
-      saveAs(
-        new Blob([buffer], { 
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        }), 
-        nombreArchivo
-      );
-    } catch (error) {
-      console.error('Error al descargar Excel:', error);
-    }
+    registros.forEach(registro => {
+      if (registro.Horas && registro.Horas.length > 0) {
+        registro.Horas.forEach(hora => {
+          const cantidadDividida = registro.horas_extra_divididas ?? 0;
+          const cantidadBono = registro.bono_salarial ?? 0;
+          const recargo = hora.valor;
+          const valorHoraExtra = valorHoraOrdinaria * recargo;
+          const valorTotalDivididas = cantidadDividida * valorHoraExtra;
+          const valorTotalBono = cantidadBono * valorHoraOrdinaria;
+
+          totalHorasDivididas += cantidadDividida;
+          totalPagarDivididas += valorTotalDivididas;
+          totalHorasBono += cantidadBono;
+          totalPagarBono += valorTotalBono;
+
+          detalles.push({
+            fecha: registro.fecha,
+            tipo: hora.tipo,
+            denominacion: hora.denominacion,
+            cantidadDividida,
+            valorTotalDivididas: valorTotalDivididas.toFixed(2),
+            cantidadBono,
+            valorTotalBono: valorTotalBono.toFixed(2),
+            recargo,
+            valorHoraExtra: valorHoraExtra.toFixed(2),
+            registroOriginal: registro
+          });
+        });
+      }
+    });
+
+    return {
+      totalHorasDivididas,
+      totalPagarDivididas,
+      totalHorasBono,
+      totalPagarBono,
+      totalPagar: totalPagarDivididas + totalPagarBono,
+      detalles
+    };
   };
 
   // Funciones de paginación
@@ -201,8 +218,6 @@ export const useGestionReportes = () => {
     handleVerDetalles,
     handleVerRegistros,
     handleVerReporte,
-    handleDescargarWord,
-    handleDescargarExcel,
     handleChangePage,
     handleChangeRowsPerPage,
     handleCloseDialog,

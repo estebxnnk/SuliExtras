@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { gestionarRegistrosHorasExtraService } from '../services/gestionarRegistrosHorasExtraService';
 
 export const useCrearRegistro = (cargarDatos, showSuccess, showError) => {
   const [loading, setLoading] = useState(false);
@@ -10,18 +11,12 @@ export const useCrearRegistro = (cargarDatos, showSuccess, showError) => {
       // Validar que el registro tenga todos los campos requeridos
       if (!nuevoRegistro.fecha || !nuevoRegistro.horaIngreso || !nuevoRegistro.horaSalida || 
           !nuevoRegistro.ubicacion || !nuevoRegistro.usuario || !nuevoRegistro.cantidadHorasExtra || 
-          !nuevoRegistro.horas || nuevoRegistro.horas.length === 0) {
+          !nuevoRegistro.horas || nuevoRegistro.horas.length === 0)  {
         throw new Error('Todos los campos son obligatorios');
       }
 
       // Llamada real a la API para crear el registro
-      const response = await fetch('http://localhost:3000/api/registros', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(nuevoRegistro),
-      });
+      const response = await gestionarRegistrosHorasExtraService.createRegistro(nuevoRegistro);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -30,6 +25,8 @@ export const useCrearRegistro = (cargarDatos, showSuccess, showError) => {
 
       const resultado = await response.json();
       console.log('Registro creado exitosamente:', resultado);
+
+      console.log('Resultado:', resultado);
       
       showSuccess('Registro creado exitosamente');
       

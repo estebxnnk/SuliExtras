@@ -1,111 +1,154 @@
-# Módulo GestionReportesHorasExtra
+# Gestión de Reportes de Horas Extra
 
-## Descripción
-Este módulo permite a los Sub-Administradores gestionar y generar reportes detallados de horas extra para todos los usuarios del sistema. Incluye funcionalidades para visualizar registros, generar reportes y exportar documentos en formatos Word y Excel.
+Este módulo permite a los sub-administradores generar reportes detallados de horas extra para todos los usuarios del sistema, siguiendo la misma arquitectura y patrones de diseño establecidos en el proyecto.
 
-## Características Principales
+## 🏗️ Arquitectura
 
-### 🔍 Gestión de Usuarios
-- Lista completa de usuarios con paginación
-- Búsqueda por nombre, apellido, documento o email
-- Visualización de detalles de usuario
-
-### 📊 Registros de Horas Extra
-- Visualización de todos los registros de horas extra por usuario
-- Filtrado por estado (aprobado, pendiente, rechazado)
-- Información detallada de cada registro
-
-### 📈 Reportes y Exportación
-- Generación de reportes consolidados de horas extra
-- Cálculo automático de valores a pagar
-- Exportación a formato Word (.docx) con logo corporativo
-- Exportación a formato Excel (.xlsx) con estilos profesionales
-
-### 💰 Cálculos Automáticos
-- Cálculo de horas extra divididas
-- Cálculo de bonos salariales
-- Aplicación de recargos según tipo de hora
-- Total consolidado a pagar
-
-## Estructura de Archivos
+El módulo sigue el patrón de **separación de responsabilidades** establecido en el proyecto:
 
 ```
 GestionReportesHorasExtra/
-├── index.jsx                 # Componente principal
-├── components/
-│   └── LoadingSpinner.jsx    # Spinner de carga personalizado
-└── README.md                 # Esta documentación
+├── components/           # Componentes de UI reutilizables
+│   ├── LoadingSpinner.jsx
+│   ├── Filtros.jsx
+│   ├── UsuariosTable.jsx
+│   └── index.js
+├── hooks/               # Lógica de estado y efectos
+│   ├── useGestionReportes.js
+│   └── index.js
+├── services/            # Lógica de negocio y API
+│   ├── gestionReportesService.js
+│   └── index.js
+├── utils/               # Utilidades y funciones auxiliares
+│   ├── exportUtils.js
+│   └── index.js
+├── config/              # Configuración del módulo
+│   └── index.js
+├── index.jsx            # Componente principal
+└── README.md
 ```
 
-## Dependencias
+## 🎯 Funcionalidades
 
-### Material-UI
-- `Box`, `Paper`, `Typography`, `Table`, `Dialog`
-- `IconButton`, `TablePagination`, `TextField`
-- `Button`, `Divider`, `InputAdornment`
+### Core Features
+- **Listado de Usuarios**: Visualización paginada de todos los usuarios del sistema
+- **Búsqueda Avanzada**: Filtrado por nombre, apellido, documento o email
+- **Gestión de Registros**: Visualización de registros de horas extra por usuario
+- **Generación de Reportes**: Cálculo automático de totales y valores a pagar
+- **Exportación**: Descarga de reportes en formato Word (.docx) y Excel (.xlsx)
 
-### Iconos
-- `VisibilityIcon` - Ver detalles de usuario
-- `ListAltIcon` - Ver registros de horas extra
-- `ReceiptLongIcon` - Generar reporte
-- `SearchIcon` - Búsqueda
-- `PersonIcon` - Icono de usuario
+### Características Técnicas
+- **Responsive Design**: Adaptable a diferentes tamaños de pantalla
+- **Lazy Loading**: Carga dinámica de utilidades de exportación
+- **Estado Centralizado**: Gestión de estado mediante hooks personalizados
+- **Manejo de Errores**: Gestión robusta de errores y estados de carga
 
-### Librerías de Exportación
-- `docx` - Generación de documentos Word
-- `exceljs` - Generación de archivos Excel
-- `file-saver` - Descarga de archivos
+## 🔧 Componentes
 
-### Contextos
-- `SalarioMinimoContext` - Acceso al salario mínimo del sistema
+### LoadingSpinner
+Spinner de carga personalizado con logo de la empresa y animaciones.
 
-## Funcionalidades Técnicas
+### Filtros
+Sistema de filtrado con búsqueda en tiempo real y diseño moderno.
 
-### Estado del Componente
-- `usuarios` - Lista de usuarios del sistema
-- `registros` - Registros de horas extra del usuario seleccionado
-- `reporteData` - Datos consolidados del reporte
-- `loading` - Estados de carga para diferentes operaciones
+### UsuariosTable
+Tabla de usuarios con acciones para ver detalles, registros y generar reportes.
 
-### API Endpoints
-- `GET /api/usuarios` - Obtener lista de usuarios
-- `GET /api/registros/usuario-completo/:id` - Obtener registros de usuario
+## 📊 Hooks
 
-### Cálculos
-- **Valor Hora Ordinaria**: `salarioMinimo / 240`
-- **Valor Hora Extra**: `valorHoraOrdinaria * recargo`
-- **Total Divididas**: `cantidadDividida * valorHoraExtra`
-- **Total Bono**: `cantidadBono * valorHoraOrdinaria`
+### useGestionReportes
+Hook principal que maneja:
+- Estado de usuarios y registros
+- Lógica de paginación y filtrado
+- Cálculos de reportes
+- Gestión de diálogos
 
-## Uso
+## 🌐 Servicios
 
-### Acceso al Módulo
-El módulo se accede a través de la navegación del Sub-Administrador y está protegido por el sistema de roles.
+### gestionReportesService
+- `fetchUsuarios()`: Obtiene lista de usuarios
+- `fetchRegistrosUsuario(id)`: Obtiene registros de un usuario específico
+- `fetchRegistrosAprobados(id)`: Obtiene registros aprobados para reportes
 
-### Flujo de Trabajo
-1. **Selección de Usuario**: Buscar y seleccionar un usuario de la lista
-2. **Visualización de Registros**: Revisar registros de horas extra del usuario
-3. **Generación de Reporte**: Crear reporte consolidado con cálculos
-4. **Exportación**: Descargar reporte en Word o Excel
+## 📁 Utilidades
 
-### Personalización
-- **Logo**: Utiliza `/img/NuevoLogo.png` para documentos Word
-- **Colores**: Sigue la paleta de colores del sistema (#1976d2, #42a5f5)
-- **Estilos**: Aplicación de gradientes y efectos visuales modernos
+### exportUtils
+- `generarDocumentoWord()`: Genera documentos Word con formato profesional
+- `generarDocumentoExcel()`: Genera hojas de cálculo Excel con estilos
+- `descargarWord()`: Descarga automática de documentos Word
+- `descargarExcel()`: Descarga automática de hojas Excel
 
-## Responsive Design
-- Adaptación automática para dispositivos móviles
-- Tablas con scroll horizontal en pantallas pequeñas
-- Botones y controles optimizados para touch
+## ⚙️ Configuración
 
-## Notas de Implementación
-- El módulo mantiene la consistencia visual con otros módulos del sistema
-- Implementa el mismo patrón de diseño y arquitectura
-- Utiliza el LoadingSpinner personalizado con logo corporativo
-- Manejo de errores robusto con try-catch en todas las operaciones async
+### CONFIG
+- **API**: Endpoints y configuración de base de datos
+- **PAGINATION**: Opciones de paginación
+- **SEARCH**: Configuración de búsqueda
+- **EXPORT**: Configuración de exportación
+- **STYLES**: Colores y gradientes del tema
+- **MESSAGES**: Mensajes del sistema
+- **CALCULATIONS**: Parámetros de cálculo
 
-## Mantenimiento
-- Verificar dependencias de librerías de exportación
-- Actualizar endpoints de API si cambian
-- Revisar cálculos de salarios y recargos
-- Mantener compatibilidad con cambios en el contexto de salario mínimo
+## 🚀 Uso
+
+```jsx
+import GestionReportesHorasExtra from './pages/SubAdministrador/GestionReportesHorasExtra';
+
+// El componente se integra automáticamente con:
+// - NavbarSubAdmin
+// - SalarioMinimoContext
+// - Sistema de rutas
+```
+
+## 🔗 Dependencias
+
+- **Material-UI**: Componentes de UI
+- **docx**: Generación de documentos Word
+- **exceljs**: Generación de hojas Excel
+- **file-saver**: Descarga de archivos
+
+## 📱 Responsive Design
+
+El módulo está optimizado para:
+- **Desktop**: Vista completa con todas las funcionalidades
+- **Tablet**: Adaptación de layouts y tamaños
+- **Mobile**: Navegación optimizada y componentes adaptados
+
+## 🎨 Tema y Estilos
+
+- **Colores Primarios**: Azul (#1976d2) y variantes
+- **Gradientes**: Efectos visuales modernos
+- **Sombras**: Profundidad y jerarquía visual
+- **Transiciones**: Animaciones suaves y profesionales
+
+## 🔒 Seguridad
+
+- **Validación de Datos**: Verificación de entrada de usuario
+- **Manejo de Errores**: Gestión segura de excepciones
+- **Contexto de Usuario**: Verificación de permisos y roles
+
+## 📈 Rendimiento
+
+- **Lazy Loading**: Carga diferida de utilidades pesadas
+- **Memoización**: Optimización de re-renderizados
+- **Paginación**: Carga eficiente de grandes volúmenes de datos
+- **Debounce**: Optimización de búsquedas en tiempo real
+
+## 🧪 Testing
+
+El módulo está diseñado para facilitar:
+- **Unit Testing**: Funciones puras y hooks
+- **Integration Testing**: Flujos de usuario completos
+- **E2E Testing**: Casos de uso reales
+
+## 🔄 Mantenimiento
+
+### Estructura Modular
+- **Separación Clara**: Cada capa tiene responsabilidades específicas
+- **Fácil Extensión**: Nuevas funcionalidades se integran sin modificar código existente
+- **Reutilización**: Componentes y utilidades pueden ser reutilizados en otros módulos
+
+### Patrones Establecidos
+- **Consistencia**: Mismo estilo y estructura que otros módulos del proyecto
+- **Escalabilidad**: Arquitectura preparada para crecimiento futuro
+- **Legibilidad**: Código claro y bien documentado
