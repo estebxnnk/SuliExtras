@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, TextField, InputAdornment, Button } from '@mui/material';
-import { SearchIcon } from '@mui/icons-material';
-import { SubAdminHeader } from '../../components';
-import { AssessmentIcon } from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search';
+import { SubAdminHeaderUniversal } from '../../components';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 const HeaderGestionReportes = ({
   title,
@@ -14,35 +14,20 @@ const HeaderGestionReportes = ({
   onOpenSalario
 }) => {
   return (
-    <SubAdminHeader
+    <SubAdminHeaderUniversal
       title={title}
       subtitle={subtitle}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      showAddButton={false}
       icon={AssessmentIcon}
       iconColor="#9c27b0"
-      gradientColors={["#9c27b0", "#7b1fa2"]}
-    >
-      {/* Campo de búsqueda */}
-      <TextField
-        placeholder="Buscar por nombre, apellido, documento o email"
-        value={search}
-        onChange={onSearchChange}
-        fullWidth
-        sx={{ mb: 2 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-            </InputAdornment>
-          ),
-        }}
-      />
-      
-      {/* Botón de editar salario mínimo */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      showSearch={true}
+      searchValue={search}
+      searchPlaceholder="Buscar por nombre, apellido, documento o email"
+      onSearchChange={onSearchChange}
+      additionalButtons={[
         <Button 
+          key="salario-button"
           variant="outlined" 
           color="secondary" 
           onClick={onOpenSalario}
@@ -57,8 +42,8 @@ const HeaderGestionReportes = ({
         >
           Editar salario mínimo
         </Button>
-      </Box>
-    </SubAdminHeader>
+      ]}
+    />
   );
 };
 

@@ -12,11 +12,19 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { SalarioMinimoContext } from '../../../providers/SalarioMinimoProvider';
 import SalarioMinimoEditor from '../../../SalarioMinimoEditor';
 import { 
-  SubAdminLayout, 
-  SubAdminUniversalAlert
+  SubAdminLayoutUniversal, 
+  SubAdminUniversalAlertUniversal,
+  SubAdminStatsUniversal,
+  SubAdminLoadingSpinner,
+  SubAdminCreateSuccessSpinner,
+  SubAdminEditSuccessSpinner,
+  SubAdminDeleteSuccessSpinner
 } from '../components';
 import { 
   HeaderGestionReportes,
@@ -66,7 +74,13 @@ function GestionReportesHorasExtra() {
   const {
     alertState,
     setAlertState,
-    hideAlert
+    hideAlert,
+    loadingState,
+    setLoadingState,
+    hideLoading,
+    successState,
+    setSuccessState,
+    hideSuccess
   } = useAlertasReportes();
 
   const {
@@ -76,7 +90,7 @@ function GestionReportesHorasExtra() {
     handleVerReporte,
     handleDescargarWord,
     handleDescargarExcel
-  } = useAccionesReportes(setAlertState, setLoadingRegistros, setRegistros, setReporteData, valorHoraOrdinaria);
+  } = useAccionesReportes(setAlertState, setLoadingState, setRegistros, setReporteData, valorHoraOrdinaria);
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -97,7 +111,7 @@ function GestionReportesHorasExtra() {
   }, [setUsuarios, setAlertState]);
 
   return (
-    <SubAdminLayout>
+    <SubAdminLayoutUniversal>
       <HeaderGestionReportes
         title="Gestión de Reportes de Horas Extra"
         subtitle="Genera y visualiza reportes detallados de horas extra por usuario"
@@ -106,6 +120,39 @@ function GestionReportesHorasExtra() {
         search={search}
         onSearchChange={(e) => setSearch(e.target.value)}
         onOpenSalario={() => setOpenSalario(true)}
+      />
+
+      {/* Estadísticas del módulo */}
+      <SubAdminStatsUniversal
+        stats={[
+          { 
+            type: 'total', 
+            label: 'Total Usuarios', 
+            value: usuarios.length, 
+            description: 'Usuarios registrados en el sistema' 
+          },
+          { 
+            type: 'empleados', 
+            label: 'Usuarios Activos', 
+            value: usuarios.filter(u => u.estado === 'activo').length, 
+            description: 'Usuarios con estado activo' 
+          },
+          { 
+            type: 'horas', 
+            label: 'Registros Cargados', 
+            value: registros.length, 
+            description: 'Total de registros de horas extra' 
+          },
+          { 
+            type: 'aprobados', 
+            label: 'Reportes Generados', 
+            value: reporteData.detalles?.length || 0, 
+            description: 'Reportes de horas extra generados' 
+          }
+        ]}
+        title="Resumen del Sistema de Reportes"
+        subtitle="Métricas importantes de gestión de horas extra"
+        iconColor="#9c27b0"
       />
 
       <TablaUsuarios
@@ -520,7 +567,7 @@ function GestionReportesHorasExtra() {
       </Dialog>
 
       {/* Alerta universal reutilizable */}
-      <SubAdminUniversalAlert
+      <SubAdminUniversalAlertUniversal
         open={alertState.open}
         type={alertState.type}
         message={alertState.message}
@@ -529,7 +576,41 @@ function GestionReportesHorasExtra() {
         showLogo={true}
         autoHideDuration={4000}
       />
-    </SubAdminLayout>
+
+      {/* Spinner de carga */}
+      <SubAdminLoadingSpinner
+        open={loadingState.open}
+        message={loadingState.message}
+        size={loadingState.size}
+        showLogo={true}
+      />
+
+      {/* Spinner de éxito */}
+      {successState.type === 'create' && (
+        <SubAdminCreateSuccessSpinner
+          open={successState.open}
+          message={successState.message}
+          title={successState.title}
+          onClose={hideSuccess}
+        />
+      )}
+      {successState.type === 'edit' && (
+        <SubAdminEditSuccessSpinner
+          open={successState.open}
+          message={successState.message}
+          title={successState.title}
+          onClose={hideSuccess}
+        />
+      )}
+      {successState.type === 'delete' && (
+        <SubAdminDeleteSuccessSpinner
+          open={successState.open}
+          message={successState.message}
+          title={successState.title}
+          onClose={hideSuccess}
+        />
+      )}
+    </SubAdminLayoutUniversal>
   );
 }
 

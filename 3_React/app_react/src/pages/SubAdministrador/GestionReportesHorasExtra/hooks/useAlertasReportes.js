@@ -8,6 +8,19 @@ export const useAlertasReportes = () => {
     title: ''
   });
 
+  const [loadingState, setLoadingState] = useState({
+    open: false,
+    message: 'Cargando...',
+    size: 'medium'
+  });
+
+  const [successState, setSuccessState] = useState({
+    open: false,
+    type: 'create', // create, edit, delete, approve, reject, stateChange
+    message: '',
+    title: ''
+  });
+
   const hideAlert = useCallback(() => {
     setAlertState({ ...alertState, open: false });
   }, [alertState]);
@@ -21,7 +34,7 @@ export const useAlertasReportes = () => {
     });
   }, []);
 
-  const showSuccess = useCallback((message, title = 'Éxito') => {
+  const showSuccessAlert = useCallback((message, title = 'Éxito') => {
     showAlert('success', message, title);
   }, [showAlert]);
 
@@ -37,14 +50,37 @@ export const useAlertasReportes = () => {
     showAlert('info', message, title);
   }, [showAlert]);
 
+  const hideLoading = useCallback(() => {
+    setLoadingState({ ...loadingState, open: false });
+  }, [loadingState]);
+
+  const showLoading = useCallback((message = 'Cargando...', size = 'medium') => {
+    setLoadingState({ open: true, message, size });
+  }, []);
+
+  const hideSuccess = useCallback(() => {
+    setSuccessState({ ...successState, open: false });
+  }, [successState]);
+
+  const showSuccess = useCallback((type = 'create', message = '', title = '') => {
+    setSuccessState({ open: true, type, message, title });
+  }, []);
+
   return {
     alertState,
     setAlertState,
     hideAlert,
     showAlert,
-    showSuccess,
+    showSuccessAlert,
     showError,
     showWarning,
-    showInfo
+    showInfo,
+    loadingState,
+    setLoadingState,
+    hideLoading,
+    showLoading,
+    successState,
+    setSuccessState,
+    hideSuccess
   };
 };

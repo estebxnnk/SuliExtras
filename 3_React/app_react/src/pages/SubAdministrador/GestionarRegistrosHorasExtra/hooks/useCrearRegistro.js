@@ -16,14 +16,7 @@ export const useCrearRegistro = (cargarDatos, showSuccess, showError) => {
       }
 
       // Llamada real a la API para crear el registro
-      const response = await gestionarRegistrosHorasExtraService.createRegistro(nuevoRegistro);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al crear el registro');
-      }
-
-      const resultado = await response.json();
+      const resultado = await gestionarRegistrosHorasExtraService.createRegistro(nuevoRegistro);
       console.log('Registro creado exitosamente:', resultado);
 
       console.log('Resultado:', resultado);

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-export const useAccionesReportes = (setAlertState, setLoadingRegistros, setRegistros, setReporteData, valorHoraOrdinaria) => {
+export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros, setReporteData, valorHoraOrdinaria) => {
   
   const handleRefresh = useCallback(async (fetchUsuarios) => {
     try {
@@ -28,7 +28,7 @@ export const useAccionesReportes = (setAlertState, setLoadingRegistros, setRegis
 
   const handleVerRegistros = useCallback(async (usuario, setUsuarioSeleccionado, setOpenRegistros) => {
     try {
-      setLoadingRegistros(true);
+      setLoadingState({ open: true, message: 'Cargando registros...', size: 'medium' });
       setUsuarioSeleccionado(usuario);
       setOpenRegistros(true);
       
@@ -47,9 +47,9 @@ export const useAccionesReportes = (setAlertState, setLoadingRegistros, setRegis
         title: 'Error'
       });
     } finally {
-      setLoadingRegistros(false);
+      setLoadingState({ open: false, message: '', size: 'medium' });
     }
-  }, [setLoadingRegistros, setRegistros, setAlertState]);
+  }, [setLoadingState, setRegistros, setAlertState]);
 
   const handleVerReporte = useCallback(async (usuario, setUsuarioSeleccionado, setOpenReporte) => {
     try {

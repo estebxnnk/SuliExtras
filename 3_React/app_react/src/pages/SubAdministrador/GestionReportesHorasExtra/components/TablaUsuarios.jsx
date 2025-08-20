@@ -1,7 +1,14 @@
 import React from 'react';
-import { SubAdminTable } from '../../components';
-import { AssessmentIcon } from '@mui/icons-material';
-import { VisibilityIcon, ListAltIcon, ReceiptLongIcon } from '@mui/icons-material';
+import { SubAdminTableUniversal } from '../../components';
+import {
+  Visibility as VisibilityIcon,
+  ListAlt as ListAltIcon,
+  ReceiptLong as ReceiptLongIcon,
+  Assessment as AssessmentIcon
+} from '@mui/icons-material';
+
+
+
 
 const TablaUsuarios = ({
   data,
@@ -16,24 +23,20 @@ const TablaUsuarios = ({
 }) => {
   const columns = [
     { 
-      id: 'nombres', 
-      label: 'Nombres', 
-      render: (value, row) => row.persona?.nombres || 'N/A' 
-    },
-    { 
-      id: 'apellidos', 
-      label: 'Apellidos', 
-      render: (value, row) => row.persona?.apellidos || 'N/A' 
+      id: 'usuario', 
+      label: 'Usuario'
     },
     { 
       id: 'documento', 
-      label: 'Documento', 
-      render: (value, row) => `${row.persona?.tipoDocumento || 'N/A'}: ${row.persona?.numeroDocumento || 'N/A'}` 
+      label: 'Documento'
     },
     { 
-      id: 'email', 
-      label: 'Email', 
-      render: (value, row) => row.email || 'N/A' 
+      id: 'rol', 
+      label: 'Rol'
+    },
+    { 
+      id: 'estado', 
+      label: 'Estado'
     },
     { 
       id: 'fechaCreacion', 
@@ -64,14 +67,11 @@ const TablaUsuarios = ({
   ];
 
   return (
-    <SubAdminTable
+    <SubAdminTableUniversal
       data={data}
       columns={columns}
       title="Usuarios del Sistema"
       subtitle="Lista de usuarios para generar reportes de horas extra"
-      icon={AssessmentIcon}
-      iconColor="#9c27b0"
-      gradientColors={["#f8f9fa", "#e9ecef"]}
       page={page}
       rowsPerPage={rowsPerPage}
       totalCount={totalCount}
@@ -80,7 +80,9 @@ const TablaUsuarios = ({
       showPagination={true}
       emptyMessage="No se encontraron usuarios"
       customActions={customActions}
-      showActions={false}
+      headerColor="#9c27b0"
+      isUserTable={true}
+      isMobile={false}
     />
   );
 };

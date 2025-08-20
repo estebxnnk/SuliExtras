@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { SalarioMinimoContext } from '../../../../providers/SalarioMinimoProvider';
 
 export const useGestionReportes = () => {
@@ -26,7 +26,7 @@ export const useGestionReportes = () => {
   const valorHoraOrdinaria = salarioMinimo / 240;
 
   // Filtro de búsqueda
-  const usuariosFiltrados = React.useMemo(() => {
+  const usuariosFiltrados = useMemo(() => {
     if (!search.trim()) return usuarios;
     
     const texto = search.toLowerCase();
