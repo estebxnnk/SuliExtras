@@ -17,9 +17,7 @@ const TablaUsuarios = ({
   totalCount,
   onPageChange,
   onRowsPerPageChange,
-  onVerDetalles,
-  onVerRegistros,
-  onVerReporte
+  customActions
 }) => {
   const columns = [
     { 
@@ -35,8 +33,8 @@ const TablaUsuarios = ({
       label: 'Rol'
     },
     { 
-      id: 'estado', 
-      label: 'Estado'
+      id: 'ubicacion', 
+      label: 'Ubicación'
     },
     { 
       id: 'fechaCreacion', 
@@ -45,26 +43,7 @@ const TablaUsuarios = ({
     }
   ];
 
-  const customActions = [
-    {
-      icon: <VisibilityIcon />,
-      tooltip: 'Ver detalles',
-      color: '#1976d2',
-      onClick: (row) => onVerDetalles(row)
-    },
-    {
-      icon: <ListAltIcon />,
-      tooltip: 'Ver registros de horas extra',
-      color: '#388e3c',
-      onClick: (row) => onVerRegistros(row)
-    },
-    {
-      icon: <ReceiptLongIcon />,
-      tooltip: 'Ver reporte general',
-      color: '#ff9800',
-      onClick: (row) => onVerReporte(row)
-    }
-  ];
+
 
   return (
     <SubAdminTableUniversal

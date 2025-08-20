@@ -68,7 +68,7 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
           message: 'Este usuario no tiene registros aprobados para generar reporte',
           title: 'Sin datos'
         });
-        return;
+        // Continuar para abrir el diálogo con datos vacíos
       }
 
       let totalHorasDivididas = 0;
@@ -116,6 +116,8 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
         totalPagar: totalPagarDivididas + totalPagarBono,
         detalles
       });
+      // Alinear el estado de registros con los datos del reporte para que los filtros del diálogo funcionen
+      setRegistros(registros);
       setUsuarioSeleccionado(usuario);
       setOpenReporte(true);
       

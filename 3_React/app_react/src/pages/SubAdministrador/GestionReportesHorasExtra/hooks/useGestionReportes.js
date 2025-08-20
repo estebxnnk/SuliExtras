@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react'; 
 import { SalarioMinimoContext } from '../../../../providers/SalarioMinimoProvider';
 
 export const useGestionReportes = () => {
@@ -25,7 +25,7 @@ export const useGestionReportes = () => {
   const { salarioMinimo } = useContext(SalarioMinimoContext);
   const valorHoraOrdinaria = salarioMinimo / 240;
 
-  // Filtro de búsqueda
+  // Filtro de búsqueda simple
   const usuariosFiltrados = useMemo(() => {
     if (!search.trim()) return usuarios;
     
@@ -50,6 +50,8 @@ export const useGestionReportes = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
+
 
   return {
     // Estados
@@ -76,6 +78,8 @@ export const useGestionReportes = () => {
     openSalario,
     setOpenSalario,
     valorHoraOrdinaria,
+    
+
     
     // Datos procesados
     usuariosFiltrados,

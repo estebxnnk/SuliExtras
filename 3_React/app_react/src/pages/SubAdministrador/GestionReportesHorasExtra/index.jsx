@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useMemo, useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -26,15 +26,19 @@ import {
   SubAdminEditSuccessSpinner,
   SubAdminDeleteSuccessSpinner
 } from '../components';
+
+import {
+  FiltrosAvanzados,
+  TablaResumenDescarga
+} from './components';
 import { 
   HeaderGestionReportes,
   TablaUsuarios
 } from './components';
-import { 
-  useGestionReportes,
-  useAccionesReportes,
-  useAlertasReportes
-} from './hooks';
+import { useGestionReportes } from './hooks/useGestionReportes';
+import { useAccionesReportes } from './hooks/useAccionesReportes';
+import { useAlertasReportes } from './hooks/useAlertasReportes';
+
 import { gestionReportesService } from './services';
 
 function GestionReportesHorasExtra() {
@@ -56,8 +60,6 @@ function GestionReportesHorasExtra() {
     setLoadingRegistros,
     page,
     rowsPerPage,
-    search,
-    setSearch,
     openReporte,
     setOpenReporte,
     reporteData,
@@ -65,11 +67,131 @@ function GestionReportesHorasExtra() {
     openSalario,
     setOpenSalario,
     valorHoraOrdinaria,
-    usuariosFiltrados,
     usuariosPagina,
     handleChangePage,
-    handleChangeRowsPerPage
+    handleChangeRowsPerPage,
+    // Filtro simple
+    search,
+    setSearch
   } = useGestionReportes();
+
+  // Filtros SOLO para el diálogo de reporte
+  const [tipoHoraDialog, setTipoHoraDialog] = useState('todos');
+  const [fechaInicioDialog, setFechaInicioDialog] = useState('');
+  const [fechaFinDialog, setFechaFinDialog] = useState('');
+  const [ubicacionDialog, setUbicacionDialog] = useState('todos');
+
+  const ubicacionesDialog = useMemo(() => {
+    const setU = new Set(registros.map(r => r.ubicacion).filter(Boolean));
+    return Array.from(setU).sort();
+  }, [registros]);
+
+  const tiposHoraDialog = useMemo(() => {
+    const mapTipos = new Map();
+    registros.forEach(reg => {
+      if (Array.isArray(reg.Horas)) {
+        reg.Horas.forEach(h => {
+          const key = String(h.id ?? h.tipoHoraId ?? h.tipo);
+          if (!mapTipos.has(key)) {
+            mapTipos.set(key, {
+              id: h.id ?? h.tipoHoraId ?? key,
+              tipo: h.tipo || 'Tipo',
+              denominacion: h.denominacion || '',
+            });
+          }
+        });
+      }
+    });
+    return Array.from(mapTipos.values());
+  }, [registros]);
+
+  // Usuarios filtrados por búsqueda
+  const usuariosConFiltros = useMemo(() => {
+    return usuarios.filter(usuario => {
+      const searchMatch = !search || 
+        `${usuario.persona?.nombres || ''} ${usuario.persona?.apellidos || ''}`.toLowerCase().includes(search.toLowerCase()) ||
+        (usuario.email || '').toLowerCase().includes(search.toLowerCase()) ||
+        (usuario.persona?.numeroDocumento || '').toLowerCase().includes(search.toLowerCase());
+      return searchMatch;
+    });
+  }, [usuarios, search]);
+
+  // Aplicar filtros del diálogo al conjunto de registros
+  const registrosDialogFiltrados = useMemo(() => {
+    return registros.filter(reg => {
+      // Filtro ubicación
+      const ubicMatch = ubicacionDialog === 'todos' || reg.ubicacion === ubicacionDialog;
+
+      // Filtro fechas
+      const fechaOk = (() => {
+        if (!fechaInicioDialog && !fechaFinDialog) return true;
+        const d = reg.fecha ? new Date(reg.fecha) : null;
+        if (!d) return false;
+        const startOk = !fechaInicioDialog || d >= new Date(fechaInicioDialog);
+        const endOk = !fechaFinDialog || d <= new Date(fechaFinDialog);
+        return startOk && endOk;
+      })();
+
+      // Filtro tipo de hora (si existe en el registro)
+      const tipoOk = (() => {
+        if (tipoHoraDialog === 'todos') return true;
+        if (!Array.isArray(reg.Horas)) return true;
+        return reg.Horas.some(h => String(h.id ?? h.tipoHoraId) === String(tipoHoraDialog));
+      })();
+
+      return ubicMatch && fechaOk && tipoOk;
+    });
+  }, [registros, ubicacionDialog, fechaInicioDialog, fechaFinDialog, tipoHoraDialog]);
+
+  // Recalcular los totales del reporte cuando cambian los filtros del diálogo
+  useEffect(() => {
+    if (!openReporte) return;
+    let totalHorasDivididas = 0;
+    let totalPagarDivididas = 0;
+    let totalHorasBono = 0;
+    let totalPagarBono = 0;
+    const detalles = [];
+
+    registrosDialogFiltrados.forEach(registro => {
+      if (Array.isArray(registro.Horas) && registro.Horas.length > 0) {
+        registro.Horas.forEach(hora => {
+          const cantidadDividida = registro.horas_extra_divididas ?? 0;
+          const cantidadBono = registro.bono_salarial ?? 0;
+          const recargo = hora.valor;
+          const valorHoraExtra = valorHoraOrdinaria * recargo;
+          const valorTotalDivididas = cantidadDividida * valorHoraExtra;
+          const valorTotalBono = cantidadBono * valorHoraOrdinaria;
+
+          totalHorasDivididas += cantidadDividida;
+          totalPagarDivididas += valorTotalDivididas;
+          totalHorasBono += cantidadBono;
+          totalPagarBono += valorTotalBono;
+
+          detalles.push({
+            fecha: registro.fecha,
+            tipo: hora.tipo,
+            denominacion: hora.denominacion,
+            cantidadDividida,
+            valorTotalDivididas: Number(valorTotalDivididas.toFixed(2)),
+            cantidadBono,
+            valorTotalBono: Number(valorTotalBono.toFixed(2)),
+            recargo,
+            valorHoraExtra: Number(valorHoraExtra.toFixed(2)),
+            registroOriginal: registro
+          });
+        });
+      }
+    });
+
+    setReporteData({
+      totalHorasDivididas,
+      totalPagarDivididas,
+      totalHorasBono,
+      totalPagarBono,
+      totalPagar: totalPagarDivididas + totalPagarBono,
+      detalles
+    });
+  }, [openReporte, registrosDialogFiltrados, valorHoraOrdinaria, setReporteData]);
 
   const {
     alertState,
@@ -97,7 +219,7 @@ function GestionReportesHorasExtra() {
       try {
         const data = await gestionReportesService.fetchUsuarios();
         setUsuarios(data);
-      } catch (error) {
+    } catch (error) {
         setAlertState({
           open: true,
           type: 'error',
@@ -117,9 +239,13 @@ function GestionReportesHorasExtra() {
         subtitle="Genera y visualiza reportes detallados de horas extra por usuario"
         refreshing={false}
         onRefresh={() => handleRefresh(fetchUsuarios)}
-        search={search}
-        onSearchChange={(e) => setSearch(e.target.value)}
         onOpenSalario={() => setOpenSalario(true)}
+      />
+
+      {/* Filtro principal (solo búsqueda) */}
+      <FiltrosAvanzados
+        search={search}
+        onSearchChange={setSearch}
       />
 
       {/* Estadísticas del módulo */}
@@ -144,7 +270,7 @@ function GestionReportesHorasExtra() {
             description: 'Total de registros de horas extra' 
           },
           { 
-            type: 'aprobados', 
+            type: 'aprobado', 
             label: 'Reportes Generados', 
             value: reporteData.detalles?.length || 0, 
             description: 'Reportes de horas extra generados' 
@@ -157,14 +283,31 @@ function GestionReportesHorasExtra() {
 
       <TablaUsuarios
         data={usuariosPagina}
-        page={page}
+          page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={usuariosFiltrados.length}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        onVerDetalles={(usuario) => handleVerDetalles(usuario, setUsuarioSeleccionado, setOpenDialog)}
-        onVerRegistros={(usuario) => handleVerRegistros(usuario, setUsuarioSeleccionado, setOpenRegistros)}
-        onVerReporte={(usuario) => handleVerReporte(usuario, setUsuarioSeleccionado, setOpenReporte)}
+        totalCount={usuariosConFiltros.length}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        customActions={[
+          {
+            icon: <VisibilityIcon />,
+            tooltip: 'Ver detalles del usuario',
+            color: '#1976d2',
+            onClick: (usuario) => handleVerDetalles(usuario, setUsuarioSeleccionado, setOpenDialog)
+          },
+          {
+            icon: <ListAltIcon />,
+            tooltip: 'Ver registros del usuario',
+            color: '#4caf50',
+            onClick: (usuario) => handleVerRegistros(usuario, setUsuarioSeleccionado, setOpenRegistros)
+          },
+          {
+            icon: <AssessmentIcon />,
+            tooltip: 'Generar reporte del usuario',
+            color: '#9c27b0',
+            onClick: (usuario) => handleVerReporte(usuario, setUsuarioSeleccionado, setOpenReporte)
+          }
+        ]}
       />
 
       {/* Diálogo de detalles de usuario */}
@@ -182,7 +325,7 @@ function GestionReportesHorasExtra() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3, maxHeight: '80vh', overflow: 'auto' }}>
           {usuarioSeleccionado && (
             <Box sx={{ 
               p: 3, 
@@ -203,8 +346,8 @@ function GestionReportesHorasExtra() {
                 }}>
                   <Typography variant="body1" fontWeight={600} color="text.primary">
                     Documento de Identidad
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                     {usuarioSeleccionado.persona?.tipoDocumento}: {usuarioSeleccionado.persona?.numeroDocumento}
                   </Typography>
                 </Box>
@@ -217,8 +360,8 @@ function GestionReportesHorasExtra() {
                 }}>
                   <Typography variant="body1" fontWeight={600} color="text.primary">
                     Información de Contacto
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                     {usuarioSeleccionado.email}
                   </Typography>
                 </Box>
@@ -231,8 +374,8 @@ function GestionReportesHorasExtra() {
                 }}>
                   <Typography variant="body1" fontWeight={600} color="text.primary">
                     Fecha de Registro
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                     {usuarioSeleccionado.createdAt ? new Date(usuarioSeleccionado.createdAt).toLocaleString('es-ES', {
                       year: 'numeric',
                       month: 'long',
@@ -240,7 +383,7 @@ function GestionReportesHorasExtra() {
                       hour: '2-digit',
                       minute: '2-digit'
                     }) : 'No disponible'}
-                  </Typography>
+              </Typography>
                 </Box>
               </Box>
             </Box>
@@ -263,7 +406,54 @@ function GestionReportesHorasExtra() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3, maxHeight: '80vh', overflow: 'auto' }}>
+          {/* Filtros del diálogo */}
+          <Box sx={{ mb: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 2 }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Tipo de Hora</Typography>
+              <select
+                value={tipoHoraDialog}
+                onChange={(e) => setTipoHoraDialog(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
+              >
+                <option value="todos">Todos</option>
+                {tiposHoraDialog.map(t => (
+                  <option key={t.id} value={t.id}>{t.tipo} {t.denominacion ? `- ${t.denominacion}` : ''}</option>
+                ))}
+              </select>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Ubicación</Typography>
+              <select
+                value={ubicacionDialog}
+                onChange={(e) => setUbicacionDialog(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
+              >
+                <option value="todos">Todas</option>
+                {ubicacionesDialog.map(u => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Fecha inicio</Typography>
+              <input
+                type="date"
+                value={fechaInicioDialog}
+                onChange={(e) => setFechaInicioDialog(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
+              />
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Fecha fin</Typography>
+              <input
+                type="date"
+                value={fechaFinDialog}
+                onChange={(e) => setFechaFinDialog(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
+              />
+            </Box>
+          </Box>
           {loadingRegistros ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="h6" color="text.secondary">
@@ -304,7 +494,7 @@ function GestionReportesHorasExtra() {
                     color: 'white'
                   }}>
                     <Typography variant="subtitle1" fontWeight={600}>
-                      Registros de Horas Extra ({registros.length})
+                      Registros de Horas Extra ({registrosDialogFiltrados.length})
                     </Typography>
                   </Box>
                   <Box sx={{ maxHeight: 500, overflow: 'auto', p: 2 }}>
@@ -313,7 +503,7 @@ function GestionReportesHorasExtra() {
                       gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
                       gap: 2 
                     }}>
-                      {registros.map(registro => (
+                  {registrosDialogFiltrados.map(registro => (
                         <Box key={registro.id} sx={{ 
                           p: 2, 
                           background: 'white', 
@@ -357,8 +547,8 @@ function GestionReportesHorasExtra() {
                             <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mb: 0.5 }}>
                               Tipos de Hora:
                             </Typography>
-                            {registro.Horas && registro.Horas.length > 0 ? (
-                              registro.Horas.map(hora => (
+                        {registro.Horas && registro.Horas.length > 0 ? (
+                          registro.Horas.map(hora => (
                                 <Box key={hora.id} sx={{ 
                                   p: 1, 
                                   background: 'rgba(56, 142, 60, 0.1)', 
@@ -374,9 +564,9 @@ function GestionReportesHorasExtra() {
                                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                                     Cantidad: {hora.RegistroHora.cantidad}
                                   </Typography>
-                                </Box>
-                              ))
-                            ) : (
+                            </Box>
+                          ))
+                        ) : (
                               <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
                                 No asignado
                               </Typography>
@@ -404,13 +594,13 @@ function GestionReportesHorasExtra() {
                   <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
                     No hay registros de horas extra para este usuario
                   </Typography>
-                  {usuarioSeleccionado && (
+                        {usuarioSeleccionado && (
                     <Typography variant="body2" color="text.secondary">
                       Usuario: <strong>{usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}</strong> ({usuarioSeleccionado.email})
                     </Typography>
-                  )}
+                        )}
                 </Box>
-              )}
+                  )}
             </>
           )}
         </DialogContent>
@@ -431,7 +621,7 @@ function GestionReportesHorasExtra() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3, maxHeight: '80vh', overflow: 'auto' }}>
           {usuarioSeleccionado && (
             <Box sx={{ 
               mb: 3, 
@@ -449,33 +639,48 @@ function GestionReportesHorasExtra() {
             </Box>
           )}
           
-                  {/* Botones de descarga */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<DescriptionOutlinedIcon />}
-            onClick={() => handleDescargarWord(reporteData, usuarioSeleccionado)}
-            sx={{ 
-              background: 'linear-gradient(135deg, #1976d2, #1565c0)',
-              '&:hover': { background: 'linear-gradient(135deg, #1565c0, #0d47a1)' }
-            }}
-          >
-            Descargar Word
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<TableChartOutlinedIcon />}
-            onClick={() => handleDescargarExcel(reporteData, usuarioSeleccionado)}
-            sx={{ 
-              background: 'linear-gradient(135deg, #2e7d32, #1b5e20)',
-              '&:hover': { background: 'linear-gradient(135deg, #1b5e20, #0d4f1a)' }
-            }}
-          >
-            Descargar Excel
-          </Button>
-        </Box>
+                  {/* Tabla de resumen para descarga */}
+          <TablaResumenDescarga
+            registrosFiltrados={registrosDialogFiltrados}
+            registrosAprobadosTodos={registros}
+            valorHoraOrdinaria={valorHoraOrdinaria}
+            tipoHoraSeleccionado={tipoHoraDialog}
+            filtrosActivos={Boolean(
+              (tipoHoraDialog && tipoHoraDialog !== 'todos') ||
+              ubicacionDialog !== 'todos' ||
+              fechaInicioDialog ||
+              fechaFinDialog
+            )}
+            onComputed={(resumen) => setReporteData(resumen)}
+          />
+
+          {/* Botones de descarga */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<DescriptionOutlinedIcon />}
+              onClick={() => handleDescargarWord(reporteData, usuarioSeleccionado)}
+              sx={{ 
+                background: 'linear-gradient(135deg, #1976d2, #1565c0)',
+                '&:hover': { background: 'linear-gradient(135deg, #1565c0, #0d47a1)' }
+              }}
+            >
+              Descargar Word
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<TableChartOutlinedIcon />}
+              onClick={() => handleDescargarExcel(reporteData, usuarioSeleccionado)}
+              sx={{ 
+                background: 'linear-gradient(135deg, #2e7d32, #1b5e20)',
+                '&:hover': { background: 'linear-gradient(135deg, #1b5e20, #0d4f1a)' }
+              }}
+            >
+              Descargar Excel
+            </Button>
+          </Box>
           
           {/* Resumen de totales */}
           <Box sx={{ 
@@ -491,13 +696,13 @@ function GestionReportesHorasExtra() {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="subtitle1" fontWeight={600} color="#1976d2">
                 Total horas extra (reporte): {reporteData.totalHorasDivididas} | Valor: $ {reporteData.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
-              </Typography>
+          </Typography>
               <Typography variant="subtitle1" fontWeight={600} color="#ff9800">
                 Total bono salarial (horas): {reporteData.totalHorasBono} | Valor: $ {reporteData.totalPagarBono.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
-              </Typography>
+          </Typography>
               <Typography variant="h6" fontWeight={700} color="#388e3c" sx={{ mt: 1 }}>
                 Total a pagar: $ {reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
-              </Typography>
+          </Typography>
             </Box>
           </Box>
           
@@ -522,12 +727,11 @@ function GestionReportesHorasExtra() {
                 Detalle de Horas Extra y Bonos
               </Typography>
             </Box>
-            <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+            <Box sx={{ maxHeight: 400, overflow: 'auto', p: 2 }}>
               <Box sx={{ 
                 display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: 2, 
-                p: 2 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                gap: 2
               }}>
                 {reporteData.detalles.map((detalle, idx) => (
                   <Box key={idx} sx={{ 
@@ -535,7 +739,11 @@ function GestionReportesHorasExtra() {
                     background: 'white', 
                     borderRadius: 1, 
                     border: '1px solid #dee2e6',
-                    '&:hover': { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }
+                    '&:hover': { 
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.2s ease'
+                    }
                   }}>
                     <Typography variant="subtitle2" fontWeight={600} color="#9c27b0" sx={{ mb: 1 }}>
                       {detalle.fecha}

@@ -255,21 +255,31 @@ const SubAdminTableUniversal = ({
                             transition: 'all 0.2s ease'
                           }}
                         />
-                      ) : isUserTable && column.id === 'estado' ? (
-                        <Chip
-                          label={row.estado === 'activo' ? 'Activo' : row.estado === 'inactivo' ? 'Inactivo' : row.estado || 'Sin estado'}
-                          size="small"
-                          color={row.estado === 'activo' ? 'success' : row.estado === 'inactivo' ? 'error' : 'default'}
-                          variant="filled"
-                          sx={{
-                            fontWeight: 600,
-                            fontSize: '0.8rem',
-                            '&:hover': {
-                              transform: 'scale(1.05)'
-                            },
-                            transition: 'all 0.2s ease'
-                          }}
-                        />
+                      ) : isUserTable && column.id === 'ubicacion' ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              background: row.ubicacion === 'Medellín' ? '#4caf50' : 
+                                         row.ubicacion === 'Bogotá' ? '#2196f3' : 
+                                         row.ubicacion === 'Cali' ? '#ff9800' : 
+                                         row.ubicacion === 'Barranquilla' ? '#9c27b0' : '#666',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: '0.9rem',
+                              color: 'text.primary'
+                            }}
+                          >
+                            {row.ubicacion || 'Sin ubicación'}
+                          </Typography>
+                        </Box>
                       ) : (
                         column.render ? column.render(row[column.id], row) : row[column.id]
                       )}
