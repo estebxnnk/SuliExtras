@@ -8,7 +8,7 @@ const Filtros = ({ search, onSearchChange, isMobile }) => {
     <Box sx={{ 
       mb: 3,
       p: 3,
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,248,255,0.95) 100%)',
+      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240,248,255,0.95) 100%)',
       borderRadius: 3,
       border: '1px solid rgba(25, 118, 210, 0.15)',
       boxShadow: '0 4px 20px rgba(0,0,0,0.08)'

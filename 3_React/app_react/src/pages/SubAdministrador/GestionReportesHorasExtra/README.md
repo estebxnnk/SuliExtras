@@ -1,111 +1,162 @@
-# Módulo GestionReportesHorasExtra
+# Gestión de Reportes de Horas Extra
 
-## Descripción
-Este módulo permite a los Sub-Administradores gestionar y generar reportes detallados de horas extra para todos los usuarios del sistema. Incluye funcionalidades para visualizar registros, generar reportes y exportar documentos en formatos Word y Excel.
+Este módulo ha sido completamente migrado para usar los componentes reutilizables del SubAdministrador, siguiendo la misma arquitectura que el módulo `GestionarRegistrosHorasExtra`. Mantiene toda su funcionalidad original mientras mejora la consistencia visual, la mantenibilidad del código y la separación de responsabilidades.
 
-## Características Principales
+## 🏗️ **Arquitectura del Módulo**
 
-### 🔍 Gestión de Usuarios
-- Lista completa de usuarios con paginación
-- Búsqueda por nombre, apellido, documento o email
-- Visualización de detalles de usuario
-
-### 📊 Registros de Horas Extra
-- Visualización de todos los registros de horas extra por usuario
-- Filtrado por estado (aprobado, pendiente, rechazado)
-- Información detallada de cada registro
-
-### 📈 Reportes y Exportación
-- Generación de reportes consolidados de horas extra
-- Cálculo automático de valores a pagar
-- Exportación a formato Word (.docx) con logo corporativo
-- Exportación a formato Excel (.xlsx) con estilos profesionales
-
-### 💰 Cálculos Automáticos
-- Cálculo de horas extra divididas
-- Cálculo de bonos salariales
-- Aplicación de recargos según tipo de hora
-- Total consolidado a pagar
-
-## Estructura de Archivos
-
+### **Estructura de Directorios**
 ```
 GestionReportesHorasExtra/
-├── index.jsx                 # Componente principal
-├── components/
-│   └── LoadingSpinner.jsx    # Spinner de carga personalizado
-└── README.md                 # Esta documentación
+├── components/           # Componentes de UI reutilizables
+│   ├── HeaderGestionReportes.jsx
+│   ├── TablaUsuarios.jsx
+│   └── index.js
+├── hooks/               # Lógica de negocio y estado
+│   ├── useGestionReportes.js
+│   ├── useAccionesReportes.js
+│   ├── useAlertasReportes.js
+│   └── index.js
+├── services/            # Capa de servicios y API
+│   ├── gestionReportesService.js
+│   └── index.js
+├── config/              # Configuración del módulo
+│   └── index.js
+├── utils/               # Utilidades de exportación
+├── index.jsx            # Componente principal
+└── README.md
 ```
 
-## Dependencias
+## 🔧 **Componentes Implementados**
 
-### Material-UI
-- `Box`, `Paper`, `Typography`, `Table`, `Dialog`
-- `IconButton`, `TablePagination`, `TextField`
-- `Button`, `Divider`, `InputAdornment`
+### **1. HeaderGestionReportes**
+- Header reutilizable con título, subtítulo y campo de búsqueda
+- Botón para editar salario mínimo
+- Integrado con `SubAdminHeader` para consistencia visual
 
-### Iconos
-- `VisibilityIcon` - Ver detalles de usuario
-- `ListAltIcon` - Ver registros de horas extra
-- `ReceiptLongIcon` - Generar reporte
-- `SearchIcon` - Búsqueda
-- `PersonIcon` - Icono de usuario
+### **2. TablaUsuarios**
+- Tabla reutilizable con paginación y acciones personalizadas
+- Columnas: Nombres, Apellidos, Documento, Email, Fecha de Creación
+- Acciones: Ver detalles, Ver registros, Generar reporte
+- Integrado con `SubAdminTable` para consistencia
 
-### Librerías de Exportación
-- `docx` - Generación de documentos Word
-- `exceljs` - Generación de archivos Excel
-- `file-saver` - Descarga de archivos
+## 🎣 **Hooks Personalizados**
 
-### Contextos
-- `SalarioMinimoContext` - Acceso al salario mínimo del sistema
+### **useGestionReportes**
+- Maneja todo el estado del módulo
+- Gestiona usuarios, registros, reportes y paginación
+- Proporciona funciones de filtrado y paginación
 
-## Funcionalidades Técnicas
+### **useAccionesReportes**
+- Encapsula todas las acciones del módulo
+- Maneja operaciones CRUD y generación de reportes
+- Gestiona descargas de Word y Excel
 
-### Estado del Componente
-- `usuarios` - Lista de usuarios del sistema
-- `registros` - Registros de horas extra del usuario seleccionado
-- `reporteData` - Datos consolidados del reporte
-- `loading` - Estados de carga para diferentes operaciones
+### **useAlertasReportes**
+- Sistema de alertas centralizado
+- Maneja diferentes tipos de alertas (success, error, warning, info)
+- Integrado con `SubAdminUniversalAlert`
 
-### API Endpoints
-- `GET /api/usuarios` - Obtener lista de usuarios
-- `GET /api/registros/usuario-completo/:id` - Obtener registros de usuario
+## 🚀 **Servicios**
 
-### Cálculos
-- **Valor Hora Ordinaria**: `salarioMinimo / 240`
-- **Valor Hora Extra**: `valorHoraOrdinaria * recargo`
-- **Total Divididas**: `cantidadDividida * valorHoraExtra`
-- **Total Bono**: `cantidadBono * valorHoraOrdinaria`
+### **gestionReportesService**
+- `fetchUsuarios()`: Obtiene lista de usuarios
+- `fetchRegistrosUsuario(usuarioId)`: Obtiene registros de un usuario
+- `fetchRegistrosAprobados(usuarioId)`: Obtiene registros aprobados
+- `calcularReporte(registros, salarioMinimo)`: Calcula reportes
 
-## Uso
+## ⚙️ **Configuración**
 
-### Acceso al Módulo
-El módulo se accede a través de la navegación del Sub-Administrador y está protegido por el sistema de roles.
+### **CONFIG**
+- Configuración de API y endpoints
+- Configuración de paginación y búsqueda
+- Configuración de exportación
+- Colores y estilos del módulo
+- Mensajes del sistema
 
-### Flujo de Trabajo
-1. **Selección de Usuario**: Buscar y seleccionar un usuario de la lista
-2. **Visualización de Registros**: Revisar registros de horas extra del usuario
-3. **Generación de Reporte**: Crear reporte consolidado con cálculos
-4. **Exportación**: Descargar reporte en Word o Excel
+## 🎨 **Tema Visual**
 
-### Personalización
-- **Logo**: Utiliza `/img/NuevoLogo.png` para documentos Word
-- **Colores**: Sigue la paleta de colores del sistema (#1976d2, #42a5f5)
-- **Estilos**: Aplicación de gradientes y efectos visuales modernos
+### **Colores del Módulo**
+- **Primario**: #9c27b0 (Morado)
+- **Secundario**: #7b1fa2 (Morado oscuro)
+- **Gradientes**: Morado a morado oscuro
+- **Consistencia**: Sigue el tema del SubAdministrador
 
-## Responsive Design
-- Adaptación automática para dispositivos móviles
-- Tablas con scroll horizontal en pantallas pequeñas
-- Botones y controles optimizados para touch
+## 📱 **Funcionalidades**
 
-## Notas de Implementación
-- El módulo mantiene la consistencia visual con otros módulos del sistema
-- Implementa el mismo patrón de diseño y arquitectura
-- Utiliza el LoadingSpinner personalizado con logo corporativo
-- Manejo de errores robusto con try-catch en todas las operaciones async
+### **Gestión de Usuarios**
+- Lista de usuarios con búsqueda y paginación
+- Filtrado por nombre, apellido, documento o email
+- Ordenamiento por fecha de creación
 
-## Mantenimiento
-- Verificar dependencias de librerías de exportación
-- Actualizar endpoints de API si cambian
-- Revisar cálculos de salarios y recargos
-- Mantener compatibilidad con cambios en el contexto de salario mínimo
+### **Visualización de Registros**
+- Detalles completos de cada usuario
+- Registros de horas extra con estados
+- Información de tipos de hora y bonos
+
+### **Generación de Reportes**
+- Reportes detallados de horas extra
+- Cálculos automáticos de valores
+- Exportación a Word y Excel
+
+### **Gestión de Salario**
+- Edición del salario mínimo
+- Cálculos automáticos de valores por hora
+- Integración con el contexto global
+
+## 🔄 **Migración Completada**
+
+### **Componentes Reutilizables Adoptados**
+- ✅ `SubAdminLayout` - Layout principal
+- ✅ `SubAdminHeader` - Header del módulo
+- ✅ `SubAdminTable` - Tabla de usuarios
+- ✅ `SubAdminUniversalAlert` - Sistema de alertas
+
+### **Beneficios de la Migración**
+- **Consistencia Visual**: Mismo diseño en todo el módulo SubAdministrador
+- **Mantenibilidad**: Código organizado y separado por responsabilidades
+- **Reutilización**: Componentes que se pueden usar en otros módulos
+- **Escalabilidad**: Fácil agregar nuevas funcionalidades
+- **Testing**: Hooks y servicios fáciles de probar
+
+## 🚀 **Uso del Módulo**
+
+### **Importación de Componentes**
+```jsx
+import { 
+  HeaderGestionReportes,
+  TablaUsuarios 
+} from './components';
+
+import { 
+  useGestionReportes,
+  useAccionesReportes,
+  useAlertasReportes 
+} from './hooks';
+```
+
+### **Uso de Hooks**
+```jsx
+const {
+  usuarios,
+  usuariosFiltrados,
+  usuariosPagina,
+  // ... otros estados
+} = useGestionReportes();
+
+const {
+  handleRefresh,
+  handleVerDetalles,
+  // ... otras acciones
+} = useAccionesReportes(setAlertState, setLoadingRegistros, setRegistros, setReporteData, valorHoraOrdinaria);
+```
+
+## 📋 **Próximos Pasos**
+
+1. **Testing**: Implementar tests unitarios para hooks y servicios
+2. **Optimización**: Implementar memoización para mejor rendimiento
+3. **Internacionalización**: Agregar soporte para múltiples idiomas
+4. **Accesibilidad**: Mejorar la accesibilidad del módulo
+
+---
+
+El módulo se integra perfectamente con el sistema de navegación del SubAdministrador y mantiene todas las funcionalidades originales mientras proporciona una experiencia de usuario mejorada y consistente.

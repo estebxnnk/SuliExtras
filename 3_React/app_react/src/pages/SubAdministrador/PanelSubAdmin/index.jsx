@@ -29,13 +29,16 @@ import WarningIcon from '@mui/icons-material/Warning';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart';
-import NavbarSubAdmin from '../NavbarSubAdmin';
 import { usePanelSubAdmin } from './hooks/usePanelSubAdmin';
 import { UsuarioDialog } from './components/UsuarioDialog';
 import { FiltrosPanel } from './components/FiltrosPanel';
 import { KPICards } from './components/KPICards';
 import { UsuariosTable } from './components/UsuariosTable';
 import { GraficoUsuarios } from './components/GraficoUsuarios';
+import { 
+  SubAdminLayout, 
+  SubAdminHeader 
+} from '../components';
 
 function PanelSubAdmin() {
   const theme = useTheme();
@@ -73,24 +76,17 @@ function PanelSubAdmin() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <NavbarSubAdmin />
-      
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
-        {/* Header */}
-        <Box sx={{ mb: 3, display: 'flex', width: '100vw', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h4" component="h1" fontWeight="bold" color="primary">
-            Panel de Sub Administrador
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-            sx={{ minWidth: 'auto' }}
-          >
-            Actualizar
-          </Button>
-        </Box>
+    <SubAdminLayout>
+      <SubAdminHeader
+        title="Panel de Sub Administrador"
+        subtitle="Gestión integral de usuarios y registros del sistema"
+        refreshing={loading}
+        onRefresh={handleRefresh}
+        showAddButton={false}
+        icon={InfoIcon}
+        iconColor="#1976d2"
+        gradientColors={["#1976d2", "#1565c0"]}
+      />
 
         {/* Filtros */}
         <FiltrosPanel
@@ -134,9 +130,8 @@ function PanelSubAdmin() {
           onClose={handleCloseUsuario}
           isMobile={isMobile}
         />
-      </Box>
-    </Box>
-  );
+      </SubAdminLayout>
+    );
 }
 
 export default PanelSubAdmin; 
