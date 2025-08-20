@@ -70,18 +70,21 @@ export const gestionReportesService = {
     let detalles = [];
 
     registros.forEach(registro => {
-      if (registro.Horas && registro.Horas.length > 0) {
-        registro.Horas.forEach(hora => {
-          const cantidadDividida = registro.horas_extra_divididas ?? 0;
-          const cantidadBono = registro.bono_salarial ?? 0;
+      const cantidadDividida = registro.horas_extra_divididas ?? 0;
+      const cantidadBono = registro.bono_salarial ?? 0;
+
+      if (Array.isArray(registro.Horas) && registro.Horas.length > 0) {
+        registro.Horas.forEach((hora, index) => {
           const recargo = hora.valor;
           const valorHoraExtra = valorHoraOrdinaria * recargo;
           const valorTotalDivididas = cantidadDividida * valorHoraExtra;
-          const valorTotalBono = cantidadBono * valorHoraOrdinaria;
 
           totalHorasDivididas += cantidadDividida;
           totalPagarDivididas += valorTotalDivididas;
-          totalHorasBono += cantidadBono;
+
+          const bonoEnFila = index === 0 ? cantidadBono : 0;
+          const valorTotalBono = bonoEnFila * valorHoraExtra;
+          totalHorasBono += bonoEnFila;
           totalPagarBono += valorTotalBono;
 
           detalles.push({
@@ -89,13 +92,30 @@ export const gestionReportesService = {
             tipo: hora.tipo,
             denominacion: hora.denominacion,
             cantidadDividida,
-            valorTotalDivididas: valorTotalDivididas.toFixed(2),
-            cantidadBono,
-            valorTotalBono: valorTotalBono.toFixed(2),
+            valorTotalDivididas: Number(valorTotalDivididas.toFixed(2)),
+            cantidadBono: bonoEnFila,
+            valorTotalBono: Number(valorTotalBono.toFixed(2)),
             recargo,
-            valorHoraExtra: valorHoraExtra.toFixed(2),
+            valorHoraExtra: Number(valorHoraExtra.toFixed(2)),
             registroOriginal: registro
           });
+        });
+      } else if ((cantidadBono ?? 0) > 0) {
+        // Sin horas asignadas: representar el bono como fila única sin recargo
+        const valorTotalBono = cantidadBono * valorHoraOrdinaria;
+        totalHorasBono += cantidadBono;
+        totalPagarBono += valorTotalBono;
+        detalles.push({
+          fecha: registro.fecha,
+          tipo: 'Bono Salarial',
+          denominacion: '-',
+          cantidadDividida: 0,
+          valorTotalDivididas: 0,
+          cantidadBono,
+          valorTotalBono: Number(valorTotalBono.toFixed(2)),
+          recargo: 1,
+          valorHoraExtra: Number(valorHoraOrdinaria.toFixed(2)),
+          registroOriginal: registro
         });
       }
     });

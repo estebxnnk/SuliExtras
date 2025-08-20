@@ -6,8 +6,11 @@ import {
   Typography,
   IconButton,
   Paper,
-  Avatar
+  Avatar,
+  Fade,
+  Portal
 } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
@@ -20,65 +23,145 @@ import {
 export const SubAdminSuccessSpinner = ({
   open,
   onClose,
-  title = "Operación Exitosa",
-  message = "La operación se completó correctamente",
-  icon = <CheckCircleIcon sx={{ fontSize: 32 }} />,
-  iconColor = "#4caf50",
+  title = '¡Éxito!',
+  message = 'La operación se completó correctamente',
+  icon = <CheckCircleIcon />,
+  iconColor = '#4caf50',
   showLogo = true,
-  autoHideDuration = 3000
+  size = 'medium',
+  logoSrc = '/img/NuevoLogo.png',
+  autoHideDuration,
+  onAutoHideComplete
 }) => {
   if (!open) return null;
 
+  const getSize = () => {
+    switch (size) {
+      case 'small': return 60;
+      case 'large': return 120;
+      default: return 80;
+    }
+  };
+
+  React.useEffect(() => {
+    if (!open || !autoHideDuration) return;
+    const t = setTimeout(() => {
+      onClose?.();
+      onAutoHideComplete?.();
+    }, autoHideDuration);
+    return () => clearTimeout(t);
+  }, [open, autoHideDuration, onClose, onAutoHideComplete]);
+
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        p: 2
-      }}
-    >
-      <Paper
-        elevation={8}
-        sx={{
-          borderRadius: 3,
-          p: 3,
-          maxWidth: 500,
-          width: '100%',
-          textAlign: 'center'
-        }}
-      >
-        {showLogo && (
-          <Avatar
+    <Portal>
+      <Fade in={open} timeout={300}>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 20000,
+            p: 2
+          }}
+          onClick={onClose}
+        >
+          <Box
+            onClick={(e) => e.stopPropagation()}
             sx={{
-              bgcolor: iconColor,
-              color: 'white',
-              width: 64,
-              height: 64,
-              mx: 'auto',
-              mb: 2
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '400px',
+              gap: 3,
+              p: 4,
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,255,240,0.98) 100%)',
+              borderRadius: 4,
+              border: `3px solid ${iconColor}`,
+              boxShadow: '0 20px 60px rgba(76,175,80,0.3)',
+              backdropFilter: 'blur(20px)',
+              animation: 'slideIn 0.5s ease-out',
+              maxWidth: '90vw',
+              width: '500px'
             }}
           >
-            {icon}
-          </Avatar>
-        )}
-        
-        <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
-          {title}
-        </Typography>
-        
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          {message}
-        </Typography>
-      </Paper>
-    </Box>
+            {showLogo && (
+              <Box sx={{ width: 80, height: 80, animation: 'logoPulse 2s ease-in-out infinite' }}>
+                <img
+                  src={logoSrc}
+                  alt="Logo"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}
+                />
+              </Box>
+            )}
+
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CircularProgress
+                variant="determinate"
+                value={100}
+                size={getSize() + 24}
+                thickness={4}
+                sx={{ color: iconColor, opacity: 0.35, animation: 'successRing 1s ease-out' }}
+              />
+              <Box sx={{ position: 'absolute' }}>
+                {React.cloneElement(icon, {
+                  sx: { fontSize: getSize(), color: iconColor, animation: 'successScale 0.6s ease-out 0.3s both', filter: 'drop-shadow(0 4px 8px rgba(76,175,80,0.4))' }
+                })}
+              </Box>
+            </Box>
+
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                color={iconColor}
+                sx={{ mb: 2, animation: 'successFadeIn 0.8s ease-out 0.5s both' }}
+              >
+                {title}
+              </Typography>
+              <Typography
+                variant="body1"
+                color="#333"
+                sx={{ animation: 'successFadeIn 0.8s ease-out 0.7s both' }}
+              >
+                {message}
+              </Typography>
+            </Box>
+
+            <style>{`
+              @keyframes slideIn {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes logoPulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.9; }
+              }
+              @keyframes successScale {
+                0% { transform: scale(0); opacity: 0; }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); opacity: 1; }
+              }
+              @keyframes successRing {
+                0% { stroke-dasharray: 0 283; }
+                100% { stroke-dasharray: 283 283; }
+              }
+              @keyframes successFadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+            `}</style>
+          </Box>
+        </Box>
+      </Fade>
+    </Portal>
   );
 };
 

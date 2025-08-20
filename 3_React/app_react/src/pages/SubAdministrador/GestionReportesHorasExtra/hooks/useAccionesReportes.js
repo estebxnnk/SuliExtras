@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
+import { gestionReportesService } from '../services/gestionReportesService';
 
-export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros, setReporteData, valorHoraOrdinaria) => {
+export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros, setReporteData, valorHoraOrdinaria, setSuccessState) => {
   
   const handleRefresh = useCallback(async (fetchUsuarios) => {
     try {
@@ -31,14 +32,9 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
       setLoadingState({ open: true, message: 'Cargando registros...', size: 'medium' });
       setUsuarioSeleccionado(usuario);
       setOpenRegistros(true);
-      
-      // Buscar registros por id de usuario
-      const response = await fetch(`http://localhost:3000/api/registros/usuario-completo/${usuario.id}`);
-      if (!response.ok) {
-        throw new Error('Error al cargar registros');
-      }
-      const data = await response.json();
-      setRegistros(Array.isArray(data.registros) ? data.registros : []);
+
+      const registros = await gestionReportesService.fetchRegistrosUsuario(usuario.id);
+      setRegistros(Array.isArray(registros) ? registros : []);
     } catch (error) {
       setAlertState({
         open: true,
@@ -53,13 +49,8 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
 
   const handleVerReporte = useCallback(async (usuario, setUsuarioSeleccionado, setOpenReporte) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/registros/usuario-completo/${usuario.id}`);
-      if (!response.ok) {
-        throw new Error('Error al cargar datos para el reporte');
-      }
-      
-      const data = await response.json();
-      const registros = Array.isArray(data.registros) ? data.registros.filter(r => r.estado === 'aprobado') : [];
+      const registrosAprobados = await gestionReportesService.fetchRegistrosAprobados(usuario.id);
+      const registros = Array.isArray(registrosAprobados) ? registrosAprobados : [];
       
       if (registros.length === 0) {
         setAlertState({
@@ -76,20 +67,24 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
       let totalHorasBono = 0;
       let totalPagarBono = 0;
       let detalles = [];
-      
+
       registros.forEach(registro => {
-        if (registro.Horas && registro.Horas.length > 0) {
-          registro.Horas.forEach(hora => {
-            const cantidadDividida = registro.horas_extra_divididas ?? 0;
-            const cantidadBono = registro.bono_salarial ?? 0;
+        const cantidadDividida = registro.horas_extra_divididas ?? 0;
+        const cantidadBono = registro.bono_salarial ?? 0;
+
+        if (Array.isArray(registro.Horas) && registro.Horas.length > 0) {
+          registro.Horas.forEach((hora, index) => {
             const recargo = hora.valor;
             const valorHoraExtra = valorHoraOrdinaria * recargo;
             const valorTotalDivididas = cantidadDividida * valorHoraExtra;
-            const valorTotalBono = cantidadBono * valorHoraOrdinaria;
 
             totalHorasDivididas += cantidadDividida;
             totalPagarDivididas += valorTotalDivididas;
-            totalHorasBono += cantidadBono;
+
+            // Bono solo en la primera fila del registro para no duplicar
+            const bonoEnFila = index === 0 ? cantidadBono : 0;
+            const valorTotalBono = bonoEnFila * valorHoraExtra;
+            totalHorasBono += bonoEnFila;
             totalPagarBono += valorTotalBono;
 
             detalles.push({
@@ -97,13 +92,30 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
               tipo: hora.tipo,
               denominacion: hora.denominacion,
               cantidadDividida,
-              valorTotalDivididas: valorTotalDivididas.toFixed(2),
-              cantidadBono,
-              valorTotalBono: valorTotalBono.toFixed(2),
+              valorTotalDivididas: Number(valorTotalDivididas.toFixed(2)),
+              cantidadBono: bonoEnFila,
+              valorTotalBono: Number(valorTotalBono.toFixed(2)),
               recargo,
-              valorHoraExtra: valorHoraExtra.toFixed(2),
+              valorHoraExtra: Number(valorHoraExtra.toFixed(2)),
               registroOriginal: registro
             });
+          });
+        } else if ((cantidadBono ?? 0) > 0) {
+          // Sin horas asociadas, reflejar el bono en una sola fila con recargo 1
+          const valorTotalBono = cantidadBono * valorHoraOrdinaria;
+          totalHorasBono += cantidadBono;
+          totalPagarBono += valorTotalBono;
+          detalles.push({
+            fecha: registro.fecha,
+            tipo: 'Bono Salarial',
+            denominacion: '-',
+            cantidadDividida: 0,
+            valorTotalDivididas: 0,
+            cantidadBono,
+            valorTotalBono: Number(valorTotalBono.toFixed(2)),
+            recargo: 1,
+            valorHoraExtra: Number(valorHoraOrdinaria.toFixed(2)),
+            registroOriginal: registro
           });
         }
       });
@@ -135,7 +147,7 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
         title: 'Error'
       });
     }
-  }, [setAlertState, setReporteData, valorHoraOrdinaria]);
+  }, [setAlertState, setReporteData, valorHoraOrdinaria, setRegistros]);
 
   const handleDescargarWord = useCallback(async (reporteData, usuarioSeleccionado) => {
     try {
@@ -147,6 +159,9 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
         message: 'Documento Word descargado exitosamente',
         title: 'Éxito'
       });
+      if (setSuccessState) {
+        setSuccessState({ open: true, type: 'download', message: 'Documento Word descargado exitosamente', title: 'Descarga completada' });
+      }
     } catch (error) {
       console.error('Error al descargar Word:', error);
       setAlertState({
@@ -156,7 +171,7 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
         title: 'Error'
       });
     }
-  }, [setAlertState]);
+  }, [setAlertState, setSuccessState]);
 
   const handleDescargarExcel = useCallback(async (reporteData, usuarioSeleccionado) => {
     try {
@@ -168,6 +183,9 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
         message: 'Documento Excel descargado exitosamente',
         title: 'Éxito'
       });
+      if (setSuccessState) {
+        setSuccessState({ open: true, type: 'download', message: 'Documento Excel descargado exitosamente', title: 'Descarga completada' });
+      }
     } catch (error) {
       console.error('Error al descargar Excel:', error);
       setAlertState({
@@ -177,7 +195,7 @@ export const useAccionesReportes = (setAlertState, setLoadingState, setRegistros
         title: 'Error'
       });
     }
-  }, [setAlertState]);
+  }, [setAlertState, setSuccessState]);
 
   return {
     handleRefresh,

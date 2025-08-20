@@ -49,14 +49,16 @@ const TablaResumenDescarga = ({
     const rows = [];
     registrosAprobados.forEach(registro => {
       const horasArray = Array.isArray(registro.Horas) ? registro.Horas : (registro.horas || []);
-      horasArray.forEach(hora => {
+      // Valores comunes del registro
+      const baseDivididas = registro.horas_extra_divididas ?? 0;
+      const cantidadBono = registro.bono_salarial ?? 0;
+
+      horasArray.forEach((hora, index) => {
         // Compatibilidad de propiedades
-        const cantidadDividida = registro.horas_extra_divididas ?? hora?.RegistroHora?.cantidad ?? hora?.cantidad ?? 0;
-        const cantidadBono = registro.bono_salarial ?? 0;
         const recargo = (hora?.valor ?? hora?.tipoHora?.valor ?? 1);
         const valorHoraExtra = valorHoraOrdinaria * recargo;
-        const valorTotalDivididas = cantidadDividida * valorHoraExtra;
-        const valorTotalBono = cantidadBono * valorHoraOrdinaria;
+        const cantidadTotal = Number(baseDivididas);
+        const valorTotalDivididas = cantidadTotal * valorHoraExtra;
 
         // Filtro por tipo de hora si aplica
         if (tipoHoraSeleccionado && tipoHoraSeleccionado !== 'todos') {
@@ -68,14 +70,29 @@ const TablaResumenDescarga = ({
           fecha: registro.fecha,
           tipo: hora?.tipo || hora?.tipoHora?.tipo || '',
           denominacion: hora?.denominacion || hora?.tipoHora?.denominacion || '',
-          cantidadDividida: Number(cantidadDividida) || 0,
+          cantidadDividida: Number(cantidadTotal) || 0,
           valorTotalDivididas,
-          cantidadBono: Number(cantidadBono) || 0,
-          valorTotalBono,
+          cantidadBono: index === 0 ? Number(cantidadBono) || 0 : 0,
+          valorTotalBono: (index === 0 ? (Number(cantidadBono) || 0) : 0) * valorHoraExtra,
           recargo,
           valorHoraExtra
         });
       });
+
+      // Si no hay horas, representar solo el bono en una fila sin recargo
+      if ((!horasArray || horasArray.length === 0) && (Number(cantidadBono) > 0)) {
+        rows.push({
+          fecha: registro.fecha,
+          tipo: 'Bono Salarial',
+          denominacion: '-',
+          cantidadDividida: 0,
+          valorTotalDivididas: 0,
+          cantidadBono: Number(cantidadBono) || 0,
+          valorTotalBono: (Number(cantidadBono) || 0) * valorHoraOrdinaria,
+          recargo: 1,
+          valorHoraExtra: valorHoraOrdinaria
+        });
+      }
     });
     return rows;
   }, [registrosAprobados, valorHoraOrdinaria, tipoHoraSeleccionado]);
@@ -112,15 +129,28 @@ const TablaResumenDescarga = ({
 
   // Totales
   const totales = useMemo(() => {
-    return detallesFiltrados.reduce((acc, d) => {
+    const base = detallesFiltrados.reduce((acc, d) => {
       acc.totalHorasDivididas += d.cantidadDividida;
       acc.totalPagarDivididas += d.valorTotalDivididas;
-      acc.totalHorasBono += d.cantidadBono;
-      acc.totalPagarBono += d.valorTotalBono;
-      acc.totalPagar = acc.totalPagarDivididas + acc.totalPagarBono;
+      acc.totalHorasBono += d.cantidadBono || 0;
+      acc.totalPagarBono += d.valorTotalBono || 0;
       return acc;
-    }, { totalHorasDivididas: 0, totalPagarDivididas: 0, totalHorasBono: 0, totalPagarBono: 0, totalPagar: 0 });
-  }, [detallesFiltrados]);
+    }, { totalHorasDivididas: 0, totalPagarDivididas: 0, totalHorasBono: 0, totalPagarBono: 0 });
+
+    // Bonos de registros que no tienen horas (no se muestran en detalle) pero deben sumar al total
+    const bonosSoloRegistros = (registrosAprobados || []).filter(r => (!Array.isArray(r.Horas) || r.Horas.length === 0) && Number(r.bono_salarial) > 0);
+    const horasBonoExtra = bonosSoloRegistros.reduce((sum, r) => sum + Number(r.bono_salarial || 0), 0);
+    const valorBonoExtra = horasBonoExtra * valorHoraOrdinaria;
+
+    const tot = {
+      totalHorasDivididas: base.totalHorasDivididas,
+      totalPagarDivididas: base.totalPagarDivididas,
+      totalHorasBono: base.totalHorasBono + horasBonoExtra,
+      totalPagarBono: base.totalPagarBono + valorBonoExtra,
+      totalPagar: base.totalPagarDivididas + base.totalPagarBono + valorBonoExtra
+    };
+    return tot;
+  }, [detallesFiltrados, registrosAprobados, valorHoraOrdinaria]);
 
   // Emitir al padre el dataset computado para descarga
   React.useEffect(() => {
@@ -231,7 +261,7 @@ const TablaResumenDescarga = ({
             </Typography>
           </Box>
           <Typography variant="h5" fontWeight={700} color="#2196f3">
-            ${totales.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+            ${totales.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
           </Typography>
         </Box>
       </Box>

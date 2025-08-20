@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useMemo, useState } from 'react';
+import React, { useEffect, useContext, useMemo, useState, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -24,7 +24,8 @@ import {
   SubAdminLoadingSpinner,
   SubAdminCreateSuccessSpinner,
   SubAdminEditSuccessSpinner,
-  SubAdminDeleteSuccessSpinner
+  SubAdminDeleteSuccessSpinner,
+  SubAdminSuccessSpinnerUniversal
 } from '../components';
 
 import {
@@ -153,18 +154,21 @@ function GestionReportesHorasExtra() {
     const detalles = [];
 
     registrosDialogFiltrados.forEach(registro => {
+      const cantidadDividida = registro.horas_extra_divididas ?? 0;
+      const cantidadBono = registro.bono_salarial ?? 0;
+
       if (Array.isArray(registro.Horas) && registro.Horas.length > 0) {
-        registro.Horas.forEach(hora => {
-          const cantidadDividida = registro.horas_extra_divididas ?? 0;
-          const cantidadBono = registro.bono_salarial ?? 0;
+        registro.Horas.forEach((hora, index) => {
           const recargo = hora.valor;
           const valorHoraExtra = valorHoraOrdinaria * recargo;
           const valorTotalDivididas = cantidadDividida * valorHoraExtra;
-          const valorTotalBono = cantidadBono * valorHoraOrdinaria;
 
           totalHorasDivididas += cantidadDividida;
           totalPagarDivididas += valorTotalDivididas;
-          totalHorasBono += cantidadBono;
+
+          const bonoEnFila = index === 0 ? cantidadBono : 0;
+          const valorTotalBono = bonoEnFila * valorHoraExtra;
+          totalHorasBono += bonoEnFila;
           totalPagarBono += valorTotalBono;
 
           detalles.push({
@@ -173,13 +177,17 @@ function GestionReportesHorasExtra() {
             denominacion: hora.denominacion,
             cantidadDividida,
             valorTotalDivididas: Number(valorTotalDivididas.toFixed(2)),
-            cantidadBono,
+            cantidadBono: bonoEnFila,
             valorTotalBono: Number(valorTotalBono.toFixed(2)),
             recargo,
             valorHoraExtra: Number(valorHoraExtra.toFixed(2)),
             registroOriginal: registro
           });
         });
+      } else if ((cantidadBono ?? 0) > 0) {
+        // Sin horas: sumar solo a totales, no crear fila
+        totalHorasBono += cantidadBono;
+        totalPagarBono += cantidadBono * valorHoraOrdinaria;
       }
     });
 
@@ -212,25 +220,25 @@ function GestionReportesHorasExtra() {
     handleVerReporte,
     handleDescargarWord,
     handleDescargarExcel
-  } = useAccionesReportes(setAlertState, setLoadingState, setRegistros, setReporteData, valorHoraOrdinaria);
+  } = useAccionesReportes(setAlertState, setLoadingState, setRegistros, setReporteData, valorHoraOrdinaria, setSuccessState);
+
+  const fetchUsuarios = useCallback(async () => {
+    try {
+      const data = await gestionReportesService.fetchUsuarios();
+      setUsuarios(data);
+    } catch (error) {
+      setAlertState({
+        open: true,
+        type: 'error',
+        message: 'Error al cargar usuarios: ' + error.message,
+        title: 'Error'
+      });
+    }
+  }, [setUsuarios, setAlertState]);
 
   useEffect(() => {
-    const fetchUsuarios = async () => {
-      try {
-        const data = await gestionReportesService.fetchUsuarios();
-        setUsuarios(data);
-    } catch (error) {
-        setAlertState({
-          open: true,
-          type: 'error',
-          message: 'Error al cargar usuarios: ' + error.message,
-          title: 'Error'
-        });
-      }
-    };
-    
     fetchUsuarios();
-  }, [setUsuarios, setAlertState]);
+  }, [fetchUsuarios]);
 
   return (
     <SubAdminLayoutUniversal>
@@ -651,7 +659,7 @@ function GestionReportesHorasExtra() {
               fechaInicioDialog ||
               fechaFinDialog
             )}
-            onComputed={(resumen) => setReporteData(resumen)}
+            onComputed={useCallback((resumen) => setReporteData(resumen), [setReporteData])}
           />
 
           {/* Botones de descarga */}
@@ -696,13 +704,13 @@ function GestionReportesHorasExtra() {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="subtitle1" fontWeight={600} color="#1976d2">
                 Total horas extra (reporte): {reporteData.totalHorasDivididas} | Valor: $ {reporteData.totalPagarDivididas.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
-          </Typography>
+              </Typography>
               <Typography variant="subtitle1" fontWeight={600} color="#ff9800">
-                Total bono salarial (horas): {reporteData.totalHorasBono} | Valor: $ {reporteData.totalPagarBono.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
-          </Typography>
+                Bono salarial (horas): {reporteData.totalHorasBono} | Valor: $ {reporteData.totalPagarBono.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              </Typography>
               <Typography variant="h6" fontWeight={700} color="#388e3c" sx={{ mt: 1 }}>
                 Total a pagar: $ {reporteData.totalPagar.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
-          </Typography>
+              </Typography>
             </Box>
           </Box>
           
@@ -815,6 +823,14 @@ function GestionReportesHorasExtra() {
           open={successState.open}
           message={successState.message}
           title={successState.title}
+          onClose={hideSuccess}
+        />
+      )}
+      {successState.type === 'download' && (
+        <SubAdminSuccessSpinnerUniversal
+          open={successState.open}
+          message={successState.message || 'Documento descargado exitosamente'}
+          title={successState.title || 'Descarga Completada'}
           onClose={hideSuccess}
         />
       )}
