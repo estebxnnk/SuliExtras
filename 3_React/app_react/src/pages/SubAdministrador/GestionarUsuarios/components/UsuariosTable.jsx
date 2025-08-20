@@ -203,9 +203,9 @@ export const UsuariosTable = ({
 
                 <TableCell>
                   <Chip
-                    label={getEstadoLabel(usuario.estado)}
+                    label={getEstadoLabel(usuario.ubicacion)}
                     size="small"
-                    color={getEstadoColor(usuario.estado)}
+                    color={getEstadoColor(usuario.ubicacion)}
                     variant="filled"
                     sx={{
                       fontWeight: 600,

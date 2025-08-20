@@ -333,3 +333,4 @@ export const SubAdminStateChangeSuccessSpinner = (props) => (
     iconColor="#9c27b0"
   />
 );
+
