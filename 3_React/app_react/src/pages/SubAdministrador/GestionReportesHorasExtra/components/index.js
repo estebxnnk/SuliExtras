@@ -1,3 +1,2 @@
-export { default as LoadingSpinner } from './LoadingSpinner';
-export { default as Filtros } from './Filtros';
-export { default as UsuariosTable } from './UsuariosTable';
+export { default as TablaUsuarios } from './TablaUsuarios';
+export { default as HeaderGestionReportes } from './HeaderGestionReportes';

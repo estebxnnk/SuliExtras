@@ -153,9 +153,10 @@ const CrearRegistroDialog = ({
         justificacionHoraExtra: formData.justificacionHoraExtra || '',
         numRegistro,
         estado: 'pendiente',
+        tipoHoraId: parseInt(formData.tipoHoraId), // Agregar el ID del tipo de hora directamente
         horas: [
           {
-            id: parseInt(formData.tipoHoraId),
+            tipoHoraId: parseInt(formData.tipoHoraId), // Cambiar 'id' por 'tipoHoraId'
             cantidad: parseFloat(formData.cantidadHorasExtra)
           }
         ]
