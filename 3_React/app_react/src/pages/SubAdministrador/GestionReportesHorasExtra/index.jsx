@@ -18,15 +18,15 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import { SalarioMinimoContext } from '../../../providers/SalarioMinimoProvider';
 import SalarioMinimoEditor from '../../../SalarioMinimoEditor';
 import { 
-  SubAdminLayoutUniversal, 
+  LayoutUniversal, 
   SubAdminUniversalAlertUniversal,
-  SubAdminStatsUniversal,
+  StatsUniversal,
   SubAdminLoadingSpinner,
   SubAdminCreateSuccessSpinner,
   SubAdminEditSuccessSpinner,
   SubAdminDeleteSuccessSpinner,
   SubAdminSuccessSpinnerUniversal
-} from '../components';
+} from '../../../components';
 
 import {
   FiltrosAvanzados,
@@ -241,7 +241,7 @@ function GestionReportesHorasExtra() {
   }, [fetchUsuarios]);
 
   return (
-    <SubAdminLayoutUniversal>
+    <LayoutUniversal>
       <HeaderGestionReportes
         title="Gestión de Reportes de Horas Extra"
         subtitle="Genera y visualiza reportes detallados de horas extra por usuario"
@@ -257,7 +257,7 @@ function GestionReportesHorasExtra() {
       />
 
       {/* Estadísticas del módulo */}
-      <SubAdminStatsUniversal
+      <StatsUniversal
         stats={[
           { 
             type: 'total', 
@@ -834,7 +834,7 @@ function GestionReportesHorasExtra() {
           onClose={hideSuccess}
         />
       )}
-    </SubAdminLayoutUniversal>
+    </LayoutUniversal>
   );
 }
 

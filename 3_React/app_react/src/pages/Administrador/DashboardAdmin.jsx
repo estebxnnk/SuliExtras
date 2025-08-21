@@ -8,7 +8,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import NavbarAdminstrativo from './NavbarAdminstrativo';
-import ModernFooter from '../components/ModernFooter';
+import ModernFooter from '../../components/ModernFooter';
 
 function DashboardAdmin() {
   const [usuarios, setUsuarios] = useState([]);

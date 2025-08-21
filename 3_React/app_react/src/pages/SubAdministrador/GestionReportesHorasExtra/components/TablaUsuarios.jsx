@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubAdminTableUniversal } from '../../components';
+import { SubAdminTableUniversal } from '../../../../components';
 import {
   Visibility as VisibilityIcon,
   ListAlt as ListAltIcon,

@@ -16,7 +16,7 @@ import {
   Dashboard as DashboardIcon
 } from '@mui/icons-material';
 
-const SubAdminHeader = ({
+const HeaderPanelSubAdmin = ({
   title = "Módulo SubAdministrador",
   subtitle = "Panel de gestión administrativa",
   refreshing = false,
@@ -142,4 +142,4 @@ const SubAdminHeader = ({
   );
 };
 
-export default SubAdminHeader;
+export default HeaderPanelSubAdmin;

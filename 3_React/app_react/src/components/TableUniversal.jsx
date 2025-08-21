@@ -27,7 +27,7 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 
-const SubAdminTable = ({
+const TableUniversal = ({
   data = [],
   columns = [],
   page = 0,
@@ -308,4 +308,4 @@ const SubAdminTable = ({
   );
 };
 
-export default SubAdminTable;
+export default TableUniversal;

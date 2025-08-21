@@ -18,7 +18,7 @@ import {
  * Componente de estadísticas universal que se basa 100% en el estilo del módulo
  * Mantiene la misma estética visual y estructura
  */
-const SubAdminStatsUniversal = ({ 
+const StatsUniversal = ({ 
   stats = [],
   title = "Estadísticas del Módulo",
   subtitle = "Resumen de datos importantes",
@@ -161,4 +161,4 @@ const SubAdminStatsUniversal = ({
   );
 };
 
-export default SubAdminStatsUniversal;
+export default StatsUniversal;

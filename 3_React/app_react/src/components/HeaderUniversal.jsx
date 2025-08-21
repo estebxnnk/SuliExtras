@@ -16,7 +16,7 @@ import {
  * Header universal que se basa 100% en el estilo de HeaderGestionRegistros
  * Mantiene la misma estética visual y estructura
  */
-const SubAdminHeaderUniversal = ({ 
+const HeaderUniversal = ({ 
   // Propiedades básicas
   title = "Título del Módulo",
   subtitle = "Descripción del módulo",
@@ -180,4 +180,4 @@ const SubAdminHeaderUniversal = ({
   );
 };
 
-export default SubAdminHeaderUniversal;
+export default HeaderUniversal;

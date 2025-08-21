@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, TextField, InputAdornment, Button } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { SubAdminHeaderUniversal } from '../../components';
+import { HeaderUniversal } from '../../../../components';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 
 const HeaderGestionReportes = ({
@@ -14,7 +14,7 @@ const HeaderGestionReportes = ({
   onOpenSalario
 }) => {
   return (
-    <SubAdminHeaderUniversal
+    <HeaderUniversal
       title={title}
       subtitle={subtitle}
       icon={AssessmentIcon}

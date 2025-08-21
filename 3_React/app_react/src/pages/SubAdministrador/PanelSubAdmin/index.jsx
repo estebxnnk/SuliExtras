@@ -35,10 +35,8 @@ import { FiltrosPanel } from './components/FiltrosPanel';
 import { KPICards } from './components/KPICards';
 import { UsuariosTable } from './components/UsuariosTable';
 import { GraficoUsuarios } from './components/GraficoUsuarios';
-import { 
-  SubAdminLayout, 
-  SubAdminHeader 
-} from '../components';
+import HeaderPanelSubAdmin from './components/HeaderPanelSubAdmin';
+import LayoutSubAdmin from './components/LayoutSubAdmin';
 
 function PanelSubAdmin() {
   const theme = useTheme();
@@ -76,8 +74,8 @@ function PanelSubAdmin() {
   }
 
   return (
-    <SubAdminLayout>
-      <SubAdminHeader
+    <LayoutSubAdmin>
+      <HeaderPanelSubAdmin
         title="Panel de Sub Administrador"
         subtitle="Gestión integral de usuarios y registros del sistema"
         refreshing={loading}
@@ -130,7 +128,7 @@ function PanelSubAdmin() {
           onClose={handleCloseUsuario}
           isMobile={isMobile}
         />
-      </SubAdminLayout>
+      </LayoutSubAdmin>
     );
 }
 
