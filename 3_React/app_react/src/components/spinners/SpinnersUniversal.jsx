@@ -1,14 +1,12 @@
 import React from 'react';
 import {
-  Alert,
-  Snackbar,
   Box,
   Typography,
   IconButton,
   Paper,
-  Avatar,
   Fade,
-  Portal
+  Portal,
+  Slide
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import {
@@ -16,7 +14,13 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon,
   Info as InfoIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  ThumbUp as ThumbUpIcon,
+  ThumbDown as ThumbDownIcon,
+  Add as AddIcon,
+  SwapHoriz as SwapHorizIcon
 } from '@mui/icons-material';
 
 // Spinner de éxito personalizable
@@ -135,6 +139,27 @@ export const SubAdminSuccessSpinner = ({
               </Typography>
             </Box>
 
+            {/* Barra de progreso animada */}
+            <Box
+              sx={{
+                width: '100%',
+                height: 4,
+                background: '#e0e0e0',
+                borderRadius: 2,
+                overflow: 'hidden',
+                animation: 'progressBar 1.5s linear'
+              }}
+            >
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  background: `linear-gradient(90deg, ${iconColor} 0%, ${iconColor} 100%)`,
+                  animation: 'progressBar 1.5s linear'
+                }}
+              />
+            </Box>
+
             <style>{`
               @keyframes slideIn {
                 from { opacity: 0; transform: translateY(30px); }
@@ -157,6 +182,10 @@ export const SubAdminSuccessSpinner = ({
                 from { opacity: 0; transform: translateY(20px); }
                 to { opacity: 1; transform: translateY(0); }
               }
+              @keyframes progressBar {
+               0% { width: 0%; }
+               100% { width: 100%; }
+             }
             `}</style>
           </Box>
         </Box>
@@ -172,118 +201,160 @@ export const SubAdminUniversalAlert = ({
   message = '',
   title = '',
   onClose,
-  showLogo = true,
-  autoHideDuration = 4000
+  showLogo = false,
+  autoHideDuration = 6000
 }) => {
-  const getIcon = () => {
+  if (!open) return null;
+
+  const getConfig = () => {
     switch (type) {
       case 'success':
-        return <CheckCircleIcon sx={{ fontSize: 32 }} />;
+        return {
+          icon: <CheckCircleIcon sx={{ fontSize: 32 }} />,
+          color: '#4caf50',
+          background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.95) 0%, rgba(76, 175, 80, 0.9) 100%)',
+          borderColor: '#4caf50',
+          iconColor: '#fff'
+        };
       case 'error':
-        return <ErrorIcon sx={{ fontSize: 32 }} />;
+        return {
+          icon: <ErrorIcon sx={{ fontSize: 32 }} />,
+          color: '#f44336',
+          background: 'linear-gradient(135deg, rgba(244, 67, 54, 0.95) 0%, rgba(244, 67, 54, 0.9) 100%)',
+          borderColor: '#f44336',
+          iconColor: '#fff'
+        };
       case 'warning':
-        return <WarningIcon sx={{ fontSize: 32 }} />;
+        return {
+          icon: <WarningIcon sx={{ fontSize: 32 }} />,
+          color: '#ff9800',
+          background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.95) 0%, rgba(255, 152, 0, 0.9) 100%)',
+          borderColor: '#ff9800',
+          iconColor: '#fff'
+        };
       case 'info':
-        return <InfoIcon sx={{ fontSize: 32 }} />;
       default:
-        return <InfoIcon sx={{ fontSize: 32 }} />;
+        return {
+          icon: <InfoIcon sx={{ fontSize: 32 }} />,
+          color: '#2196f3',
+          background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.95) 0%, rgba(33, 150, 243, 0.9) 100%)',
+          borderColor: '#2196f3',
+          iconColor: '#fff'
+        };
     }
   };
 
-  const getIconColor = () => {
-    switch (type) {
-      case 'success':
-        return '#4caf50';
-      case 'error':
-        return '#f44336';
-      case 'warning':
-        return '#ff9800';
-      case 'info':
-        return '#2196f3';
-      default:
-        return '#2196f3';
-    }
-  };
+  const cfg = getConfig();
 
-  const getBackgroundColor = () => {
-    switch (type) {
-      case 'success':
-        return 'rgba(76, 175, 80, 0.1)';
-      case 'error':
-        return 'rgba(244, 67, 54, 0.1)';
-      case 'warning':
-        return 'rgba(255, 152, 0, 0.1)';
-      case 'info':
-        return 'rgba(33, 150, 243, 0.1)';
-      default:
-        return 'rgba(33, 150, 243, 0.1)';
-    }
-  };
+  React.useEffect(() => {
+    if (!open || !autoHideDuration) return;
+    const t = setTimeout(() => {
+      onClose?.();
+    }, autoHideDuration);
+    return () => clearTimeout(t);
+  }, [open, autoHideDuration, onClose]);
 
   return (
-    <Snackbar
-      open={open}
-      autoHideDuration={autoHideDuration}
-      onClose={onClose}
-      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-    >
-      <Paper
-        elevation={8}
+    <Slide direction="up" in={open} mountOnEnter unmountOnExit>
+      <Box
         sx={{
-          borderRadius: 3,
-          p: 3,
-          maxWidth: 500,
-          width: '100%',
-          background: getBackgroundColor(),
-          border: `2px solid ${getIconColor()}`,
-          position: 'relative'
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999,
+          minWidth: 400,
+          maxWidth: 600,
+          width: '90vw'
         }}
       >
-        <IconButton
-          onClick={onClose}
+        <Box
           sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            color: getIconColor()
+            background: cfg.background,
+            border: `3px solid ${cfg.borderColor}`,
+            borderRadius: 4,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(20px)',
+            overflow: 'hidden',
+            animation: 'slideIn 0.5s ease-out'
           }}
         >
-          <CloseIcon />
-        </IconButton>
+          {/* Header con logo y título */}
+          <Box sx={{
+            p: 3,
+            background: 'rgba(255,255,255,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2
+          }}>
+            {showLogo && (
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  animation: 'logoPulse 2s ease-in-out infinite'
+                }}
+              >
+                <img
+                  src="/img/NuevoLogo.png"
+                  alt="SuliExtras Logo"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                  }}
+                />
+              </Box>
+            )}
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          {showLogo && (
-            <Avatar
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+              {cfg.icon}
+              <Typography variant="h6" fontWeight={700} color="#fff">
+                {title || (type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : type === 'warning' ? 'Advertencia' : 'Información')}
+              </Typography>
+            </Box>
+
+            <IconButton
+              onClick={onClose}
               sx={{
-                bgcolor: getIconColor(),
-                color: 'white',
-                width: 48,
-                height: 48
+                color: '#fff',
+                '&:hover': { background: 'rgba(255,255,255,0.2)' }
               }}
             >
-              {getIcon()}
-            </Avatar>
-          )}
-          
-          <Box>
-            {title && (
-              <Typography variant="h6" fontWeight={600} color={getIconColor()}>
-                {title}
-              </Typography>
-            )}
-            <Typography variant="body1" color="text.primary">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Contenido del mensaje */}
+          <Box sx={{ p: 3, background: 'rgba(255,255,255,0.95)' }}>
+            <Typography variant="body1" color="#333" sx={{ lineHeight: 1.6, textAlign: 'center' }}>
               {message}
             </Typography>
           </Box>
         </Box>
-      </Paper>
-    </Snackbar>
+
+        {/* Estilos CSS para las animaciones */}
+        <style>
+          {`
+            @keyframes slideIn {
+              from { opacity: 0; transform: translate(-50%, -60%); }
+              to { opacity: 1; transform: translate(-50%, -50%); }
+            }
+            @keyframes logoPulse {
+              0%, 100% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.05); opacity: 0.9; }
+            }
+          `}
+        </style>
+      </Box>
+    </Slide>
   );
 };
 
 // Spinner de carga personalizable
 export const SubAdminLoadingSpinner = ({
-  open,
+  open = true,
   message = "Cargando...",
   size = "medium",
   showLogo = true
@@ -360,60 +431,114 @@ export const SubAdminLoadingSpinner = ({
 export const SubAdminCreateSuccessSpinner = (props) => (
   <SubAdminSuccessSpinner
     {...props}
-    title="Registro Creado"
-    message="El registro se creó exitosamente"
-    icon={<CheckCircleIcon sx={{ fontSize: 32 }} />}
+    title={props.title || '¡Creado!'}
+    message={props.message || 'Registro creado exitosamente'}
+    icon={<AddIcon sx={{ fontSize: 48 }} />}
     iconColor="#4caf50"
+    autoHideDuration={props.autoHideDuration ?? 1500}
+    onAutoHideComplete={props.onComplete}
   />
 );
 
 export const SubAdminEditSuccessSpinner = (props) => (
   <SubAdminSuccessSpinner
     {...props}
-    title="Registro Editado"
-    message="El registro se editó exitosamente"
-    icon={<CheckCircleIcon sx={{ fontSize: 32 }} />}
-    iconColor="#2196f3"
+    title={props.title || '¡Editado!'}
+    message={props.message || 'Registro editado exitosamente'}
+    icon={<EditIcon sx={{ fontSize: 48 }} />}
+    iconColor="#1976d2"
+    autoHideDuration={props.autoHideDuration ?? 1500}
+    onAutoHideComplete={props.onComplete}
   />
 );
 
 export const SubAdminDeleteSuccessSpinner = (props) => (
   <SubAdminSuccessSpinner
     {...props}
-    title="Registro Eliminado"
-    message="El registro se eliminó exitosamente"
-    icon={<CheckCircleIcon sx={{ fontSize: 32 }} />}
+    title={props.title || '¡Eliminado!'}
+    message={props.message || 'Registro eliminado exitosamente'}
+    icon={<DeleteIcon sx={{ fontSize: 48 }} />}
     iconColor="#f44336"
+    autoHideDuration={props.autoHideDuration ?? 1500}
+    onAutoHideComplete={props.onComplete}
   />
 );
 
 export const SubAdminApproveSuccessSpinner = (props) => (
   <SubAdminSuccessSpinner
     {...props}
-    title="Registro Aprobado"
-    message="El registro se aprobó exitosamente"
-    icon={<CheckCircleIcon sx={{ fontSize: 32 }} />}
+    title={props.title || '¡Aprobado!'}
+    message={props.message || 'Registro aprobado exitosamente'}
+    icon={<ThumbUpIcon sx={{ fontSize: 48 }} />}
     iconColor="#4caf50"
+    autoHideDuration={props.autoHideDuration ?? 1500}
+    onAutoHideComplete={props.onComplete}
   />
 );
 
 export const SubAdminRejectSuccessSpinner = (props) => (
   <SubAdminSuccessSpinner
     {...props}
-    title="Registro Rechazado"
-    message="El registro se rechazó exitosamente"
-    icon={<CheckCircleIcon sx={{ fontSize: 32 }} />}
+    title={props.title || '¡Rechazado!'}
+    message={props.message || 'Registro rechazado exitosamente'}
+    icon={<ThumbDownIcon sx={{ fontSize: 48 }} />}
     iconColor="#ff9800"
+    autoHideDuration={props.autoHideDuration ?? 1500}
+    onAutoHideComplete={props.onComplete}
   />
 );
 
 export const SubAdminStateChangeSuccessSpinner = (props) => (
   <SubAdminSuccessSpinner
     {...props}
-    title="Estado Cambiado"
-    message="El estado se cambió exitosamente"
-    icon={<CheckCircleIcon sx={{ fontSize: 32 }} />}
+    title={props.title || '¡Estado Cambiado!'}
+    message={props.message || 'El estado se cambió exitosamente'}
+    icon={<SwapHorizIcon sx={{ fontSize: 48 }} />}
     iconColor="#9c27b0"
+    autoHideDuration={props.autoHideDuration ?? 1500}
+    onAutoHideComplete={props.onComplete}
   />
+);
+
+
+// Aliases compatibles con GestionarRegistrosHorasExtra
+export const UniversalAlert = (props) => (
+  <SubAdminUniversalAlert {...props} />
+);
+
+export const SuccessSpinner = ({ onComplete, size = 'medium', message = '¡Operación exitosa!', ...rest }) => (
+  <SubAdminSuccessSpinner
+    {...rest}
+    title={rest.title || '¡Éxito!'}
+    message={message}
+    icon={<CheckCircleIcon sx={{ fontSize: 80 }} />}
+    iconColor="#4caf50"
+    autoHideDuration={rest.autoHideDuration ?? 1500}
+    onAutoHideComplete={onComplete}
+  />
+);
+
+export const CreateSuccessSpinner = (props) => (
+  <SubAdminCreateSuccessSpinner {...props} />
+);
+
+export const EditSuccessSpinner = (props) => (
+  <SubAdminEditSuccessSpinner {...props} />
+);
+
+export const DeleteSuccessSpinner = (props) => (
+  <SubAdminDeleteSuccessSpinner {...props} />
+);
+
+export const ApproveSuccessSpinner = (props) => (
+  <SubAdminApproveSuccessSpinner {...props} />
+);
+
+export const RejectSuccessSpinner = (props) => (
+  <SubAdminRejectSuccessSpinner {...props} />
+);
+
+export const StateChangeSuccessSpinner = (props) => (
+  <SubAdminStateChangeSuccessSpinner {...props} />
 );
 

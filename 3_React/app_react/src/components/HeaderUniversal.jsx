@@ -124,29 +124,6 @@ const HeaderUniversal = ({
       
       {/* Botones de acción */}
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {/* Botón de refrescar */}
-        {onRefresh && (
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={onRefresh}
-            disabled={refreshing}
-            sx={{ 
-              fontWeight: 600,
-              borderRadius: 2,
-              borderWidth: 2,
-              borderColor: iconColor,
-              color: iconColor,
-              '&:hover': {
-                borderColor: iconColor,
-                backgroundColor: `${iconColor}10`
-              }
-            }}
-          >
-            {refreshing ? 'Actualizando...' : 'Actualizar'}
-          </Button>
-        )}
-        
         {/* Botón de agregar */}
         {showAddButton && onAdd && (
           <Button

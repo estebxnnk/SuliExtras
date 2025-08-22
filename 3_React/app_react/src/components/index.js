@@ -14,9 +14,22 @@ export {
   SubAdminStateChangeSuccessSpinner
 } from './spinners/SpinnersUniversal';
 
+// Aliases para compatibilidad con otros módulos
+export {
+  UniversalAlert,
+  SuccessSpinner,
+  CreateSuccessSpinner,
+  EditSuccessSpinner,
+  DeleteSuccessSpinner,
+  ApproveSuccessSpinner,
+  RejectSuccessSpinner,
+  StateChangeSuccessSpinner
+} from './spinners/SpinnersUniversal';
+
 // Componentes universales basados en el estilo de GestionarRegistrosHorasExtra
 export { default as LayoutUniversal } from './LayoutUniversal';
 export { default as HeaderUniversal } from './HeaderUniversal';
 export { default as SubAdminTableUniversal } from './SubAdminTableUniversal';
 export { default as StatsUniversal } from './StatsUniversal';
+export { default as FiltersUniversal } from './FiltersUniversal';
 

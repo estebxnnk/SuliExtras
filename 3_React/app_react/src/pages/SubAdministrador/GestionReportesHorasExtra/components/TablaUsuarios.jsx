@@ -1,14 +1,5 @@
 import React from 'react';
 import { SubAdminTableUniversal } from '../../../../components';
-import {
-  Visibility as VisibilityIcon,
-  ListAlt as ListAltIcon,
-  ReceiptLong as ReceiptLongIcon,
-  Assessment as AssessmentIcon
-} from '@mui/icons-material';
-
-
-
 
 const TablaUsuarios = ({
   data,
