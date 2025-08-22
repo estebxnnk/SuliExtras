@@ -131,6 +131,9 @@ function NavbarAdmin({ onFiltrarPorRol }) {
         <Link to="/panel-admin?tab=solicitudes" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Solicitudes</Typography>
         </Link>
+        <Link to="/gestion-sedes" style={{ textDecoration: 'none' }}>
+          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Gestionar Sedes</Typography>
+        </Link>
         <Button
           variant="outlined"
           color="primary"

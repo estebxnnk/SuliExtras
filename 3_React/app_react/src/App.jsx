@@ -18,6 +18,7 @@ import GestionarRegistrosHorasExtra from './pages/SubAdministrador/GestionarRegi
 import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
 import PanelUsuariosAdministrativo from './pages/Administrador/PanelUsuariosAdministrativo';
 import RegistrarUsuario from './pages/Administrador/RegistrarUsuario';
+import GestionSedes from './pages/Administrador/GestionSedes/index';
 
 //Rol JefeDirecto
 import PanelJefeDirecto from './pages/JefeDirecto/PanelJefeDirecto';
@@ -72,6 +73,11 @@ function App() {
         <Route path="/usuarios-administrativo" element={
           <ProtectedRoute allowedRoles={['Administrador']}>
             <PanelUsuariosAdministrativo />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestion-sedes" element={
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <GestionSedes />
           </ProtectedRoute>
         } />
         <Route path="/registrar-usuario-administrativo" element={
