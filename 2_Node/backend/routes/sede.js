@@ -54,6 +54,75 @@ const { soloAdministradores } = require('../middleware/roleMiddleware');
  *               descripcion:
  *                 type: string
  *                 description: Descripción adicional
+ *               horarios:
+ *                 type: array
+ *                 description: Lista de horarios asociados a la sede
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - nombre
+ *                     - tipo
+ *                     - horaEntrada
+ *                     - horaSalida
+ *                     - horasJornada
+ *                     - horasJornadaReal
+ *                     - tiempoAlmuerzo
+ *                     - diasTrabajados
+ *                   properties:
+ *                     nombre:
+ *                       type: string
+ *                       maxLength: 100
+ *                       description: Nombre del horario
+ *                       example: "Horario Normal"
+ *                     tipo:
+ *                       type: string
+ *                       enum: ["normal", "nocturno", "especial", "festivo"]
+ *                       default: "normal"
+ *                       description: Tipo de horario
+ *                       example: "normal"
+ *                     horaEntrada:
+ *                       type: string
+ *                       format: time
+ *                       description: Hora de entrada
+ *                       example: "08:00"
+ *                     horaSalida:
+ *                       type: string
+ *                       format: time
+ *                       description: Hora de salida
+ *                       example: "17:00"
+ *                     horasJornada:
+ *                       type: number
+ *                       format: float
+ *                       description: Horas de la jornada normal
+ *                       example: 8.0
+ *                     horasJornadaReal:
+ *                       type: number
+ *                       format: float
+ *                       description: Horas reales trabajadas (horasJornada - tiempo de almuerzo)
+ *                       example: 7.0
+ *                     tiempoAlmuerzo:
+ *                       type: integer
+ *                       minimum: 0
+ *                       maximum: 180
+ *                       default: 60
+ *                       description: Tiempo de almuerzo en minutos
+ *                       example: 60
+ *                     diasTrabajados:
+ *                       type: integer
+ *                       minimum: 0
+ *                       maximum: 7
+ *                       default: 5
+ *                       description: Cantidad de días trabajados en la semana
+ *                       example: 5
+ *                     activo:
+ *                       type: boolean
+ *                       default: true
+ *                       description: Si el horario está activo
+ *                       example: true
+ *                     descripcion:
+ *                       type: string
+ *                       description: Descripción adicional del horario
+ *                       example: "Horario estándar de oficina"
  *     responses:
  *       201:
  *         description: Sede creada exitosamente
@@ -257,6 +326,129 @@ router.patch('/:sedeId/estado', authMiddleware, soloAdministradores, sedeControl
  */
 router.get('/:sedeId/estadisticas', authMiddleware, sedeController.obtenerEstadisticasSede);
 
+/**
+ * @swagger
+ * /api/sedes/{sedeId}/horarios:
+ *   post:
+ *     summary: Agregar un horario a una sede existente
+ *     tags: [Sedes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sedeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la sede
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nombre
+ *               - tipo
+ *               - horaEntrada
+ *               - horaSalida
+ *               - horasJornada
+ *               - horasJornadaReal
+ *               - tiempoAlmuerzo
+ *               - diasTrabajados
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 maxLength: 100
+ *                 description: Nombre del horario
+ *                 example: "Horario Normal"
+ *               tipo:
+ *                 type: string
+ *                 enum: ["normal", "nocturno", "especial", "festivo"]
+ *                 description: Tipo de horario
+ *                 example: "normal"
+ *               horaEntrada:
+ *                 type: string
+ *                 format: time
+ *                 description: Hora de entrada
+ *                 example: "08:00"
+ *               horaSalida:
+ *                 type: string
+ *                 format: time
+ *                 description: Hora de salida
+ *                 example: "17:00"
+ *               horasJornada:
+ *                 type: number
+ *                 format: float
+ *                 description: Horas de la jornada normal
+ *                 example: 8.0
+ *               horasJornadaReal:
+ *                 type: number
+ *                 format: float
+ *                 description: Horas reales trabajadas
+ *                 example: 7.0
+ *               tiempoAlmuerzo:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 180
+ *                 description: Tiempo de almuerzo en minutos
+ *                 example: 60
+ *               diasTrabajados:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 7
+ *                 description: Días trabajados en la semana
+ *                 example: 5
+ *               activo:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Si el horario está activo
+ *                 example: true
+ *               descripcion:
+ *                 type: string
+ *                 description: Descripción adicional
+ *                 example: "Horario estándar de oficina"
+ *     responses:
+ *       200:
+ *         description: Horario agregado exitosamente
+ *       400:
+ *         description: Error en la solicitud
+ *       404:
+ *         description: Sede no encontrada
+ */
+router.post('/:sedeId/horarios', authMiddleware, soloAdministradores, sedeController.agregarHorario);
+
+/**
+ * @swagger
+ * /api/sedes/{sedeId}/horarios/{horarioIndex}:
+ *   delete:
+ *     summary: Eliminar un horario de una sede
+ *     tags: [Sedes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sedeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la sede
+ *       - in: path
+ *         name: horarioIndex
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Índice del horario en el array (0-based)
+ *     responses:
+ *       200:
+ *         description: Horario eliminado exitosamente
+ *       400:
+ *         description: Error en la solicitud
+ *       404:
+ *         description: Sede o horario no encontrado
+ */
+router.delete('/:sedeId/horarios/:horarioIndex', authMiddleware, soloAdministradores, sedeController.eliminarHorario);
+
 module.exports = router;
 
 /**
@@ -299,10 +491,22 @@ module.exports = router;
  *           format: date-time
  *         horarios:
  *           type: array
+ *           description: Array de horarios para la sede
  *           items:
- *             $ref: '#/components/schemas/HorarioSede'
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *               tipo:
+ *                 type: string
+ *               horaEntrada:
+ *                 type: string
+ *               horaSalida:
+ *                 type: string
+ *               activo:
+ *                 type: boolean
  *         usuarios:
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/User'
- */ 
+ */

@@ -5,7 +5,7 @@ const sedeLogic = require('../logic/SedeLogic');
  */
 const crearSede = async (req, res) => {
   try {
-    const { nombre, direccion, ciudad, telefono, email, descripcion } = req.body;
+    const { nombre, direccion, ciudad, telefono, email, descripcion, horarios } = req.body;
     
     // Validaciones básicas
     if (!nombre || !direccion || !ciudad) {
@@ -20,7 +20,8 @@ const crearSede = async (req, res) => {
       ciudad,
       telefono,
       email,
-      descripcion
+      descripcion,
+      horarios
     });
     
     res.status(201).json({
@@ -188,6 +189,64 @@ const buscarSedes = async (req, res) => {
   }
 };
 
+/**
+ * Agregar un horario a una sede existente
+ */
+const agregarHorario = async (req, res) => {
+  try {
+    const { sedeId } = req.params;
+    const horarioData = req.body;
+    
+    if (!sedeId) {
+      return res.status(400).json({
+        error: 'ID de sede requerido'
+      });
+    }
+    
+    const sede = await sedeLogic.agregarHorario(sedeId, horarioData);
+    
+    res.status(200).json({
+      message: 'Horario agregado exitosamente',
+      sede
+    });
+  } catch (error) {
+    console.error('Error al agregar horario:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+/**
+ * Eliminar un horario de una sede
+ */
+const eliminarHorario = async (req, res) => {
+  try {
+    const { sedeId, horarioIndex } = req.params;
+    
+    if (!sedeId || horarioIndex === undefined) {
+      return res.status(400).json({
+        error: 'ID de sede e índice de horario requeridos'
+      });
+    }
+    
+    const index = parseInt(horarioIndex);
+    if (isNaN(index)) {
+      return res.status(400).json({
+        error: 'Índice de horario debe ser un número válido'
+      });
+    }
+    
+    const sede = await sedeLogic.eliminarHorario(sedeId, index);
+    
+    res.status(200).json({
+      message: 'Horario eliminado exitosamente',
+      sede
+    });
+  } catch (error) {
+    console.error('Error al eliminar horario:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   crearSede,
   listarSedes,
@@ -196,5 +255,7 @@ module.exports = {
   eliminarSede,
   cambiarEstadoSede,
   obtenerEstadisticasSede,
-  buscarSedes
-}; 
+  buscarSedes,
+  agregarHorario,
+  eliminarHorario
+};

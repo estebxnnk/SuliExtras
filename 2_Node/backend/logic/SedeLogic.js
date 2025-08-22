@@ -1,5 +1,4 @@
 const Sede = require('../models/Sede');
-const HorarioSede = require('../models/HorarioSede');
 const User = require('../models/User');
 const Persona = require('../models/Persona');
 const Rol = require('../models/Roles');
@@ -12,7 +11,7 @@ class SedeLogic {
    * @returns {Object} - Sede creada
    */
   async crearSede(data) {
-    const { nombre, direccion, ciudad, telefono, email, descripcion } = data;
+    const { nombre, direccion, ciudad, telefono, email, descripcion, horarios } = data;
     
     // Verificar que el nombre sea único
     const sedeExistente = await Sede.findOne({ where: { nombre } });
@@ -26,7 +25,8 @@ class SedeLogic {
       ciudad,
       telefono,
       email,
-      descripcion
+      descripcion,
+      horarios // Guardar el array de horarios directamente
     });
     
     return sede;
@@ -39,12 +39,6 @@ class SedeLogic {
   async listarSedes() {
     return await Sede.findAll({
       include: [
-        {
-          model: HorarioSede,
-          as: 'horarios',
-          where: { activo: true },
-          required: false
-        },
         {
           model: User,
           as: 'usuarios',
@@ -66,11 +60,6 @@ class SedeLogic {
   async obtenerSedePorId(sedeId) {
     const sede = await Sede.findByPk(sedeId, {
       include: [
-        {
-          model: HorarioSede,
-          as: 'horarios',
-          order: [['diaSemana', 'ASC']]
-        },
         {
           model: User,
           as: 'usuarios',
@@ -139,9 +128,6 @@ class SedeLogic {
       throw new Error('No se puede eliminar una sede que tiene usuarios asignados');
     }
     
-    // Eliminar horarios de la sede
-    await HorarioSede.destroy({ where: { sedeId } });
-    
     // Eliminar la sede
     await sede.destroy();
     
@@ -191,7 +177,8 @@ class SedeLogic {
       ['JefeDirecto', 'Administrador', 'SuperAdministrador'].includes(u.rol.nombre)
     ).length;
     
-    const horarios = await HorarioSede.count({ where: { sedeId, activo: true } });
+    // Contar horarios activos desde el campo JSON
+    const horariosActivos = sede.horarios ? sede.horarios.filter(h => h.activo).length : 0;
     
     return {
       sede: {
@@ -203,7 +190,7 @@ class SedeLogic {
         totalUsuarios,
         empleados,
         supervisores,
-        horariosActivos: horarios
+        horariosActivos
       }
     };
   }
@@ -231,17 +218,103 @@ class SedeLogic {
     
     return await Sede.findAll({
       where,
-      include: [
-        {
-          model: HorarioSede,
-          as: 'horarios',
-          where: { activo: true },
-          required: false
-        }
-      ],
       order: [['nombre', 'ASC']]
     });
   }
+  
+  /**
+   * Agregar un horario a una sede existente
+   * @param {number} sedeId - ID de la sede
+   * @param {Object} horarioData - Datos del nuevo horario
+   * @returns {Object} - Sede actualizada
+   */
+  async agregarHorario(sedeId, horarioData) {
+    const sede = await Sede.findByPk(sedeId);
+    
+    if (!sede) {
+      throw new Error('Sede no encontrada');
+    }
+    
+    // Validar datos requeridos
+    const { nombre, tipo, horaEntrada, horaSalida, horasJornada, horasJornadaReal, tiempoAlmuerzo, diasTrabajados } = horarioData;
+    
+    if (!nombre || !tipo || !horaEntrada || !horaSalida || horasJornada === undefined || horasJornadaReal === undefined || tiempoAlmuerzo === undefined || diasTrabajados === undefined) {
+      throw new Error('Faltan campos requeridos para el horario');
+    }
+    
+    // Validar tipo
+    if (!['normal', 'nocturno', 'especial', 'festivo'].includes(tipo)) {
+      throw new Error('Tipo de horario inválido');
+    }
+    
+    // Validar rangos
+    if (tiempoAlmuerzo < 0 || tiempoAlmuerzo > 180) {
+      throw new Error('Tiempo de almuerzo debe estar entre 0 y 180 minutos');
+    }
+    
+    if (diasTrabajados < 0 || diasTrabajados > 7) {
+      throw new Error('Días trabajados debe estar entre 0 y 7');
+    }
+    
+    // Obtener horarios actuales o inicializar array vacío
+    const horariosActuales = sede.horarios || [];
+    
+    // Verificar que no exista un horario con el mismo tipo
+    //const tipoExistente = horariosActuales.find(h => h.tipo === tipo);
+    //if (tipoExistente) {
+      //throw new Error(`Ya existe un horario de tipo '${tipo}' en esta sede`);
+    
+    
+    // Crear nuevo horario
+    const nuevoHorario = {
+      nombre,
+      tipo,
+      horaEntrada,
+      horaSalida,
+      horasJornada,
+      horasJornadaReal,
+      tiempoAlmuerzo,
+      diasTrabajados,
+      activo: horarioData.activo !== undefined ? horarioData.activo : true,
+      descripcion: horarioData.descripcion || null
+    };
+    
+    // Agregar al array
+    horariosActuales.push(nuevoHorario);
+    
+    // Actualizar sede
+    await sede.update({ horarios: horariosActuales });
+    
+    return sede;
+  }
+  
+  /**
+   * Eliminar un horario de una sede
+   * @param {number} sedeId - ID de la sede
+   * @param {number} horarioIndex - Índice del horario a eliminar
+   * @returns {Object} - Sede actualizada
+   */
+  async eliminarHorario(sedeId, horarioIndex) {
+    const sede = await Sede.findByPk(sedeId);
+    
+    if (!sede) {
+      throw new Error('Sede no encontrada');
+    }
+    
+    const horariosActuales = sede.horarios || [];
+    
+    if (horarioIndex < 0 || horarioIndex >= horariosActuales.length) {
+      throw new Error('Índice de horario inválido');
+    }
+    
+    // Eliminar horario del array
+    horariosActuales.splice(horarioIndex, 1);
+    
+    // Actualizar sede
+    await sede.update({ horarios: horariosActuales });
+    
+    return sede;
+  }
 }
 
-module.exports = new SedeLogic(); 
+module.exports = new SedeLogic();

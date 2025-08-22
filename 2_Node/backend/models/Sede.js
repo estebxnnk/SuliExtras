@@ -43,6 +43,11 @@ const Sede = sequelize.define('Sede', {
     type: DataTypes.TEXT,
     allowNull: true,
     comment: 'Descripción adicional de la sede'
+  },
+  horarios: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: 'Array de horarios para la sede'
   }
 }, {
   timestamps: true,
