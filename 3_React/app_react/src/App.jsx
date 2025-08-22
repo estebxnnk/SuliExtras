@@ -1,15 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from '../security/ProtectedRoute';
 
 //Home
-import Home from './pages/Home';
-import Contactanos from './pages/Contactanos';
-import Login from './pages/Login';
+import Home from './pages/Home/Home';
+import Contactanos from './pages/Home/Contactanos';
+import Login from './pages/Home/Login';
 
 //Rol Sub Administrador
-import PanelSubAdmin from './pages/SubAdministrador/PanelSubAdmin';
-import RegistrarUsuarioSubAdmin from './pages/SubAdministrador/RegistrarUsuarioSubAdmin';
-import PanelUsuariosSubAdmin from './pages/SubAdministrador/PanelUsuariosSubAdmin';
+import PanelSubAdmin from './pages/SubAdministrador/PanelSubAdmin/index';
+import RegistrarUsuarioSubAdmin from './pages/SubAdministrador/GestionarUsuarios/RegistrarUsuarioSubAdmin';
+import PanelUsuariosSubAdmin from './pages/SubAdministrador/GestionarUsuarios/index';
 import CrearRegistroHorasExtraSubAdmin from './pages/SubAdministrador/GestionarRegistrosHorasExtra';
 import GestionReportesHorasExtra from './pages/SubAdministrador/GestionReportesHorasExtra';
 import GestionarRegistrosHorasExtra from './pages/SubAdministrador/GestionarRegistrosHorasExtra';

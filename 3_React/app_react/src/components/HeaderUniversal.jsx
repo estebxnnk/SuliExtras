@@ -16,7 +16,7 @@ import {
  * Header universal que se basa 100% en el estilo de HeaderGestionRegistros
  * Mantiene la misma estética visual y estructura
  */
-const SubAdminHeaderUniversal = ({ 
+const HeaderUniversal = ({ 
   // Propiedades básicas
   title = "Título del Módulo",
   subtitle = "Descripción del módulo",
@@ -124,29 +124,6 @@ const SubAdminHeaderUniversal = ({
       
       {/* Botones de acción */}
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {/* Botón de refrescar */}
-        {onRefresh && (
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={onRefresh}
-            disabled={refreshing}
-            sx={{ 
-              fontWeight: 600,
-              borderRadius: 2,
-              borderWidth: 2,
-              borderColor: iconColor,
-              color: iconColor,
-              '&:hover': {
-                borderColor: iconColor,
-                backgroundColor: `${iconColor}10`
-              }
-            }}
-          >
-            {refreshing ? 'Actualizando...' : 'Actualizar'}
-          </Button>
-        )}
-        
         {/* Botón de agregar */}
         {showAddButton && onAdd && (
           <Button
@@ -180,4 +157,4 @@ const SubAdminHeaderUniversal = ({
   );
 };
 
-export default SubAdminHeaderUniversal;
+export default HeaderUniversal;

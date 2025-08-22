@@ -33,7 +33,7 @@ import {
   Cancel as CancelIcon,
   Security as SecurityIcon
 } from '@mui/icons-material';
-import NavbarSubAdmin from './NavbarSubAdmin';
+import NavbarSubAdmin from '../NavbarSubAdmin';
 
 const tiposDocumento = [
   { value: 'CC', label: 'Cédula de Ciudadanía' },

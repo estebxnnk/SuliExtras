@@ -24,10 +24,12 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   Warning as WarningIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Person as PersonIcon,
+  LocationOn as LocationOnIcon
 } from '@mui/icons-material';
 
-const SubAdminTable = ({
+const TableUniversal = ({
   data = [],
   columns = [],
   page = 0,
@@ -124,6 +126,38 @@ const SubAdminTable = ({
       default:
         return 'Acción';
     }
+  };
+
+  // Estilos para chips de rol (por nombre)
+  const getRoleChipSx = (roleName = '') => {
+    const r = roleName.toLowerCase();
+    if (r.includes('admin')) {
+      return {
+        background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+        color: 'white',
+        border: 'none',
+      };
+    }
+    if (r.includes('SubAdministrador')) {
+      return {
+        background: 'linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%)',
+        color: 'white',
+        border: 'none',
+      };
+    }
+    if (r.includes('oper') || r.includes('user') || r.includes('usuario')) {
+      return {
+        background: 'linear-gradient(135deg, #388e3c 0%, #43a047 100%)',
+        color: 'white',
+        border: 'none',
+      };
+    }
+    return {
+      background: 'rgba(25, 118, 210, 0.1)',
+      borderColor: '#1976d2',
+      color: '#1976d2',
+      borderWidth: 2
+    };
   };
 
   if (loading) {
@@ -223,18 +257,80 @@ const SubAdminTable = ({
                   <TableRow
                     key={row.id || index}
                     sx={{
-                      '&:nth-of-type(odd)': { bgcolor: '#f8f9fa' },
-                      '&:hover': { bgcolor: '#e3f2fd' },
-                      transition: 'background-color 0.2s ease'
+                      '&:nth-of-type(odd)': { bgcolor: 'rgba(25, 118, 210, 0.02)' },
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, rgba(25,118,210,0.08) 0%, rgba(25,118,210,0.12) 100%)',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.08)'
+                      }
                     }}
                   >
                     {columns.map((column) => (
                       <TableCell
                         key={column.id}
                         align={column.align || 'left'}
-                        sx={{ py: 2 }}
+                        sx={{ 
+                          py: 2,
+                          transition: 'background-color 0.2s ease, transform 0.1s ease',
+                          '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.04)' }
+                        }}
                       >
-                        {column.render ? column.render(row[column.id], row) : row[column.id]}
+                        {column.render ? (
+                          column.render(row[column.id], row)
+                        ) : column.id === 'usuario' ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar
+                              sx={{
+                                background: '2px solid rgba(255,255,255,0.2)',
+                                color: 'white',
+                                width: 36,
+                                height: 36,
+                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+                              }}
+                            >
+                              <PersonIcon sx={{ fontSize: 20 }} />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: '#1976d2' }}>
+                                {`${row.persona?.nombres || row.nombre || row.name || 'Usuario'} ${row.persona?.apellidos || ''}`.trim()}
+                              </Typography>
+                              {row.email && (
+                                <Typography variant="caption" color="text.secondary">{row.email}</Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        ) : column.id === 'rol' ? (
+                          <Chip
+                            label={row.rol?.nombre || row[column.id] || 'Sin rol'}
+                            size="small"
+                            variant={getRoleChipSx(row.rol?.nombre || row[column.id])?.border ? 'outlined' : 'filled'}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              ...getRoleChipSx(row.rol?.nombre || row[column.id])
+                            }}
+                          />
+                        ) : column.id === 'documento' ? (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ fontWeight: 600, color: '#666', fontFamily: 'monospace' }}
+                          >
+                            {(row.persona?.tipoDocumento || row.tipoDocumento || 'N/A')}: {row.persona?.numeroDocumento || row.numeroDocumento || 'Sin documento'}
+                          </Typography>
+                        ) : column.id === 'ubicacion' ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LocationOnIcon sx={{ fontSize: 18, color: '#ef5350' }} />
+                            <Typography variant="body2">{row[column.id] || 'No asignada'}</Typography>
+                          </Box>
+                        ) : column.id === 'sede' ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LocationOnIcon sx={{ fontSize: 18, color: '#ef5350' }} />
+                            <Typography variant="body2">{row.sede?.nombre || 'No asignada'}</Typography>
+                          </Box>
+                        ) : (
+                          row[column.id]
+                        )}
                       </TableCell>
                     ))}
                     {showActions && (
@@ -308,4 +404,4 @@ const SubAdminTable = ({
   );
 };
 
-export default SubAdminTable;
+export default TableUniversal;

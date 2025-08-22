@@ -3,12 +3,15 @@ import {
   Box,
   Paper
 } from '@mui/material';
-import NavbarSubAdmin from '../NavbarSubAdmin';
+import NavbarSubAdmin from '../pages/SubAdministrador/NavbarSubAdmin';
 
-const SubAdminLayout = ({ 
-  children, 
-  title = "Módulo SubAdministrador",
-  subtitle = "Panel de gestión administrativa",
+/**
+ * Layout universal que se basa 100% en el estilo del módulo GestionarRegistrosHorasExtra
+ * Mantiene la misma estética visual y estructura
+ */
+const LayoutUniversal = ({ 
+  children,
+  backgroundImage = "/img/Recepcion.jpg",
   maxWidth = 1400,
   showNavbar = true
 }) => {
@@ -16,17 +19,19 @@ const SubAdminLayout = ({
     <Box sx={{ 
       minHeight: '100vh', 
       width: '100vw',
-      background: "url('/img/Recepcion.jpg') no-repeat center center", 
+      background: `url('${backgroundImage}') no-repeat center center`, 
       backgroundSize: 'cover',
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Navbar */}
       {showNavbar && <NavbarSubAdmin />}
       
+      {/* Contenedor principal con el mismo estilo */}
       <Paper elevation={8} sx={{ 
         borderRadius: 4, 
         p: 4,
-        margin: '120px auto 40px auto', 
+        margin: showNavbar ? '120px auto 40px auto' : '40px auto',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,248,255,0.98) 100%)',
         border: '1px solid rgba(25, 118, 210, 0.2)',
         position: 'relative',
@@ -41,4 +46,4 @@ const SubAdminLayout = ({
   );
 };
 
-export default SubAdminLayout;
+export default LayoutUniversal;
