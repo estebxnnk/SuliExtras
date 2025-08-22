@@ -235,12 +235,18 @@ class SedeLogic {
       throw new Error('Sede no encontrada');
     }
     
-    // Validar datos requeridos
+    // Validar datos requeridos (solo campos esenciales)
     const { nombre, tipo, horaEntrada, horaSalida, horasJornada, horasJornadaReal, tiempoAlmuerzo, diasTrabajados } = horarioData;
     
-    if (!nombre || !tipo || !horaEntrada || !horaSalida || horasJornada === undefined || horasJornadaReal === undefined || tiempoAlmuerzo === undefined || diasTrabajados === undefined) {
-      throw new Error('Faltan campos requeridos para el horario');
+    if (!nombre || !tipo || !horaEntrada || !horaSalida) {
+      throw new Error('Faltan campos requeridos para el horario: nombre, tipo, horaEntrada, horaSalida');
     }
+    
+    // Calcular campos faltantes si no se proporcionan
+    const horasJornadaCalculada = horasJornada !== undefined ? horasJornada : this.calcularHorasJornada(horaEntrada, horaSalida);
+    const tiempoAlmuerzoFinal = tiempoAlmuerzo !== undefined ? tiempoAlmuerzo : 60;
+    const horasJornadaRealCalculada = horasJornadaReal !== undefined ? horasJornadaReal : Math.max(0, horasJornadaCalculada - (tiempoAlmuerzoFinal / 60));
+    const diasTrabajadosFinal = diasTrabajados !== undefined ? diasTrabajados : 5;
     
     // Validar tipo
     if (!['normal', 'nocturno', 'especial', 'festivo'].includes(tipo)) {
@@ -248,33 +254,27 @@ class SedeLogic {
     }
     
     // Validar rangos
-    if (tiempoAlmuerzo < 0 || tiempoAlmuerzo > 180) {
+    if (tiempoAlmuerzoFinal < 0 || tiempoAlmuerzoFinal > 180) {
       throw new Error('Tiempo de almuerzo debe estar entre 0 y 180 minutos');
     }
     
-    if (diasTrabajados < 0 || diasTrabajados > 7) {
+    if (diasTrabajadosFinal < 0 || diasTrabajadosFinal > 7) {
       throw new Error('Días trabajados debe estar entre 0 y 7');
     }
     
     // Obtener horarios actuales o inicializar array vacío
     const horariosActuales = sede.horarios || [];
     
-    // Verificar que no exista un horario con el mismo tipo
-    //const tipoExistente = horariosActuales.find(h => h.tipo === tipo);
-    //if (tipoExistente) {
-      //throw new Error(`Ya existe un horario de tipo '${tipo}' en esta sede`);
-    
-    
-    // Crear nuevo horario
+    // Crear nuevo horario con valores calculados
     const nuevoHorario = {
       nombre,
       tipo,
       horaEntrada,
       horaSalida,
-      horasJornada,
-      horasJornadaReal,
-      tiempoAlmuerzo,
-      diasTrabajados,
+      horasJornada: horasJornadaCalculada,
+      horasJornadaReal: horasJornadaRealCalculada,
+      tiempoAlmuerzo: tiempoAlmuerzoFinal,
+      diasTrabajados: diasTrabajadosFinal,
       activo: horarioData.activo !== undefined ? horarioData.activo : true,
       descripcion: horarioData.descripcion || null
     };
@@ -282,8 +282,17 @@ class SedeLogic {
     // Agregar al array
     horariosActuales.push(nuevoHorario);
     
-    // Actualizar sede
-    await sede.update({ horarios: horariosActuales });
+    console.log('Horarios antes de actualizar:', JSON.stringify(horariosActuales, null, 2));
+    
+    // Forzar actualización del campo JSON usando changed() para que Sequelize detecte el cambio
+    sede.set('horarios', horariosActuales);
+    sede.changed('horarios', true);
+    await sede.save();
+    
+    // Recargar la sede desde la base de datos para verificar
+    await sede.reload();
+    
+    console.log('Horarios después de actualizar:', JSON.stringify(sede.horarios, null, 2));
     
     return sede;
   }
@@ -310,10 +319,34 @@ class SedeLogic {
     // Eliminar horario del array
     horariosActuales.splice(horarioIndex, 1);
     
-    // Actualizar sede
-    await sede.update({ horarios: horariosActuales });
+    // Forzar actualización del campo JSON usando changed() para que Sequelize detecte el cambio
+    sede.set('horarios', horariosActuales);
+    sede.changed('horarios', true);
+    await sede.save();
     
     return sede;
+  }
+
+  /**
+   * Calcular horas de jornada entre dos horas
+   * @param {string} horaEntrada - Hora de entrada (HH:mm)
+   * @param {string} horaSalida - Hora de salida (HH:mm)
+   * @returns {number} - Horas de jornada
+   */
+  calcularHorasJornada(horaEntrada, horaSalida) {
+    const [hE, mE] = horaEntrada.split(':').map(Number);
+    const [hS, mS] = horaSalida.split(':').map(Number);
+    
+    let entradaMinutos = hE * 60 + mE;
+    let salidaMinutos = hS * 60 + mS;
+    
+    // Si la salida es menor que la entrada, significa que trabajó hasta el día siguiente
+    if (salidaMinutos < entradaMinutos) {
+      salidaMinutos += 24 * 60;
+    }
+    
+    const totalMinutos = salidaMinutos - entradaMinutos;
+    return parseFloat((totalMinutos / 60).toFixed(2));
   }
 }
 
