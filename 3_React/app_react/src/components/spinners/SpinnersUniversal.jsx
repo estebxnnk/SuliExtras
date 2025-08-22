@@ -185,7 +185,7 @@ export const SubAdminSuccessSpinner = ({
               @keyframes progressBar {
                0% { width: 0%; }
                100% { width: 100%; }
-             }
+              }
             `}</style>
           </Box>
         </Box>
@@ -269,7 +269,7 @@ export const SubAdminUniversalAlert = ({
         }}
       >
         <Box
-          sx={{
+        sx={{
             background: cfg.background,
             border: `3px solid ${cfg.borderColor}`,
             borderRadius: 4,
@@ -315,15 +315,15 @@ export const SubAdminUniversalAlert = ({
               </Typography>
             </Box>
 
-            <IconButton
-              onClick={onClose}
-              sx={{
+        <IconButton
+          onClick={onClose}
+          sx={{
                 color: '#fff',
                 '&:hover': { background: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
           </Box>
 
           {/* Contenido del mensaje */}
@@ -500,6 +500,98 @@ export const SubAdminStateChangeSuccessSpinner = (props) => (
   />
 );
 
+
+// Loader inicial de página (pantalla completa), mismo estilo visual
+export const InitialPageLoader = ({
+  open = true,
+  title = 'Cargando módulo...',
+  subtitle = 'Preparando datos y componentes',
+  iconColor = '#1976d2'
+}) => {
+  if (!open) return null;
+  return (
+    <Portal>
+      <Fade in={open} timeout={300}>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "url('/img/Recepcion.jpg') no-repeat center center",
+            backgroundSize: 'cover',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 15000,
+            p: 2
+          }}
+        >
+          <Paper
+            elevation={8}
+            sx={{
+              borderRadius: 4,
+              p: 4,
+              width: '95vw',
+              maxWidth: 600,
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,248,255,0.98) 100%)',
+              border: `2px solid ${iconColor}33`,
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2 }}>
+              <CircularProgress
+                variant="determinate"
+                value={100}
+                size={88}
+                thickness={4}
+                sx={{ color: iconColor, opacity: 0.25, animation: 'successRing 1s ease-out' }}
+              />
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/img/NuevoLogo.png" alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }} />
+              </Box>
+            </Box>
+            <Typography variant="h5" fontWeight={800} color={iconColor} sx={{ mb: 1 }}>
+              {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {subtitle}
+            </Typography>
+
+            {/* Barra de progreso animada */}
+            <Box sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 4,
+                  background: '#e0e0e0',
+                  borderRadius: 2,
+                  overflow: 'hidden'
+                }}
+              >
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    background: `linear-gradient(90deg, ${iconColor} 0%, ${iconColor} 100%)`,
+                    animation: 'progressBar 1500ms linear infinite'
+                  }}
+                />
+              </Box>
+            </Box>
+
+            <style>{`
+              @keyframes successRing { 0% { stroke-dasharray: 0 283; } 100% { stroke-dasharray: 283 283; } }
+              @keyframes progressBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(0); } }
+            `}</style>
+          </Paper>
+        </Box>
+      </Fade>
+    </Portal>
+  );
+};
 
 // Aliases compatibles con GestionarRegistrosHorasExtra
 export const UniversalAlert = (props) => (

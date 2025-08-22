@@ -13,6 +13,7 @@ import PanelUsuariosSubAdmin from './pages/SubAdministrador/GestionarUsuarios/in
 import CrearRegistroHorasExtraSubAdmin from './pages/SubAdministrador/GestionarRegistrosHorasExtra';
 import GestionReportesHorasExtra from './pages/SubAdministrador/GestionReportesHorasExtra';
 import GestionarRegistrosHorasExtra from './pages/SubAdministrador/GestionarRegistrosHorasExtra';
+import GestionarTiposHoraSubAdmin from './pages/SubAdministrador/GestionarTiposHora';
 
 //Rol Administrador
 import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
@@ -163,6 +164,11 @@ function App() {
         <Route path="/crear-registro-horas-extra-subadmin" element={
           <ProtectedRoute allowedRoles={['SubAdministrador']}>
             <CrearRegistroHorasExtraSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-tipos-hora-subadmin" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <GestionarTiposHoraSubAdmin />
           </ProtectedRoute>
         } />
       </Routes>

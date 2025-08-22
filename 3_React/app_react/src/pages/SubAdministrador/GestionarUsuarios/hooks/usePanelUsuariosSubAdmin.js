@@ -211,6 +211,7 @@ export const usePanelUsuariosSubAdmin = () => {
     nuevoRolId,
     search,
     confirmDialog,
+    setConfirmDialog,
     
     // Setters
     setMensaje,
