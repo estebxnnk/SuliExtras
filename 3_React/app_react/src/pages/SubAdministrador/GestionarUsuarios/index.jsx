@@ -55,6 +55,7 @@ function PanelUsuariosSubAdmin() {
     // Setters
     setMensaje,
     setSearch,
+    setConfirmDialog,
     
     // Funciones
     fetchUsuarios,

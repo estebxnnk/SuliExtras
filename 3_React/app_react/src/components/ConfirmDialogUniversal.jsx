@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, Fade, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Fade, CircularProgress, Portal } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
@@ -85,77 +85,78 @@ function ConfirmDialogUniversal({
   const effectiveConfirmText = confirmText || 'Confirmar';
 
   return (
-    <Fade in={open} timeout={500}>
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          animation: 'fadeIn 0.3s ease-out'
-        }}
-      >
+    <Portal>
+      <Fade in={open} timeout={500}>
         <Box
           sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: '400px',
-            gap: 3,
-            p: 4,
-            background: config.bgGradient,
-            borderRadius: 4,
-            border: `3px solid ${config.borderColor}`,
-            boxShadow: `0 20px 60px ${config.shadowColor}`,
-            backdropFilter: 'blur(20px)',
-            animation: 'slideIn 0.5s ease-out',
-            maxWidth: '90vw',
-            width: '500px'
+            zIndex: 9999,
+            animation: 'fadeIn 0.3s ease-out'
           }}
         >
-          {showLogo && (
-            <Box sx={{ width: 80, height: 80, animation: 'logoPulse 2s ease-in-out infinite' }}>
-              <img src="/img/NuevoLogo.png" alt="SuliExtras Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '400px',
+              gap: 3,
+              p: 4,
+              background: config.bgGradient,
+              borderRadius: 4,
+              border: `3px solid ${config.borderColor}`,
+              boxShadow: `0 20px 60px ${config.shadowColor}`,
+              backdropFilter: 'blur(20px)',
+              animation: 'slideIn 0.5s ease-out',
+              maxWidth: '90vw',
+              width: '500px'
+            }}
+          >
+            {showLogo && (
+              <Box sx={{ width: 80, height: 80, animation: 'logoPulse 2s ease-in-out infinite' }}>
+                <img src="/img/NuevoLogo.png" alt="SuliExtras Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+              </Box>
+            )}
+
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CircularProgress variant="determinate" value={100} size={80} thickness={4} sx={{ color: config.color, animation: 'successRing 1s ease-out' }} />
+              <ActionIcon sx={{ position: 'absolute', fontSize: 48, color: config.color, animation: 'successScale 0.6s ease-out 0.3s both' }} />
             </Box>
-          )}
 
-          <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CircularProgress variant="determinate" value={100} size={80} thickness={4} sx={{ color: config.color, animation: 'successRing 1s ease-out' }} />
-            <ActionIcon sx={{ position: 'absolute', fontSize: 48, color: config.color, animation: 'successScale 0.6s ease-out 0.3s both' }} />
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h5" fontWeight={700} color={config.color} sx={{ mb: 2, animation: 'successFadeIn 0.8s ease-out 0.5s both' }}>
+                {effectiveTitle}
+              </Typography>
+              <Typography variant="body1" color="#333" sx={{ mb: 2, animation: 'successFadeIn 0.8s ease-out 0.7s both' }}>
+                {effectiveMessage}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2, animation: 'successFadeIn 0.8s ease-out 0.9s both' }}>
+              <Button variant="outlined" onClick={onClose} sx={{ borderColor: config.color, color: config.color, fontWeight: 600, borderRadius: 2, borderWidth: 2, px: 3, py: 1.5, '&:hover': { borderColor: config.color, backgroundColor: `${config.color}10`, borderWidth: 2 } }}>
+                Cancelar
+              </Button>
+              <Button variant="contained" onClick={onConfirm} sx={{ backgroundColor: config.color, fontWeight: 700, borderRadius: 2, px: 3, py: 1.5, boxShadow: `0 4px 15px ${config.shadowColor}`, '&:hover': { backgroundColor: config.color, transform: 'translateY(-2px)', boxShadow: `0 6px 20px ${config.shadowColor}` } }}>
+                {effectiveConfirmText}
+              </Button>
+            </Box>
+
+            <Box sx={{ width: '100%', height: 4, background: '#e0e0e0', borderRadius: 2, overflow: 'hidden' }}>
+              <Box sx={{ width: '100%', height: '100%', background: `linear-gradient(90deg, ${config.color} 0%, ${config.color}80 100%)` }} />
+            </Box>
           </Box>
 
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" fontWeight={700} color={config.color} sx={{ mb: 2, animation: 'successFadeIn 0.8s ease-out 0.5s both' }}>
-              {effectiveTitle}
-            </Typography>
-            <Typography variant="body1" color="#333" sx={{ mb: 2, animation: 'successFadeIn 0.8s ease-out 0.7s both' }}>
-              {effectiveMessage}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 2, animation: 'successFadeIn 0.8s ease-out 0.9s both' }}>
-            <Button variant="outlined" onClick={onClose} sx={{ borderColor: config.color, color: config.color, fontWeight: 600, borderRadius: 2, borderWidth: 2, px: 3, py: 1.5, '&:hover': { borderColor: config.color, backgroundColor: `${config.color}10`, borderWidth: 2 } }}>
-              Cancelar
-            </Button>
-            <Button variant="contained" onClick={onConfirm} sx={{ backgroundColor: config.color, fontWeight: 700, borderRadius: 2, px: 3, py: 1.5, boxShadow: `0 4px 15px ${config.shadowColor}`, '&:hover': { backgroundColor: config.color, transform: 'translateY(-2px)', boxShadow: `0 6px 20px ${config.shadowColor}` } }}>
-              {effectiveConfirmText}
-            </Button>
-          </Box>
-
-          <Box sx={{ width: '100%', height: 4, background: '#e0e0e0', borderRadius: 2, overflow: 'hidden' }}>
-            <Box sx={{ width: '100%', height: '100%', background: `linear-gradient(90deg, ${config.color} 0%, ${config.color}80 100%)` }} />
-          </Box>
-        </Box>
-
-        <style>{`
+          <style>{`
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
           @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes logoPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.9; } }
@@ -163,8 +164,9 @@ function ConfirmDialogUniversal({
           @keyframes successRing { 0% { stroke-dasharray: 0 283; } 100% { stroke-dasharray: 283 283; } }
           @keyframes successFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-      </Box>
-    </Fade>
+        </Box>
+      </Fade>
+    </Portal>
   );
 }
 

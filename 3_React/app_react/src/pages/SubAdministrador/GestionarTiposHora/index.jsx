@@ -3,7 +3,7 @@ import { Box, Button, TextField, InputAdornment } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import SearchIcon from '@mui/icons-material/Search';
-import { LayoutUniversal, HeaderUniversal, UniversalAlert, ConfirmDialogUniversal, InitialPageLoader } from '../../../components';
+import { LayoutUniversal, HeaderUniversal, UniversalAlert, ConfirmDialogUniversal, InitialPageLoader, CreateSuccessSpinner, EditSuccessSpinner, DeleteSuccessSpinner } from '../../../components';
 import { useTiposHora } from './hooks/useTiposHora';
 import TiposHoraCards from './components/TiposHoraCards';
 import TipoHoraDialog from './components/TipoHoraDialog';
@@ -12,6 +12,7 @@ function GestionarTiposHoraSubAdmin() {
   const { filtered, loading, error, search, setSearch, fetchAll, create, update, remove } = useTiposHora();
   const [alert, setAlert] = React.useState({ open: false, type: 'info', message: '', title: '' });
   const [confirm, setConfirm] = React.useState({ open: false, action: '', data: null });
+  const [success, setSuccess] = React.useState({ open: false, type: '', message: '', title: '' });
   const [dialog, setDialog] = React.useState({ open: false, mode: 'crear', data: null });
 
   React.useEffect(() => {
@@ -25,9 +26,13 @@ function GestionarTiposHoraSubAdmin() {
 
   const onSaveDialog = async (payload) => {
     try {
-      if (dialog.mode === 'crear') await create(payload);
-      else await update(dialog.data?.tipo || dialog.data?.id, payload);
-      setAlert({ open: true, type: 'success', title: dialog.mode === 'crear' ? 'Creado' : 'Actualizado', message: `Tipo de hora ${dialog.mode === 'crear' ? 'creado' : 'actualizado'} correctamente.` });
+      if (dialog.mode === 'crear') {
+        await create(payload);
+        setSuccess({ open: true, type: 'create', title: 'Creado', message: 'Tipo de hora creado correctamente.' });
+      } else {
+        await update(dialog.data?.tipo || dialog.data?.id, payload);
+        setSuccess({ open: true, type: 'edit', title: 'Actualizado', message: 'Tipo de hora actualizado correctamente.' });
+      }
       setDialog({ open: false, mode: 'crear', data: null });
     } catch (e) {
       setAlert({ open: true, type: 'error', title: 'Error', message: e.message });
@@ -38,7 +43,7 @@ function GestionarTiposHoraSubAdmin() {
     try {
       if (confirm.action === 'eliminar') {
         await remove(confirm.data?.tipo || confirm.data?.id);
-        setAlert({ open: true, type: 'success', title: 'Eliminado', message: 'Tipo de hora eliminado' });
+        setSuccess({ open: true, type: 'delete', title: 'Eliminado', message: 'Tipo de hora eliminado' });
       }
     } catch (e) {
       setAlert({ open: true, type: 'error', title: 'Error', message: e.message });
@@ -92,6 +97,16 @@ function GestionarTiposHoraSubAdmin() {
       <UniversalAlert open={alert.open} type={alert.type} message={alert.message} title={alert.title} onClose={() => setAlert(a => ({ ...a, open: false }))} showLogo autoHideDuration={4000} />
 
       <ConfirmDialogUniversal open={confirm.open} action={confirm.action} data={confirm.data} onClose={() => setConfirm({ open: false, action: '', data: null })} onConfirm={handleConfirm} />
+
+      {success.type === 'create' && (
+        <CreateSuccessSpinner open message={success.message} title={success.title} onClose={() => setSuccess({ open: false, type: '', message: '', title: '' })} />
+      )}
+      {success.type === 'edit' && (
+        <EditSuccessSpinner open message={success.message} title={success.title} onClose={() => setSuccess({ open: false, type: '', message: '', title: '' })} />
+      )}
+      {success.type === 'delete' && (
+        <DeleteSuccessSpinner open message={success.message} title={success.title} onClose={() => setSuccess({ open: false, type: '', message: '', title: '' })} />
+      )}
     </LayoutUniversal>
   );
 }

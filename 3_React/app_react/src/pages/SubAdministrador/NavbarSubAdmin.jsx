@@ -1,12 +1,11 @@
-import { Box, Paper, Typography, Button, Avatar, IconButton, Menu, Divider } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { useNavigate } from 'react-router-dom';
+import { NavbarUniversal, SidebarUniversal } from '../../components';
 
 function NavbarSubAdmin() {
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [openSidebar, setOpenSidebar] = useState(false);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -18,98 +17,51 @@ function NavbarSubAdmin() {
     }
   }, []);
 
-  const handleProfileClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userRol');
     navigate('/');
   };
 
+  const items = [
+    { key: 'usuarios', label: 'Usuarios', to: '/usuarios' },
+    { key: 'crear', label: 'Crear Usuario', to: '/registrar-usuario' },
+    { key: 'solicitudes', label: 'Solicitudes', to: '/panel-sub-admin?tab=solicitudes' },
+    { key: 'registros', label: 'Registros de horas extra', to: '/gestionar-registros-horas-extra' },
+    { key: 'reportes', label: 'Reportes de horas extra', to: '/gestionar-reportes-horas-extra' },
+    { key: 'tipos', label: 'Tipos de hora', to: '/gestionar-tipos-hora-subadmin' },
+  ];
+
+  // Derivar pestaña activa desde la URL
+  const activeKey = (() => {
+    const path = window.location.pathname;
+    const search = window.location.search;
+    if (path.includes('/usuarios')) return 'usuarios';
+    if (path.includes('/registrar-usuario')) return 'crear';
+    if (path.includes('/gestionar-registros-horas-extra')) return 'registros';
+    if (path.includes('/gestionar-reportes-horas-extra')) return 'reportes';
+    if (path.includes('/gestionar-tipos-hora-subadmin')) return 'tipos';
+    if (search.includes('tab=solicitudes')) return 'solicitudes';
+    return undefined;
+  })();
+
   return (
-    <Paper
-      elevation={8}
-      sx={{
-        position: 'fixed',
-        top: 20,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: { xs: '98vw', md: '98vw' },
-        maxWidth: 1400,
-        height: 90,
-        background: 'rgba(255,255,255,0.92)',
-        borderRadius: 2,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        px: 5,
-        zIndex: 1000,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-        <Link to="/panel-sub-admin">
-          <Box component="img" src="/img/NuevoLogo.png" alt="Logo" sx={{ height: 72 }} />
-        </Link>
-        <Link to="/usuarios" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Usuarios</Typography>
-        </Link>
-        <Link to="/registrar-usuario" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Crear Usuario</Typography>
-        </Link>
-        <Link to="/panel-sub-admin?tab=solicitudes" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Solicitudes</Typography>
-        </Link> 
-        <Link to="/gestionar-registros-horas-extra" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Registros de horas extra</Typography>
-        </Link>
-        <Link to="/gestionar-reportes-horas-extra" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Reportes de horas extra</Typography>
-        </Link>
-        <Link to="/gestionar-tipos-hora-subadmin" style={{ textDecoration: 'none' }}>
-          <Typography sx={{ fontSize: 15, color: '#000', fontWeight: 700, cursor: 'pointer', '&:hover': { color: '#52AB41' } }}>Tipos de hora</Typography>
-        </Link>
-      </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <IconButton onClick={handleProfileClick} size="large" sx={{ ml: 2 }}>
-          <Avatar sx={{ bgcolor: '#52AB41', width: 48, height: 48 }}>
-            <AccountCircleIcon sx={{ fontSize: 36, color: '#fff' }} />
-          </Avatar>
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleCloseMenu}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          PaperProps={{ sx: { p: 2, minWidth: 240, borderRadius: 3 } }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mt: 1 }}>
-            <Avatar sx={{ bgcolor: '#52AB41', width: 64, height: 64, mb: 1 }}>
-              <AccountCircleIcon sx={{ fontSize: 40, color: '#fff' }} />
-            </Avatar>
-            <Typography variant="h6" fontWeight={700}>
-              {userData ? `${userData.persona?.nombres || ''} ${userData.persona?.apellidos || ''}` : 'Cargando...'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {userData ? userData.email : ''}
-            </Typography>
-            <Typography variant="body2" color="#52AB41" fontWeight={700}>
-              {userData ? userData.rol?.nombre : ''}
-            </Typography>
-            <Divider sx={{ width: '100%', my: 1 }} />
-            <Button onClick={handleLogout} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: 2, px: 3, width: '100%' }}>
-              Cerrar sesión
-            </Button>
-          </Box>
-        </Menu>
-      </Box>
-    </Paper>
+    <>
+      <NavbarUniversal
+        title="Panel Sub-Administrador"
+        items={items}
+        activeKey={activeKey}
+        activeLabel={items.find(i => i.key === activeKey)?.label}
+        user={{
+          name: userData ? `${userData.persona?.nombres || ''} ${userData.persona?.apellidos || ''}` : undefined,
+          email: userData?.email,
+          role: userData?.rol?.nombre,
+        }}
+        onLogout={handleLogout}
+        onMenuToggle={() => setOpenSidebar(true)}
+      />
+      <SidebarUniversal open={openSidebar} onClose={() => setOpenSidebar(false)} items={items} header="Navegación" activeKey={activeKey} />
+    </>
   );
 }
 

@@ -34,6 +34,7 @@ import {
   Security as SecurityIcon
 } from '@mui/icons-material';
 import NavbarSubAdmin from '../NavbarSubAdmin';
+import { CreateSuccessSpinner } from '../../../components';
 
 const tiposDocumento = [
   { value: 'CC', label: 'Cédula de Ciudadanía' },
@@ -64,6 +65,7 @@ function RegistrarUsuario() {
   const [nuevoRol, setNuevoRol] = useState('');
   const [mensajeRol, setMensajeRol] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successSpinner, setSuccessSpinner] = useState({ open: false, title: 'Usuario Creado', message: 'Usuario registrado exitosamente.' });
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -120,7 +122,7 @@ function RegistrarUsuario() {
       }
       setExito(true);
       setMensaje('¡Usuario registrado exitosamente!');
-      setTimeout(() => navigate('/panel-admin'), 1500);
+      setSuccessSpinner({ open: true, title: 'Usuario Creado', message: 'Usuario registrado exitosamente.' });
     } catch (error) {
       setMensaje('No se pudo conectar con el servidor.');
     } finally {
@@ -690,6 +692,17 @@ function RegistrarUsuario() {
           </Dialog>
         </Paper>
       </Box>
+      {successSpinner.open && (
+        <CreateSuccessSpinner
+          open
+          title={successSpinner.title}
+          message={successSpinner.message}
+          onClose={() => {
+            setSuccessSpinner({ open: false, title: '', message: '' });
+            navigate('/usuarios');
+          }}
+        />
+      )}
     </Box>
   );
 }

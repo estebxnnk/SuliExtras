@@ -34,4 +34,6 @@ export { default as StatsUniversal } from './StatsUniversal';
 export { default as FiltersUniversal } from './FiltersUniversal';
 export { InitialPageLoader } from './spinners/SpinnersUniversal';
 export { default as ConfirmDialogUniversal } from './ConfirmDialogUniversal';
+export { default as NavbarUniversal } from './NavbarUniversal';
+export { default as SidebarUniversal } from './SidebarUniversal';
 
