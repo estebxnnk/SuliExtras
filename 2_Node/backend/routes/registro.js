@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const registroController = require('../controllers/registroController');
+const { 
+  validarCrearRegistrosBulk, 
+  validarLogicaNegocio, 
+  manejarErroresValidacion 
+} = require('../validators/registroValidator');
 
 /**
  * @swagger
@@ -339,5 +344,82 @@ router.get('/debug', registroController.debugRegistros);
  *         description: Error en la solicitud
  */
 router.post('/dividir-horas', registroController.createRegistroConDivisionHoras);
+
+/**
+ * @swagger
+ * /api/registros/bulk:
+ *   post:
+ *     summary: Crear múltiples registros de horas extra
+ *     tags: [Registros]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - registros
+ *               - usuarioId
+ *             properties:
+ *               registros:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - fecha
+ *                     - horaIngreso
+ *                     - horaSalida
+ *                     - ubicacion
+ *                     - cantidadHorasExtra
+ *                   properties:
+ *                     fecha:
+ *                       type: string
+ *                       format: date
+ *                       example: "2024-01-15"
+ *                     horaIngreso:
+ *                       type: string
+ *                       example: "18:00"
+ *                     horaSalida:
+ *                       type: string
+ *                       example: "20:00"
+ *                     ubicacion:
+ *                       type: string
+ *                       example: "Oficina Principal"
+ *                     cantidadHorasExtra:
+ *                       type: number
+ *                       example: 2.5
+ *                     justificacionHoraExtra:
+ *                       type: string
+ *                       example: "Proyecto urgente"
+ *               usuarioId:
+ *                 type: integer
+ *                 description: ID del usuario que crea los registros
+ *                 example: 1
+ *     responses:
+ *       201:
+ *         description: Registros creados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 total:
+ *                   type: integer
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Datos de entrada inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/bulk', 
+  validarCrearRegistrosBulk, 
+  validarLogicaNegocio, 
+  registroController.crearRegistrosBulk
+);
 
 module.exports = router;

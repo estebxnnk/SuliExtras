@@ -1,6 +1,7 @@
 const Registro = require('../models/Registro');
 const Hora = require('../models/Hora');
 const User = require('../models/User');
+const sequelize = require('../configDb/db').sequelize;
 
 
 // Obtener todos los registros con sus horas asociadas
@@ -238,6 +239,63 @@ const eliminarRegistro = async (id) => {
   return { mensaje: 'Registro eliminado' };
 };
 
+// Crear múltiples registros usando la misma lógica de división de horas
+const crearRegistrosBulk = async (registrosData, usuarioId) => {
+  // Validar que se proporcione usuarioId
+  if (!usuarioId) {
+    throw new Error('El usuarioId es requerido para crear registros');
+  }
+
+  // Verificar que el usuario existe
+  const user = await User.findByPk(usuarioId);
+  if (!user) {
+    throw new Error(`No se encontró un usuario con el ID: ${usuarioId}`);
+  }
+
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const registrosCreados = [];
+    
+    for (const registroData of registrosData) {
+      const { cantidadHorasExtra, ...otrosDatos } = registroData;
+      
+      // Dividir las horas extra usando la misma función
+      const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
+      
+      // Generar número de registro único
+      const numRegistro = generarNumeroRegistro();
+      
+      // Crear el registro con la misma lógica
+      const nuevoRegistro = await Registro.create({
+        ...otrosDatos,
+        usuarioId,
+        usuario: user.email,
+        numRegistro: numRegistro,
+        cantidadHorasExtra: Number(cantidadHorasExtra),
+        horas_extra_divididas,
+        bono_salarial
+      }, { transaction });
+      
+      registrosCreados.push(nuevoRegistro);
+    }
+    
+    await transaction.commit();
+    return registrosCreados;
+    
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+};
+
+// Función auxiliar para generar número de registro único
+const generarNumeroRegistro = () => {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 1000);
+  return `REG-${timestamp}-${random}`;
+};
+
 module.exports = {
   obtenerRegistros,
   obtenerRegistroPorId,
@@ -248,5 +306,6 @@ module.exports = {
   crearRegistro,
   actualizarRegistro,
   eliminarRegistro,
-  crearRegistroConDivisionHoras
+  crearRegistroConDivisionHoras,
+  crearRegistrosBulk
 };

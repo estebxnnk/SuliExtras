@@ -180,6 +180,29 @@ const createRegistroConDivisionHoras = async (req, res) => {
   }
 };
 
+const crearRegistrosBulk = async (req, res) => {
+  try {
+    const { registros, usuarioId } = req.body;
+    
+    // Las validaciones ya se realizan en el middleware de validación
+    
+    // Crear registros usando la lógica existente
+    const registrosCreados = await registroLogic.crearRegistrosBulk(registros, usuarioId);
+    
+    res.status(201).json({
+      message: `${registrosCreados.length} registros creados exitosamente`,
+      total: registrosCreados.length,
+      registros: registrosCreados
+    });
+    
+  } catch (err) {
+    console.error('Error al crear registros bulk:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al crear registros'
+    });
+  }
+};
+
 module.exports = {
   getAllRegistros,
   getRegistroById,
@@ -191,5 +214,6 @@ module.exports = {
   createRegistro,
   updateRegistro,
   deleteRegistro,
-  createRegistroConDivisionHoras
+  createRegistroConDivisionHoras,
+  crearRegistrosBulk
 };
