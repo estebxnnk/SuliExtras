@@ -29,6 +29,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart';
+import { InitialPageLoader } from '../../../components';
 import { usePanelSubAdmin } from './hooks/usePanelSubAdmin';
 import { UsuarioDialog } from './components/UsuarioDialog';
 import { FiltrosPanel } from './components/FiltrosPanel';
@@ -66,11 +67,7 @@ function PanelSubAdmin() {
   } = usePanelSubAdmin();
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Typography>Cargando...</Typography>
-      </Box>
-    );
+    return <InitialPageLoader open title="Cargando Panel" subtitle="Preparando datos y componentes" iconColor="#1976d2" />;
   }
 
   return (

@@ -25,7 +25,8 @@ import {
   SubAdminCreateSuccessSpinner,
   SubAdminEditSuccessSpinner,
   SubAdminDeleteSuccessSpinner,
-  SubAdminSuccessSpinnerUniversal
+  SubAdminSuccessSpinnerUniversal,
+  InitialPageLoader
 } from '../../../components';
 
 import {
@@ -191,6 +192,8 @@ function GestionReportesHorasExtra() {
       }
     });
 
+
+
     setReporteData({
       totalHorasDivididas,
       totalPagarDivididas,
@@ -200,6 +203,26 @@ function GestionReportesHorasExtra() {
       detalles
     });
   }, [openReporte, registrosDialogFiltrados, valorHoraOrdinaria, setReporteData]);
+
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await gestionReportesService.fetchUsuarios();
+        if (active) setUsuarios(data);
+      } catch (e) {
+        // error inicial silencioso; las alertas se manejarán luego con setAlertState si es necesario
+        console.error('Error inicial cargando usuarios:', e);
+      } finally {
+        if (active) setInitialLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [setUsuarios]);
+
+  // No early return para no romper el orden de hooks; mostramos loader vía Portal
 
   const {
     alertState,
@@ -236,12 +259,18 @@ function GestionReportesHorasExtra() {
     }
   }, [setUsuarios, setAlertState]);
 
-  useEffect(() => {
-    fetchUsuarios();
-  }, [fetchUsuarios]);
+  // Ya cargamos usuarios en el efecto de initialLoading
+
+  // Loader inicial si aún no hay usuarios y está cargando (puedes ajustar condición)
+  if (usuarios.length === 0 && !reporteData.detalles && !openDialog && !openRegistros && !openReporte) {
+    // No tengo un flag de loading global aquí, así que mostramos loader breve inicial opcional
+  }
 
   return (
     <LayoutUniversal>
+      {initialLoading && (
+        <InitialPageLoader open title="Cargando Registros" subtitle="Preparando datos y componentes" iconColor="#1976d2" />
+      )}
       <HeaderGestionReportes
         title="Gestión de Reportes de Horas Extra"
         subtitle="Genera y visualiza reportes detallados de horas extra por usuario"

@@ -28,7 +28,7 @@ import {
  * Tabla universal que se basa 100% en el estilo de TablaRegistros
  * Mantiene la misma estética visual y estructura
  */
-const SubAdminTableUniversal = ({
+const ReportesTableUniversal = ({
   // Datos y paginación
   data = [],
   columns = [],
@@ -375,4 +375,4 @@ const SubAdminTableUniversal = ({
   );
 };
 
-export default SubAdminTableUniversal;
+export default ReportesTableUniversal;

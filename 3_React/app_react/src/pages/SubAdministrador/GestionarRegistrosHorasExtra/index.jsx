@@ -17,7 +17,7 @@ import {
 } from './hooks';
 
 // Componentes optimizados
-import { 
+import {
   UniversalAlert, 
   SuccessSpinner,
   DeleteSuccessSpinner,
@@ -35,6 +35,7 @@ import {
   CrearRegistroDialog,
   InformacionFiltros
 } from './components';
+import { InitialPageLoader } from '../../../components';
 
 // Utilidades
 import { getEstadoChip, getTipoHoraNombre, getUsuario, calcularEstadisticas } from './utils/registrosUtils';
@@ -164,19 +165,7 @@ function GestionarRegistrosHorasExtra() {
   }, [cargarDatos, showError]);
 
   if (loading) {
-    return (
-      <Box sx={{ 
-        minHeight: '100vh', 
-        width: '100vw',
-        background: "url('/img/Recepcion.jpg') no-repeat center center", 
-        backgroundSize: 'cover',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <SuccessSpinner message="Cargando módulo de gestión de registros..." size="large" />
-      </Box>
-    );
+    return <InitialPageLoader open title="Cargando Registros" subtitle="Preparando datos y componentes" iconColor="#1976d2" />;
   }
 
   return (

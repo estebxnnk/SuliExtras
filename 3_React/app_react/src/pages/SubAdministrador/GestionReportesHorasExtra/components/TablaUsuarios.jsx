@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubAdminTableUniversal } from '../../../../components';
+import { ReportesTableUniversal } from '../../../../components';
 
 const TablaUsuarios = ({
   data,
@@ -37,7 +37,7 @@ const TablaUsuarios = ({
 
 
   return (
-    <SubAdminTableUniversal
+    <ReportesTableUniversal
       data={data}
       columns={columns}
       title="Usuarios del Sistema"

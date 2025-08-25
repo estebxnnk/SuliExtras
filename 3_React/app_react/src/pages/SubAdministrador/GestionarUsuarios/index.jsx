@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePanelUsuariosSubAdmin } from './hooks/usePanelUsuariosSubAdmin';
 import LoadingSpinner from './components/LoadingSpinner';
 import ConfirmDialog from './components/ConfirmDialog';
+import { ConfirmDialogUniversal, InitialPageLoader } from '../../../components';
 import FiltrosUsuarios from './components/FiltrosUsuarios';
 import UsuarioDialog from './components/UsuarioDialog';
 import {
@@ -54,6 +55,7 @@ function PanelUsuariosSubAdmin() {
     // Setters
     setMensaje,
     setSearch,
+    setConfirmDialog,
     
     // Funciones
     fetchUsuarios,
@@ -108,19 +110,7 @@ function PanelUsuariosSubAdmin() {
   }, [search]);
 
   if (loading) {
-    return (
-      <Box sx={{ 
-        minHeight: '100vh',
-        width: '100vw',
-        background: "url('/img/Recepcion.jpg') no-repeat center center",
-        backgroundSize: 'cover',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <LoadingSpinner message="Cargando usuarios..." size="large" />
-      </Box>
-    );
+    return <InitialPageLoader open title="Cargando Usuarios" subtitle="Preparando datos y componentes" iconColor="#1976d2" />;
   }
 
   return (
@@ -164,7 +154,7 @@ function PanelUsuariosSubAdmin() {
         createText={actionLoading ? 'Procesando...' : 'Registrar Usuario'}
       />
 
-      <UsuariosTable
+          <UsuariosTable
         data={usuariosPaginados}
         page={page}
         rowsPerPage={rowsPerPage}
@@ -220,12 +210,13 @@ function PanelUsuariosSubAdmin() {
       />
 
       {/* Diálogo de confirmación para eliminar o cambiar rol */}
-      <ConfirmDialog
+      <ConfirmDialogUniversal
         open={confirmDialog.open}
         action={confirmDialog.action}
-        usuario={confirmDialog.usuario}
+        data={confirmDialog.usuario}
         onClose={() => setConfirmDialog({ open: false, action: '', usuario: null })}
         onConfirm={confirmDialog.action === 'eliminar' ? confirmarEliminar : confirmarCambiarRol}
+        color={confirmDialog.action === 'eliminar' ? '#f44336' : '#1976d2'}
       />
     </LayoutUniversal>
   );
