@@ -18,6 +18,23 @@ export const useGestionSedes = () => {
   // Filtros
   const [search, setSearch] = useState('');
 
+  // Estados para horarios
+  const [openHorarioDialog, setOpenHorarioDialog] = useState(false);
+  const [nuevoHorario, setNuevoHorario] = useState({
+    nombre: '',
+    tipo: 'normal',
+    horaEntrada: '',
+    horaSalida: '',
+    horasJornada: 8,
+    tiempoAlmuerzo: 60,
+    diasTrabajados: 0,
+    activo: true,
+    descripcion: ''
+  });
+  const [showCreateHorarioSpinner, setShowCreateHorarioSpinner] = useState(false);
+  const [showHorarioAlert, setShowHorarioAlert] = useState(false);
+  const [horarioAlertMessage, setHorarioAlertMessage] = useState('');
+
   // Sedes paginadas
   const sedesConFiltros = useMemo(() => {
     return sedes.filter(sede => {
@@ -73,6 +90,18 @@ export const useGestionSedes = () => {
     // Filtros
     search,
     setSearch,
+
+    // Estados para horarios
+    openHorarioDialog,
+    setOpenHorarioDialog,
+    nuevoHorario,
+    setNuevoHorario,
+    showCreateHorarioSpinner,
+    setShowCreateHorarioSpinner,
+    showHorarioAlert,
+    setShowHorarioAlert,
+    horarioAlertMessage,
+    setHorarioAlertMessage,
 
     // Datos computados
     sedesConFiltros

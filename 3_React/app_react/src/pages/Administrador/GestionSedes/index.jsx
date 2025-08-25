@@ -69,7 +69,17 @@ function GestionSedes() {
     handleChangePage,
     handleChangeRowsPerPage,
     search,
-    setSearch
+    setSearch,
+    openHorarioDialog,
+    setOpenHorarioDialog,
+    nuevoHorario,
+    setNuevoHorario,
+    showCreateHorarioSpinner,
+    setShowCreateHorarioSpinner,
+    showHorarioAlert,
+    setShowHorarioAlert,
+    horarioAlertMessage,
+    setHorarioAlertMessage
   } = useGestionSedes();
 
   // Estados para formulario
@@ -120,6 +130,7 @@ function GestionSedes() {
     try {
       const data = await gestionSedesService.fetchSedes();
       setSedes(data);
+      return data; // Return the fetched data
     } catch (error) {
       setAlertState({
         open: true,
@@ -127,6 +138,7 @@ function GestionSedes() {
         message: 'Error al cargar sedes: ' + error.message,
         title: 'Error'
       });
+      return []; // Return empty array in case of error
     }
   }, [setSedes, setAlertState]);
 
@@ -386,15 +398,42 @@ function GestionSedes() {
         <DialogTitle sx={{ 
           display: 'flex', 
           alignItems: 'center', 
+          justifyContent: 'space-between',
           gap: 2,
           background: 'linear-gradient(135deg, #4caf50, #388e3c)',
           color: 'white'
         }}>
-          <ScheduleIcon />
-          Horarios de la Sede
-          <IconButton onClick={() => setOpenHorarios(false)} sx={{ ml: 'auto', color: 'white' }}>
-            <CloseIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <ScheduleIcon />
+            <Typography variant="h6" fontWeight={600}>Horarios de la Sede</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setOpenHorarios(false);
+                setOpenHorarioDialog(true);
+              }}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.3)',
+                  transform: 'translateY(-1px)'
+                }
+              }}
+            >
+              + Agregar Horario
+            </Button>
+            <IconButton onClick={() => setOpenHorarios(false)} sx={{ color: 'white' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </DialogTitle>
         <DialogContent sx={{ p: 3, maxHeight: '80vh', overflow: 'auto' }}>
           {sedeSeleccionada && (
@@ -491,15 +530,264 @@ function GestionSedes() {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                No hay horarios configurados para esta sede
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <ScheduleIcon sx={{ fontSize: 64, color: '#ccc', mb: 3 }} />
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Sin horarios configurados
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Los horarios se pueden configurar desde el módulo de administración de sedes.
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Esta sede no tiene horarios asignados
               </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setOpenHorarios(false);
+                  setOpenHorarioDialog(true);
+                }}
+                sx={{ 
+                  borderRadius: 3, 
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1.5,
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)',
+                    transform: 'translateY(-1px)'
+                  }
+                }}
+              >
+                Crear Primer Horario
+              </Button>
             </Box>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo para crear horario */}
+      <Dialog open={openHorarioDialog} onClose={() => setOpenHorarioDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          background: 'linear-gradient(135deg, #4caf50, #388e3c)',
+          color: 'white'
+        }}>
+          <AddIcon />
+          Agregar Horario a: {sedeSeleccionada?.nombre}
+          <IconButton onClick={() => setOpenHorarioDialog(false)} sx={{ ml: 'auto', color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Nombre del horario"
+                value={nuevoHorario.nombre}
+                onChange={(e) => setNuevoHorario({...nuevoHorario, nombre: e.target.value})}
+                required
+                placeholder="ej: Horario Administrativo"
+                InputProps={{
+                  startAdornment: <ScheduleIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                select
+                fullWidth
+                label="Tipo de horario"
+                value={nuevoHorario.tipo}
+                onChange={(e) => setNuevoHorario({...nuevoHorario, tipo: e.target.value})}
+                required
+              >
+                <option value="normal">Normal</option>
+                <option value="nocturno">Nocturno</option>
+                <option value="especial">Especial</option>
+                <option value="festivo">Festivo</option>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Hora de entrada"
+                type="time"
+                value={nuevoHorario.horaEntrada}
+                onChange={(e) => setNuevoHorario({...nuevoHorario, horaEntrada: e.target.value})}
+                required
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Hora de salida"
+                type="time"
+                value={nuevoHorario.horaSalida}
+                onChange={(e) => setNuevoHorario({...nuevoHorario, horaSalida: e.target.value})}
+                required
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Tiempo de almuerzo (minutos)"
+                type="number"
+                value={nuevoHorario.tiempoAlmuerzo}
+                onChange={(e) => setNuevoHorario({...nuevoHorario, tiempoAlmuerzo: parseInt(e.target.value) || 0})}
+                inputProps={{ min: 0, max: 180 }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={nuevoHorario.activo}
+                    onChange={(e) => setNuevoHorario({...nuevoHorario, activo: e.target.checked})}
+                    color="primary"
+                  />
+                }
+                label="Horario activo"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Descripción"
+                value={nuevoHorario.descripcion}
+                onChange={(e) => setNuevoHorario({...nuevoHorario, descripcion: e.target.value})}
+                multiline
+                rows={2}
+              />
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+            <Button onClick={() => setOpenHorarioDialog(false)} variant="outlined">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={async () => {
+                if (!nuevoHorario.nombre || !nuevoHorario.horaEntrada || !nuevoHorario.horaSalida) {
+                  setAlertState({
+                    open: true,
+                    type: 'error',
+                    message: 'Por favor complete los campos requeridos',
+                    title: 'Error de validación'
+                  });
+                  return;
+                }
+                
+                try {
+                  setShowCreateHorarioSpinner(true);
+                  
+                  // Calcular horas de jornada
+                  const calcularHorasJornada = (horaEntrada, horaSalida) => {
+                    if (!horaEntrada || !horaSalida) return 8;
+                    const [entradaHoras, entradaMinutos] = horaEntrada.split(':').map(Number);
+                    const [salidaHoras, salidaMinutos] = horaSalida.split(':').map(Number);
+                    const entradaEnMinutos = entradaHoras * 60 + entradaMinutos;
+                    const salidaEnMinutos = salidaHoras * 60 + salidaMinutos;
+                    let diferenciaMinutos = salidaEnMinutos - entradaEnMinutos;
+                    if (diferenciaMinutos < 0) diferenciaMinutos += 24 * 60;
+                    return diferenciaMinutos / 60;
+                  };
+
+                  const horasJornada = calcularHorasJornada(nuevoHorario.horaEntrada, nuevoHorario.horaSalida);
+                  const horasJornadaReal = horasJornada - (nuevoHorario.tiempoAlmuerzo / 60);
+                  
+                  // Preparar datos del horario
+                  const horarioData = {
+                    nombre: nuevoHorario.nombre,
+                    tipo: nuevoHorario.tipo,
+                    horaEntrada: nuevoHorario.horaEntrada,
+                    horaSalida: nuevoHorario.horaSalida,
+                    horasJornada: horasJornada,
+                    horasJornadaReal: horasJornadaReal,
+                    tiempoAlmuerzo: nuevoHorario.tiempoAlmuerzo,
+                    diasTrabajados: nuevoHorario.diasTrabajados || 5,
+                    activo: nuevoHorario.activo,
+                    descripcion: nuevoHorario.descripcion
+                  };
+                  
+                  console.log('🚀 Enviando horario al backend:', {
+                    sedeId: sedeSeleccionada.id,
+                    sedeName: sedeSeleccionada.nombre,
+                    horarioData: horarioData
+                  });
+                  
+                  // Llamar al servicio para agregar horario
+                  const response = await gestionSedesService.agregarHorario(sedeSeleccionada.id, horarioData);
+                  
+                  // Cerrar el diálogo de horarios temporalmente para forzar la actualización
+                  setOpenHorarioDialog(false);
+                  
+                  // Refrescar datos de sedes
+                  const sedesActualizadas = await fetchSedes();
+                  
+                  // Encontrar la sede actualizada en la respuesta
+                  const sedeActualizada = sedesActualizadas.find(s => s.id === sedeSeleccionada.id);
+                  if (sedeActualizada) {
+                    // Actualizar la sede seleccionada
+                    setSedeSeleccionada(sedeActualizada);
+                    
+                    // Actualizar la lista de horarios
+                    const horariosActualizados = Array.isArray(sedeActualizada.horariosSedeData) 
+                      ? [...sedeActualizada.horariosSedeData] 
+                      : [];
+                      
+                    console.log('📋 Horarios actualizados:', horariosActualizados);
+                    setHorarios(horariosActualizados);
+                    
+                      // Resetear el formulario
+                    setNuevoHorario({
+                      nombre: '',
+                      tipo: 'normal',
+                      horaEntrada: '',
+                      horaSalida: '',
+                      tiempoAlmuerzo: 60,
+                      diasTrabajados: 0,
+                      activo: true,
+                      descripcion: ''
+                    });
+                    
+                    // Mostrar mensaje de éxito y actualizar UI
+                    setShowCreateHorarioSpinner(false);
+                    setHorarioAlertMessage(`Horario "${nuevoHorario.nombre}" agregado exitosamente a ${sedeActualizada.nombre}`);
+                    setShowHorarioAlert(true);
+                    
+                    // Reabrir el diálogo de horarios con los datos actualizados después de un breve retraso
+                    setTimeout(() => {
+                      setOpenHorarios(true);
+                    }, 500);
+                  }
+                } catch (error) {
+                  setShowCreateHorarioSpinner(false);
+                  setAlertState({
+                    open: true,
+                    type: 'error',
+                    message: 'Error al crear el horario: ' + error.message,
+                    title: 'Error'
+                  });
+                }
+              }}
+              variant="contained"
+              disabled={!nuevoHorario.nombre || !nuevoHorario.horaEntrada || !nuevoHorario.horaSalida}
+              sx={{
+                background: 'linear-gradient(135deg, #4caf50, #388e3c)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #388e3c, #2e7d32)'
+                }
+              }}
+            >
+              Crear Horario
+            </Button>
+          </Box>
         </DialogContent>
       </Dialog>
 
@@ -667,6 +955,27 @@ function GestionSedes() {
           showLogo={true}
         />
       )}
+
+      {/* Spinner de éxito para horarios */}
+      <SubAdminCreateSuccessSpinner
+        open={showCreateHorarioSpinner}
+        onClose={() => setShowCreateHorarioSpinner(false)}
+        title="¡Horario Creado!"
+        message={`Horario "${nuevoHorario.nombre}" agregado exitosamente`}
+        size="medium"
+        showLogo={true}
+      />
+
+      {/* Alerta de éxito para horarios */}
+      <SubAdminUniversalAlertUniversal
+        open={showHorarioAlert}
+        type="success"
+        title="Operación Exitosa"
+        message={horarioAlertMessage}
+        onClose={() => setShowHorarioAlert(false)}
+        showLogo={true}
+        autoHideDuration={4000}
+      />
     </LayoutUniversal>
   );
 }

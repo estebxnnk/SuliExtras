@@ -44,6 +44,10 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import WorkIcon from '@mui/icons-material/Work';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LibraryAddOutlinedIcon from '@mui/icons-material/LibraryAddOutlined';
+import { 
+  SubAdminCreateSuccessSpinner,
+  SubAdminUniversalAlert 
+} from '../../components/spinners/SpinnersUniversal';
 
 function PanelSedes() {
   const [sedes, setSedes] = useState([]);
@@ -59,6 +63,11 @@ function PanelSedes() {
   const [openSelectHorarioDialog, setOpenSelectHorarioDialog] = useState(false);
 
   const [selectedSede, setSelectedSede] = useState(null);
+
+  // Success spinners and alerts
+  const [showCreateSuccessSpinner, setShowCreateSuccessSpinner] = useState(false);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   // Edit Sede form
   const [editForm, setEditForm] = useState({
@@ -337,14 +346,28 @@ function PanelSedes() {
         return;
       }
 
-      setMensajeHorario('¡Horario creado exitosamente!');
+      // Show success spinner
+      setShowCreateSuccessSpinner(true);
       resetNuevoHorarioState();
+      
+      // Auto-hide spinner and show alert
       setTimeout(async () => {
+        setShowCreateSuccessSpinner(false);
         setOpenHorarioDialog(false);
         setMensajeHorario('');
         await fetchSedes();
-        setSelectedSede(prev => (sedes || []).find(s => s.id === prev?.id) || prev);
-      }, 1200);
+        const updatedSede = (sedes || []).find(s => s.id === selectedSede?.id) || selectedSede;
+        setSelectedSede(updatedSede);
+        
+        // Show success alert and reopen horarios list
+        setAlertMessage(`Horario "${nuevoHorario.nombre}" agregado exitosamente a ${selectedSede?.nombre}`);
+        setShowSuccessAlert(true);
+        
+        // Reopen the horarios list dialog to show the new horario
+        setTimeout(() => {
+          setOpenHorariosListDialog(true);
+        }, 500);
+      }, 1500);
     } catch (error) {
       setMensajeHorario(error?.name === 'AbortError' ? 'Tiempo de espera agotado' : 'No se pudo conectar con el servidor.');
     }
@@ -544,11 +567,6 @@ function PanelSedes() {
                                 <EditIcon />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Agregar horario">
-                              <IconButton color="success" onClick={() => handleAgregarHorario(sede)} size="small">
-                                <AddIcon />
-                              </IconButton>
-                            </Tooltip>
                             <Tooltip title="Eliminar sede">
                               <IconButton color="error" onClick={() => handleDelete(sede)} size="small">
                                 <DeleteIcon />
@@ -741,29 +759,131 @@ function PanelSedes() {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog Lista de horarios de la sede (solo lectura simple) */}
-      <Dialog open={openHorariosListDialog} onClose={() => setOpenHorariosListDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ color: '#1976d2', fontWeight: 700 }}>Horarios de {selectedSede?.nombre}</DialogTitle>
+      {/* Dialog Lista de horarios de la sede con opción de agregar */}
+      <Dialog open={openHorariosListDialog} onClose={() => setOpenHorariosListDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ color: '#1976d2', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" fontWeight={700}>Horarios de {selectedSede?.nombre}</Typography>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setOpenHorariosListDialog(false);
+              handleAgregarHorario(selectedSede);
+            }}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)',
+                transform: 'translateY(-1px)'
+              }
+            }}
+          >
+            + Agregar Horario
+          </Button>
+        </DialogTitle>
         <DialogContent>
           {!selectedSede ? (
             <Typography variant="body2" color="text.secondary">No hay sede seleccionada.</Typography>
           ) : (Array.isArray(selectedSede.horariosSedeData) && selectedSede.horariosSedeData.length > 0) ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               {selectedSede.horariosSedeData.map(h => (
-                <Box key={h.id} sx={{ p: 1, borderRadius: 1, border: '1px solid #eee' }}>
-                  <Typography fontWeight={600}>{h.nombre}</Typography>
-                  <Typography variant="caption" color="text.secondary">{h.tipo} • {h.horaEntrada} - {h.horaSalida} • {h.activo ? 'Activo' : 'Inactivo'}</Typography>
-                </Box>
+                <Paper key={h.id} elevation={1} sx={{ p: 2, borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography fontWeight={600} sx={{ color: '#1976d2', mb: 0.5 }}>{h.nombre}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        <Chip 
+                          label={h.tipo} 
+                          size="small" 
+                          color="primary" 
+                          variant="outlined"
+                          sx={{ textTransform: 'capitalize' }}
+                        />
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <ScheduleIcon sx={{ fontSize: 16, color: '#666' }} />
+                          {h.horaEntrada} - {h.horaSalida}
+                        </Typography>
+                        <Chip 
+                          label={h.activo ? 'Activo' : 'Inactivo'} 
+                          size="small" 
+                          color={h.activo ? 'success' : 'error'}
+                          variant="filled"
+                        />
+                      </Box>
+                      {h.descripcion && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          {h.descripcion}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Paper>
               ))}
             </Box>
           ) : (
-            <Typography variant="body2" color="text.secondary">Esta sede no tiene horarios.</Typography>
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <ScheduleIcon sx={{ fontSize: 64, color: '#ccc', mb: 3 }} />
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Sin horarios asignados
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Esta sede no tiene horarios configurados
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setOpenHorariosListDialog(false);
+                  handleAgregarHorario(selectedSede);
+                }}
+                sx={{ 
+                  borderRadius: 3, 
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1.5,
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
+                    transform: 'translateY(-1px)'
+                  }
+                }}
+              >
+                Crear Primer Horario
+              </Button>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenHorariosListDialog(false)} sx={{ color: '#1976d2', fontWeight: 700 }}>Cerrar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Success Spinner for Horario Creation */}
+      <SubAdminCreateSuccessSpinner
+        open={showCreateSuccessSpinner}
+        onClose={() => setShowCreateSuccessSpinner(false)}
+        title="¡Horario Creado!"
+        message={`Horario "${nuevoHorario.nombre}" agregado exitosamente`}
+        size="medium"
+      />
+
+      {/* Success Alert */}
+      <SubAdminUniversalAlert
+        open={showSuccessAlert}
+        type="success"
+        title="Operación Exitosa"
+        message={alertMessage}
+        onClose={() => setShowSuccessAlert(false)}
+        showLogo={true}
+        autoHideDuration={4000}
+      />
     </Box>
   );
 }

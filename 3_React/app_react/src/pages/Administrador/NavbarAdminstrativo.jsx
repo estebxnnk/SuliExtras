@@ -117,7 +117,7 @@ function NavbarAdmin({ onFiltrarPorRol }) {
         boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
         backdropFilter: 'blur(8px)',
       }}
-    >
+    > 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
         <Link to="/panel-admin">
           <Box component="img" src="/img/NuevoLogo.png" alt="Logo" sx={{ height: 72 }} />
