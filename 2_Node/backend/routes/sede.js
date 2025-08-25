@@ -416,7 +416,7 @@ router.get('/:sedeId/estadisticas', authMiddleware, sedeController.obtenerEstadi
  *       404:
  *         description: Sede no encontrada
  */
-router.post('/:sedeId/horarios', authMiddleware, soloAdministradores, sedeController.agregarHorario);
+router.post('/:sedeId/horarios', sedeController.agregarHorario);
 
 /**
  * @swagger
