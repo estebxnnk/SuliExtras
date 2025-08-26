@@ -106,8 +106,8 @@ const FiltrosAvanzados = ({
         <Grid item xs={12} md={6} lg={2}>
           <TextField
             fullWidth
-            label="Buscar registros"
-            placeholder="Buscar por empleado, ubicación, número..."
+            label="Buscar registros (nombre, email o documento)"
+            placeholder="Ej: juan@empresa.com, Ana Pérez o 12345678"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             InputProps={{

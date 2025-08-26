@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
+import { getUsuario } from '../utils/registrosUtils';
 
-export const useFiltrosAvanzados = (registros) => {
+export const useFiltrosAvanzados = (registros, usuarios = []) => {
   const [filtros, setFiltros] = useState({
     search: '',
     tipoHoraId: 'todos',
@@ -16,9 +17,20 @@ export const useFiltrosAvanzados = (registros) => {
       if (filtros.search) {
         const searchTerm = filtros.search.toLowerCase();
         const ubicacion = registro.ubicacion?.toLowerCase() || '';
-        const nombres = `${registro.nombres || ''} ${registro.apellidos || ''}`.toLowerCase();
+        const usuarioData = getUsuario(registro.usuario, usuarios) || null;
+        const nombres = (usuarioData?.persona
+          ? `${usuarioData.persona.nombres || ''} ${usuarioData.persona.apellidos || ''}`
+          : `${registro.nombres || ''} ${registro.apellidos || ''}`
+        ).toLowerCase();
+        const email = (registro.usuario || registro.email || usuarioData?.email || '').toLowerCase();
+        const documento = (usuarioData?.persona?.numeroDocumento || '').toLowerCase();
         
-        if (!ubicacion.includes(searchTerm) && !nombres.includes(searchTerm)) {
+        if (
+          !ubicacion.includes(searchTerm) &&
+          !nombres.includes(searchTerm) &&
+          !email.includes(searchTerm) &&
+          !documento.includes(searchTerm)
+        ) {
           return false;
         }
       }
