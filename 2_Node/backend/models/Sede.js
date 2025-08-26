@@ -60,4 +60,4 @@ const Sede = sequelize.define('Sede', {
   ]
 });
 
-module.exports = Sede; 
+module.exports = Sede;

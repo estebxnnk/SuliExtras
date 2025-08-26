@@ -17,15 +17,6 @@ class HorarioSedeLogic {
       throw new Error('Sede no encontrada');
     }
     
-    // Verificar que no exista un horario para el mismo tipo
-    const horarioExistente = await HorarioSede.findOne({
-      where: { sedeId, tipo }
-    });
-    
-    if (horarioExistente) {
-      throw new Error(`Ya existe un horario de tipo '${tipo}' para esta sede`);
-    }
-    
     // Validar que la hora de salida sea posterior a la de entrada
     if (horaEntrada >= horaSalida) {
       throw new Error('La hora de salida debe ser posterior a la hora de entrada');
@@ -101,20 +92,20 @@ class HorarioSedeLogic {
       throw new Error('Horario no encontrado');
     }
     
-    // Si se está cambiando el tipo, verificar que no exista conflicto
-    if (data.tipo && data.tipo !== horario.tipo) {
-      const horarioExistente = await HorarioSede.findOne({
-        where: {
-          sedeId: horario.sedeId,
-          tipo: data.tipo,
-          id: { [Op.ne]: horarioId }
-        }
-      });
-      
-      if (horarioExistente) {
-        throw new Error(`Ya existe un horario de tipo '${data.tipo}' para esta sede`);
-      }
-    }
+    // Si se está cambiando el tipo, verificar que no exista conflicto (comentado para permitir múltiples horarios)
+    // if (data.tipo && data.tipo !== horario.tipo) {
+    //   const horarioExistente = await HorarioSede.findOne({
+    //     where: {
+    //       sedeId: horario.sedeId,
+    //       tipo: data.tipo,
+    //       id: { [Op.ne]: horarioId }
+    //     }
+    //   });
+    //   
+    //   if (horarioExistente) {
+    //     throw new Error(`Ya existe un horario de tipo '${data.tipo}' para esta sede`);
+    //   }
+    // }
     
     // Validar horas si se están actualizando
     if (data.horaEntrada && data.horaSalida) {
