@@ -3,7 +3,7 @@ const Hora = require('../models/Hora');
 const User = require('../models/User');
 const sequelize = require('../configDb/db').sequelize;
 const { Op } = require('sequelize');
-
+const Persona = require('../models/Persona');
 
 // Obtener todos los registros con sus horas asociadas
 const obtenerRegistros = async () => {
@@ -233,7 +233,7 @@ const aprobarRegistrosSemana = async (usuarioId, fechaInicio) => {
     await Registro.update(
       { estado: 'aprobado' },
       { 
-        where: { id: { [sequelize.Op.in]: registrosIds } },
+        where: { id: { [Op.in]: registrosIds } },
         transaction 
       }
     );
@@ -247,6 +247,123 @@ const aprobarRegistrosSemana = async (usuarioId, fechaInicio) => {
     await transaction.rollback();
     throw error;
   }
+};
+
+// Obtener registros por fecha específica (todos los usuarios)
+const obtenerRegistrosPorFecha = async (fecha) => {
+  try {
+    // Validar y formatear fecha
+    const fechaObj = new Date(fecha);
+    if (isNaN(fechaObj.getTime())) {
+      throw new Error('Formato de fecha inválido. Use YYYY-MM-DD');
+    }
+    
+    const fechaStr = fechaObj.toISOString().split('T')[0];
+    
+    // Obtener registros de la base de datos
+    const registros = await Registro.findAll({
+      where: { fecha: fechaStr },
+      attributes: [
+        'id', 'fecha', 'horaIngreso', 'horaSalida', 'ubicacion',
+        'usuario', 'usuarioId', 'numRegistro', 'cantidadHorasExtra',
+        'horas_extra_divididas', 'bono_salarial', 'justificacionHoraExtra',
+        'estado', 'createdAt', 'updatedAt'
+      ],
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'email'],
+          include: [
+            {
+              model: Persona,
+              as: 'persona',
+              attributes: ['nombres', 'apellidos', 'numeroDocumento'] // pon aquí las columnas que necesites
+            }
+          ]
+        }
+      ],
+      order: [['usuarioId', 'ASC'], ['horaIngreso', 'ASC']]
+    });
+    
+    // Procesar y organizar datos
+    const { registrosPorUsuario, totalesGenerales } = procesarRegistrosPorUsuario(registros);
+    
+    return {
+      fecha: fechaStr,
+      registrosPorUsuario,
+      totalesGenerales,
+      registros: registros
+    };
+    
+  } catch (error) {
+    console.error('Error en obtenerRegistrosPorFecha:', error);
+    throw error;
+  }
+};
+
+// Función auxiliar para procesar registros por usuario
+const procesarRegistrosPorUsuario = (registros) => {
+  const registrosPorUsuario = {};
+  
+  // Agrupar registros por usuario
+  registros.forEach(registro => {
+    const usuarioId = registro.usuarioId;
+    
+    if (!registrosPorUsuario[usuarioId]) {
+      registrosPorUsuario[usuarioId] = crearEstructuraUsuario(registro);
+    }
+    
+    agregarRegistroAUsuario(registrosPorUsuario[usuarioId], registro);
+  });
+  
+  // Calcular totales generales
+  const totalesGenerales = calcularTotalesGenerales(registros, registrosPorUsuario);
+  
+  return { registrosPorUsuario, totalesGenerales };
+};
+
+// Función auxiliar para crear estructura de usuario
+const crearEstructuraUsuario = (registro) => ({
+  usuarioId: registro.usuarioId,
+  email: registro.usuario,
+  nombre: registro.user?.nombre || 'N/A',
+  apellido: registro.user?.apellido || 'N/A',
+  registros: [],
+  totales: {
+    totalHorasExtra: 0,
+    totalHorasExtraDivididas: 0,
+    totalBonoSalarial: 0,
+    totalRegistros: 0
+  }
+});
+
+// Función auxiliar para agregar registro a usuario
+const agregarRegistroAUsuario = (usuario, registro) => {
+  usuario.registros.push(registro);
+  usuario.totales.totalHorasExtra += Number(registro.cantidadHorasExtra) || 0;
+  usuario.totales.totalHorasExtraDivididas += Number(registro.horas_extra_divididas) || 0;
+  usuario.totales.totalBonoSalarial += Number(registro.bono_salarial) || 0;
+  usuario.totales.totalRegistros += 1;
+};
+
+// Función auxiliar para calcular totales generales
+const calcularTotalesGenerales = (registros, registrosPorUsuario) => {
+  const totalesGenerales = {
+    totalHorasExtra: 0,
+    totalHorasExtraDivididas: 0,
+    totalBonoSalarial: 0,
+    totalRegistros: registros.length,
+    totalUsuarios: Object.keys(registrosPorUsuario).length
+  };
+  
+  Object.values(registrosPorUsuario).forEach(usuario => {
+    totalesGenerales.totalHorasExtra += usuario.totales.totalHorasExtra;
+    totalesGenerales.totalHorasExtraDivididas += usuario.totales.totalHorasExtraDivididas;
+    totalesGenerales.totalBonoSalarial += usuario.totales.totalBonoSalarial;
+  });
+  
+  return totalesGenerales;
 };
 
 // Lógica para dividir las horas extra
@@ -439,6 +556,7 @@ module.exports = {
   obtenerRegistrosConUsuario,
   obtenerRegistrosPorUsuarioConInfo,
   obtenerRegistrosPorSemana,
+  obtenerRegistrosPorFecha,
   aprobarRegistrosSemana,
   crearRegistro,
   actualizarRegistro,

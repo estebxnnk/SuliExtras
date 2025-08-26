@@ -35,10 +35,12 @@ import {
   DialogoRegistro,
   CrearRegistroDialog,
   CrearRegistrosBulkDialog,
-  InformacionFiltros
+  InformacionFiltros,
+  RegistrosSemanaTable
 } from './components';
+import { RegistrosPorFechaTable, GestionRegistrosDialog } from './components';
 import { InitialPageLoader } from '../../../components';
-
+import { gestionarRegistrosHorasExtraService } from './services/gestionarRegistrosHorasExtraService';
 // Utilidades
 import { getEstadoChip, getTipoHoraNombre, getUsuario, calcularEstadisticas } from './utils/registrosUtils';
 
@@ -114,6 +116,43 @@ function GestionarRegistrosHorasExtra() {
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+
+  // Vista dinámica (unitaria / semanal)
+  const [vistaSemanal, setVistaSemanal] = React.useState(false);
+  const onToggleVista = () => setVistaSemanal(v => !v);
+  const [semanaData, setSemanaData] = React.useState(null);
+  const [usuarioSemanaId, setUsuarioSemanaId] = React.useState('');
+  const [fechaInicioSemana, setFechaInicioSemana] = React.useState('');
+  const [fechaSolo, setFechaSolo] = React.useState('');
+  const [fechaData, setFechaData] = React.useState(null);
+  const [openGestion, setOpenGestion] = React.useState(false);
+  const [grupoGestion, setGrupoGestion] = React.useState(null);
+
+  React.useEffect(() => {
+    const cargarSemana = async () => {
+      if (!vistaSemanal || !usuarioSemanaId) return;
+      try {
+        const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+        setSemanaData(data);
+      } catch (e) {
+        showError(e.message || 'Error al cargar semana');
+      }
+    };
+    cargarSemana();
+  }, [vistaSemanal, usuarioSemanaId, fechaInicioSemana]);
+
+  React.useEffect(() => {
+    const cargarFecha = async () => {
+      if (!vistaSemanal || !fechaSolo) return;
+      try {
+        const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+        setFechaData(data);
+      } catch (e) {
+        showError(e.message || 'Error al cargar registros por fecha');
+      }
+    };
+    cargarFecha();
+  }, [vistaSemanal, fechaSolo]);
 
   // Funciones de acción optimizadas
   const handleVer = (registro) => abrirDialog(registro, 'ver');
@@ -231,27 +270,86 @@ function GestionarRegistrosHorasExtra() {
           tiposHora={tiposHora}
           onClearFilters={limpiarFiltros}
           isMobile={false}
+          extraControls={vistaSemanal ? (
+            <>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
+                <span style={{ fontSize: 12, color: '#666' }}>Vista semanal:</span>
+                <select value={usuarioSemanaId} onChange={(e) => setUsuarioSemanaId(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
+                  <option value="">Seleccione usuario</option>
+                  {usuarios.map(u => (
+                    <option key={u.id} value={u.id}>{u.persona?.nombres} {u.persona?.apellidos} - {u.email}</option>
+                  ))}
+                </select>
+                <input type="date" value={fechaInicioSemana} onChange={(e) => setFechaInicioSemana(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
+                <span style={{ fontSize: 12, color: '#666' }}>o Fecha única:</span>
+                <input type="date" value={fechaSolo} onChange={(e) => setFechaSolo(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
+              </Box>
+            </>
+          ) : null}
         />
 
-        {/* Tabla de Registros optimizada */}
-        <TablaRegistros
-          registrosPaginados={registrosPaginados}
-          registrosFiltrados={registrosFiltrados}
-              page={page}
-              rowsPerPage={rowsPerPage}
-          handleChangePage={handleChangePage}
-          handleChangeRowsPerPage={handleChangeRowsPerPage}
-          handleVer={handleVer}
-          handleEditar={handleEditar}
-          handleAprobar={handleAprobar}
-          handleRechazar={handleRechazar}
-          handleEliminar={handleEliminar}
-          getTipoHoraNombre={getTipoHoraNombre}
-          getEstadoChip={getEstadoChip}
-          getUsuario={getUsuario}
-          usuarios={usuarios}
-          hayFiltrosActivos={hayFiltrosActivos}
-        />
+        {/* Toggle dentro del contenedor (no modifica header) */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <button onClick={() => setVistaSemanal(false)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #1976d2', background: vistaSemanal ? '#fff' : '#1976d2', color: vistaSemanal ? '#1976d2' : '#fff', cursor: 'pointer', fontWeight: 700 }}>Vista unitaria</button>
+          <button onClick={() => setVistaSemanal(true)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #1976d2', background: vistaSemanal ? '#1976d2' : '#fff', color: vistaSemanal ? '#fff' : '#1976d2', cursor: 'pointer', fontWeight: 700 }}>Vista semanal</button>
+          {vistaSemanal && (
+            <select value={usuarioSemanaId} onChange={(e) => setUsuarioSemanaId(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
+              <option value="">Seleccione usuario</option>
+              {usuarios.map(u => (
+                <option key={u.id} value={u.id}>{u.persona?.nombres} {u.persona?.apellidos} - {u.email}</option>
+              ))}
+            </select>
+          )}
+          {vistaSemanal && (
+            <input type="date" value={fechaInicioSemana} onChange={(e) => setFechaInicioSemana(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
+          )}
+          {vistaSemanal && (
+            <>
+              <span style={{ alignSelf: 'center', color: '#666' }}>o Fecha única:</span>
+              <input type="date" value={fechaSolo} onChange={(e) => setFechaSolo(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
+            </>
+          )}
+        </Box>
+
+        {!vistaSemanal ? (
+          <TablaRegistros
+            registrosPaginados={registrosPaginados}
+            registrosFiltrados={registrosFiltrados}
+                page={page}
+                rowsPerPage={rowsPerPage}
+            handleChangePage={handleChangePage}
+            handleChangeRowsPerPage={handleChangeRowsPerPage}
+            handleVer={handleVer}
+            handleEditar={handleEditar}
+            handleAprobar={handleAprobar}
+            handleRechazar={handleRechazar}
+            handleEliminar={handleEliminar}
+            getTipoHoraNombre={getTipoHoraNombre}
+            getEstadoChip={getEstadoChip}
+            getUsuario={getUsuario}
+            usuarios={usuarios}
+            hayFiltrosActivos={hayFiltrosActivos}
+          />
+        ) : (
+          fechaSolo ? (
+            <RegistrosPorFechaTable
+              data={fechaData}
+              onOpenGestion={(grupo) => { setGrupoGestion(grupo); setOpenGestion(true); }}
+              onDeleteUsuariosSeleccionados={async (usuarioIds, registroIds) => {
+                try {
+                  const res = await gestionarRegistrosHorasExtraService.deleteMany(registroIds);
+                  showSuccess(`Eliminados: ${res.ok}/${res.total}`);
+                  const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+                  setFechaData(data);
+                } catch (e) {
+                  showError(e.message || 'Error eliminando');
+                }
+              }}
+            />
+          ) : (
+            <RegistrosSemanaTable data={semanaData} usuarios={usuarios} />
+          )
+        )}
 
         {/* Información de filtros */}
         <InformacionFiltros
@@ -388,6 +486,50 @@ function GestionarRegistrosHorasExtra() {
           confirmDialog.action === 'rechazar' ? 'Rechazar' :
           confirmDialog.action === 'eliminar' ? 'Eliminar' : 'Confirmar'
         }
+      />
+
+      <GestionRegistrosDialog
+        open={openGestion}
+        onClose={() => setOpenGestion(false)}
+        usuarioGrupo={grupoGestion}
+        onAprobarSeleccion={async (ids) => {
+          try {
+            const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'aprobado');
+            showSuccess(`Aprobados: ${res.ok}/${res.total}`);
+            setOpenGestion(false);
+            if (fechaSolo) {
+              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+              setFechaData(data);
+            } else if (usuarioSemanaId) {
+              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+              setSemanaData(data);
+            } else {
+              await refrescarDatos();
+            }
+          } catch (e) {
+            showError(e.message || 'Error aprobando');
+          }
+        }}
+        onRechazarSeleccion={async (ids) => {
+          try {
+            const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'rechazado');
+            showSuccess(`Rechazados: ${res.ok}/${res.total}`);
+            setOpenGestion(false);
+            if (fechaSolo) {
+              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+              setFechaData(data);
+            } else if (usuarioSemanaId) {
+              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+              setSemanaData(data);
+            } else {
+              await refrescarDatos();
+            }
+          } catch (e) {
+            showError(e.message || 'Error rechazando');
+          }
+        }}
+        onEditar={(r) => { setOpenGestion(false); abrirDialog(r, 'editar'); }}
+        onEliminar={(r) => { setOpenGestion(false); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
       />
     </Box>
   );

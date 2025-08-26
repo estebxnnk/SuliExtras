@@ -311,6 +311,18 @@ const CrearRegistrosBulkDialog = ({
 
   useEffect(() => {
     if (vistaSemanal && fechaLunes) {
+      // Validación: fechaLunes debe ser lunes real
+      const fecha = new Date(fechaLunes);
+      const esLunes = fecha.getDay() === 1; // 1 = Monday
+      if (!esLunes) {
+        // Ajustar automáticamente al lunes de esa semana
+        const day = fecha.getDay();
+        // En JS: 0=Domingo... 1=Lunes
+        const diff = day === 0 ? -6 : 1 - day; // mover al lunes
+        const lunes = addDays(fecha, diff);
+        setFechaLunes(formatDate(lunes));
+        return; // esperar siguiente efecto con fecha corregida
+      }
       setWeekRows(prev => {
         const nueva = computeWeekFromMonday(fechaLunes);
         // mantener horas comunes si existen en genOpts

@@ -48,7 +48,6 @@ const HeaderGestionRegistros = ({
         >
           {refreshing ? 'Actualizando...' : 'Actualizar'}
         </Button>
-        
         <Button
           variant="contained"
           startIcon={<AddIcon />}

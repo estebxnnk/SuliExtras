@@ -233,6 +233,35 @@ const getRegistrosPorSemana = async (req, res) => {
   }
 };
 
+// Obtener registros por fecha específica (todos los usuarios)
+const getRegistrosPorFecha = async (req, res) => {
+  try {
+    const { fecha } = req.params;
+    
+    if (!fecha) {
+      return res.status(400).json({ 
+        error: 'La fecha es requerida' 
+      });
+    }
+    
+    const registrosFecha = await registroLogic.obtenerRegistrosPorFecha(fecha);
+    
+    res.status(200).json({
+      message: `Registros obtenidos para la fecha ${registrosFecha.fecha}`,
+      fecha: registrosFecha.fecha,
+      registrosPorUsuario: registrosFecha.registrosPorUsuario,
+      totalesGenerales: registrosFecha.totalesGenerales,
+      registros: registrosFecha.registros
+    });
+    
+  } catch (err) {
+    console.error('Error al obtener registros por fecha:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al obtener registros por fecha'
+    });
+  }
+};
+
 // Aprobar todos los registros de una semana
 const aprobarRegistrosSemana = async (req, res) => {
   try {
@@ -271,6 +300,7 @@ module.exports = {
   getRegistrosConUsuario,
   getRegistrosPorUsuarioConInfo,
   getRegistrosPorSemana,
+  getRegistrosPorFecha,
   aprobarRegistrosSemana,
   debugRegistros,
   createRegistro,

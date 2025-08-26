@@ -17,9 +17,13 @@ export { default as RegistroDialog } from './Dialogs/RegistroDialog';
 export { default as CrearRegistroDialog } from './Dialogs/CrearRegistroDialog';
 export { default as CrearRegistrosBulkDialog } from './Dialogs/CrearRegistrosBulkDialog';
 export { default as DialogoRegistro } from './Dialogs/DialogoRegistro';
+export { default as GestionSemanaDialog } from './Dialogs/GestionSemanaDialog';
 
 // Componentes de tabla
 export { default as TablaRegistros } from './TablaRegistros';
+export { default as RegistrosSemanaTable } from './RegistrosSemanaTable';
+export { default as RegistrosPorFechaTable } from './RegistrosPorFechaTable';
+export { default as GestionRegistrosDialog } from './Dialogs/GestionRegistrosDialog';
 
 // Componentes de estadísticas y filtros
 export { default as FiltrosAvanzados } from './FiltrosAvanzados';
