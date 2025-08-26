@@ -27,7 +27,7 @@ export const useGestionSedes = () => {
     horaSalida: '',
     horasJornada: 8,
     tiempoAlmuerzo: 60,
-    diasTrabajados: 0,
+    diasTrabajados: ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'],
     activo: true,
     descripcion: ''
   });

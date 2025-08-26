@@ -12,7 +12,10 @@ import {
   Switch,
   FormControlLabel,
   Chip,
-  Grid
+  Grid,
+  Checkbox,
+  FormGroup,
+  MenuItem
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -189,6 +192,46 @@ function GestionSedes() {
     }
   };
 
+  // Días de la semana para el checklist de horarios
+  const diasSemana = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+
+  // Eliminar un horario de la sede seleccionada
+  const handleEliminarHorario = async (horarioIndex) => {
+    if (!sedeSeleccionada) return;
+    const confirmar = window.confirm('¿Seguro que deseas eliminar este horario?');
+    if (!confirmar) return;
+
+    try {
+      setLoadingState({ open: true, message: 'Eliminando horario...', size: 'medium' });
+      await gestionSedesService.eliminarHorario(sedeSeleccionada.id, horarioIndex);
+
+      // Refrescar sedes y mantener el diálogo abierto con datos actualizados
+      const sedesActualizadas = await fetchSedes();
+      const sedeActualizada = sedesActualizadas.find(s => s.id === sedeSeleccionada.id);
+      if (sedeActualizada) {
+        setSedeSeleccionada(sedeActualizada);
+        // Actualizar lista local de horarios si existe en el estado del hook
+        const horariosActualizados = Array.isArray(sedeActualizada.horarios)
+          ? sedeActualizada.horarios
+          : (Array.isArray(sedeActualizada.horariosSedeData) ? sedeActualizada.horariosSedeData : []);
+        setHorarios(horariosActualizados);
+      }
+
+      hideLoading();
+      setSuccessState({ open: true, type: 'delete', message: 'Horario eliminado correctamente' });
+      // Asegurar que el diálogo permanezca abierto
+      setOpenHorarios(true);
+    } catch (error) {
+      hideLoading();
+      setAlertState({
+        open: true,
+        type: 'error',
+        message: 'Error al eliminar el horario: ' + error.message,
+        title: 'Error'
+      });
+    }
+  };
+
   return (
     <LayoutUniversal>
       <HeaderGestionSedes
@@ -319,7 +362,6 @@ function GestionSedes() {
                     </Typography>
                   </Box>
                 </Grid>
-                
                 <Grid item xs={12} md={6}>
                   <Box sx={{ 
                     p: 2, 
@@ -481,9 +523,20 @@ function GestionSedes() {
                         border: '1px solid #dee2e6',
                         '&:hover': { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }
                       }}>
-                        <Typography variant="subtitle2" fontWeight={600} color="#4caf50" sx={{ mb: 1 }}>
-                          {horario.nombre}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="subtitle2" fontWeight={600} color="#4caf50">
+                            {horario.nombre}
+                          </Typography>
+                          <IconButton 
+                            aria-label="Eliminar horario" 
+                            size="small" 
+                            onClick={() => handleEliminarHorario(index)}
+                            sx={{ color: '#f44336' }}
+                            title="Eliminar horario"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Typography variant="body2">
                             <strong>Tipo:</strong> 
@@ -505,7 +558,15 @@ function GestionSedes() {
                             <strong>Almuerzo:</strong> {horario.tiempoAlmuerzo} min
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Días/semana:</strong> {horario.diasTrabajados}
+                            <strong>Días trabajados:</strong>
+                            <Box component="span" sx={{ ml: 1, display: 'inline-flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {Array.isArray(horario.diasTrabajados) && horario.diasTrabajados.length > 0
+                                ? horario.diasTrabajados.map((d, i) => (
+                                    <Chip key={i} label={d} size="small" variant="outlined" />
+                                  ))
+                                : <Chip label="Sin días" size="small" color="warning" />
+                              }
+                            </Box>
                           </Typography>
                           <Typography variant="body2">
                             <strong>Estado:</strong> 
@@ -605,10 +666,10 @@ function GestionSedes() {
                 onChange={(e) => setNuevoHorario({...nuevoHorario, tipo: e.target.value})}
                 required
               >
-                <option value="normal">Normal</option>
-                <option value="nocturno">Nocturno</option>
-                <option value="especial">Especial</option>
-                <option value="festivo">Festivo</option>
+                <MenuItem value="normal">Normal</MenuItem>
+                <MenuItem value="nocturno">Nocturno</MenuItem>
+                <MenuItem value="especial">Especial</MenuItem>
+                <MenuItem value="festivo">Festivo</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -632,6 +693,34 @@ function GestionSedes() {
                 required
                 InputLabelProps={{ shrink: true }}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Días trabajados</Typography>
+              <FormGroup row>
+                {diasSemana.map(dia => (
+                  <FormControlLabel
+                    key={dia}
+                    control={
+                      <Checkbox
+                        checked={Array.isArray(nuevoHorario.diasTrabajados) && nuevoHorario.diasTrabajados.includes(dia)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setNuevoHorario(prev => {
+                            const actual = Array.isArray(prev.diasTrabajados) ? prev.diasTrabajados : [];
+                            if (checked) {
+                              return { ...prev, diasTrabajados: [...new Set([...actual, dia])] };
+                            } else {
+                              return { ...prev, diasTrabajados: actual.filter(d => d !== dia) };
+                            }
+                          });
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label={dia}
+                  />
+                ))}
+              </FormGroup>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
@@ -682,6 +771,15 @@ function GestionSedes() {
                   });
                   return;
                 }
+                if (!Array.isArray(nuevoHorario.diasTrabajados) || nuevoHorario.diasTrabajados.length === 0) {
+                  setAlertState({
+                    open: true,
+                    type: 'error',
+                    message: 'Seleccione al menos un día trabajado',
+                    title: 'Error de validación'
+                  });
+                  return;
+                }
                 
                 try {
                   setShowCreateHorarioSpinner(true);
@@ -710,7 +808,7 @@ function GestionSedes() {
                     horasJornada: horasJornada,
                     horasJornadaReal: horasJornadaReal,
                     tiempoAlmuerzo: nuevoHorario.tiempoAlmuerzo,
-                    diasTrabajados: nuevoHorario.diasTrabajados || 5,
+                    diasTrabajados: Array.isArray(nuevoHorario.diasTrabajados) ? nuevoHorario.diasTrabajados : [],
                     activo: nuevoHorario.activo,
                     descripcion: nuevoHorario.descripcion
                   };
@@ -751,7 +849,7 @@ function GestionSedes() {
                       horaEntrada: '',
                       horaSalida: '',
                       tiempoAlmuerzo: 60,
-                      diasTrabajados: 0,
+                      diasTrabajados: diasSemana,
                       activo: true,
                       descripcion: ''
                     });
@@ -836,6 +934,7 @@ function GestionSedes() {
                 value={formData.direccion}
                 onChange={(e) => setFormData({...formData, direccion: e.target.value})}
                 required
+                
                 multiline
                 rows={2}
                 InputProps={{

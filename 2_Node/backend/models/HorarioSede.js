@@ -61,14 +61,10 @@ const HorarioSede = sequelize.define('HorarioSede', {
     comment: 'Tiempo de almuerzo en minutos'
   },
   diasTrabajados: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: false,
-    defaultValue: 5,
-    validate: {
-      min: 0,
-      max: 7
-    },
-    comment: 'Cantidad de días trabajados en la semana para este horario'
+    defaultValue: ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'],
+    comment: 'Días de la semana que se trabaja (ej: ["LUNES", "MARTES", "MIÉRCOLES"])'
   },
   activo: {
     type: DataTypes.BOOLEAN,
