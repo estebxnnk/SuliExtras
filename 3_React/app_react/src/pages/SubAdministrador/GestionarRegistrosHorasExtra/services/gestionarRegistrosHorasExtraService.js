@@ -108,6 +108,29 @@ export const gestionarRegistrosHorasExtraService = {
     }
   },
 
+  // Crear múltiples registros (bulk)
+  async createRegistrosBulk(payload) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/registros/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al crear los registros');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error en createRegistrosBulk:', error);
+      throw error;
+    }
+  },
+
   // Obtener un registro específico por ID
   async getRegistroById(id) {
     try {

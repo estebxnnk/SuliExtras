@@ -13,7 +13,8 @@ import {
   useEstadosRegistros,
   useUniversalAlerts,
   useFiltrosAvanzados,
-  useCrearRegistro
+  useCrearRegistro,
+  useCrearRegistrosBulk
 } from './hooks';
 
 // Componentes optimizados
@@ -33,6 +34,7 @@ import {
   TablaRegistros,
   DialogoRegistro,
   CrearRegistroDialog,
+  CrearRegistrosBulkDialog,
   InformacionFiltros
 } from './components';
 import { InitialPageLoader } from '../../../components';
@@ -92,12 +94,17 @@ function GestionarRegistrosHorasExtra() {
     hayFiltrosActivos,
     actualizarFiltro,
     limpiarFiltros
-  } = useFiltrosAvanzados(registros);
+  } = useFiltrosAvanzados(registros, usuarios);
 
   const {
     crearRegistro,
     loading: loadingCreacion
   } = useCrearRegistro(cargarDatos, showSuccess, showError);
+
+  const {
+    crearRegistrosBulk,
+    loading: loadingCreacionBulk
+  } = useCrearRegistrosBulk(cargarDatos, showSuccess, showError);
 
   // Calcular estadísticas
   const estadisticasAdicionales = calcularEstadisticas(registros, registrosFiltrados, estadisticasFiltros);
@@ -157,6 +164,10 @@ function GestionarRegistrosHorasExtra() {
     abrirDialog(null, 'crear');
   };
 
+  const [openBulk, setOpenBulk] = React.useState(false);
+  const irACrearRegistrosBulk = () => setOpenBulk(true);
+  const cerrarBulk = () => setOpenBulk(false);
+
   // Cargar datos al montar el componente
   useEffect(() => {
     cargarDatos().catch(error => {
@@ -196,6 +207,7 @@ function GestionarRegistrosHorasExtra() {
           refreshing={refreshing}
           refrescarDatos={refrescarDatos}
           irACrearRegistro={irACrearRegistro}
+          irACrearRegistrosBulk={irACrearRegistrosBulk}
         />
 
         {/* Estadísticas optimizadas con estilo moderno */}
@@ -271,6 +283,26 @@ function GestionarRegistrosHorasExtra() {
         usuarios={usuarios}
         onCrearRegistro={crearRegistro}
         loading={loadingCreacion}
+        isMobile={false}
+      />
+
+      {/* Diálogo de Crear Registros (Bulk) */}
+      <CrearRegistrosBulkDialog
+        open={openBulk}
+        onClose={cerrarBulk}
+        tiposHora={tiposHora}
+        usuarios={usuarios}
+        onCrearRegistrosBulk={async ({ usuarioId, registros }) => {
+          try {
+            const res = await crearRegistrosBulk(usuarioId, registros);
+            if (res) showSuccess('Registros creados exitosamente');
+            return true;
+          } catch (e) {
+            showError(e.message || 'Error al crear registros');
+            return false;
+          }
+        }}
+        loading={loadingCreacionBulk}
         isMobile={false}
       />
 

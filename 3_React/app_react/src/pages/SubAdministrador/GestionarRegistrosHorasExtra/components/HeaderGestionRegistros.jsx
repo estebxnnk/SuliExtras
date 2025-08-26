@@ -13,7 +13,8 @@ import {
 const HeaderGestionRegistros = ({ 
   refreshing, 
   refrescarDatos, 
-  irACrearRegistro 
+  irACrearRegistro,
+  irACrearRegistrosBulk
 }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -65,6 +66,25 @@ const HeaderGestionRegistros = ({
           }}
         >
           Crear Registro
+        </Button>
+
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={irACrearRegistrosBulk}
+          sx={{ 
+            fontWeight: 700,
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)',
+            boxShadow: '0 4px 15px rgba(27, 94, 32, 0.3)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #1b5e20 0%, #10491a 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 20px rgba(27, 94, 32, 0.4)'
+            }
+          }}
+        >
+          Crear Registros (Bulk)
         </Button>
       </Box>
     </Box>
