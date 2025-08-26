@@ -203,6 +203,66 @@ const crearRegistrosBulk = async (req, res) => {
   }
 };
 
+// Obtener registros organizados por semana
+const getRegistrosPorSemana = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    const { fechaInicio } = req.query; // Opcional: fecha para calcular la semana
+    
+    if (!usuarioId) {
+      return res.status(400).json({ 
+        error: 'El usuarioId es requerido' 
+      });
+    }
+    
+    const semana = await registroLogic.obtenerRegistrosPorSemana(usuarioId, fechaInicio);
+    
+    res.status(200).json({
+      message: `Registros de la semana del ${semana.semana.fechaInicio} al ${semana.semana.fechaFin}`,
+      semana: semana.semana,
+      registrosPorDia: semana.registrosPorDia,
+      totales: semana.totales,
+      registros: semana.registros
+    });
+    
+  } catch (err) {
+    console.error('Error al obtener registros por semana:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al obtener registros por semana'
+    });
+  }
+};
+
+// Aprobar todos los registros de una semana
+const aprobarRegistrosSemana = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    const { fechaInicio } = req.body; // Fecha para calcular la semana
+    
+    if (!usuarioId) {
+      return res.status(400).json({ 
+        error: 'El usuarioId es requerido' 
+      });
+    }
+    
+    const semana = await registroLogic.aprobarRegistrosSemana(usuarioId, fechaInicio);
+    
+    res.status(200).json({
+      message: `Registros de la semana del ${semana.semana.fechaInicio} al ${semana.semana.fechaFin} aprobados exitosamente`,
+      semana: semana.semana,
+      registrosPorDia: semana.registrosPorDia,
+      totales: semana.totales,
+      registros: semana.registros
+    });
+    
+  } catch (err) {
+    console.error('Error al aprobar registros de la semana:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al aprobar registros'
+    });
+  }
+};
+
 module.exports = {
   getAllRegistros,
   getRegistroById,
@@ -210,6 +270,8 @@ module.exports = {
   getRegistrosByUsuarioId,
   getRegistrosConUsuario,
   getRegistrosPorUsuarioConInfo,
+  getRegistrosPorSemana,
+  aprobarRegistrosSemana,
   debugRegistros,
   createRegistro,
   updateRegistro,

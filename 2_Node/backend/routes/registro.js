@@ -422,4 +422,154 @@ router.post('/bulk',
   registroController.crearRegistrosBulk
 );
 
+/**
+ * @swagger
+ * /api/registros/semana/{usuarioId}:
+ *   get:
+ *     summary: Obtener registros organizados por semana (lunes a domingo)
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *       - in: query
+ *         name: fechaInicio
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha para calcular la semana (opcional, usa fecha actual si no se proporciona)
+ *     responses:
+ *       200:
+ *         description: Registros organizados por semana
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 semana:
+ *                   type: object
+ *                   properties:
+ *                     fechaInicio:
+ *                       type: string
+ *                       format: date
+ *                     fechaFin:
+ *                       type: string
+ *                       format: date
+ *                     lunes:
+ *                       type: string
+ *                       format: date
+ *                     domingo:
+ *                       type: string
+ *                       format: date
+ *                 registrosPorDia:
+ *                   type: object
+ *                   properties:
+ *                     lunes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     martes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     miercoles:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     jueves:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     viernes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     sabado:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     domingo:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                 totales:
+ *                   type: object
+ *                   properties:
+ *                     totalHorasExtra:
+ *                       type: number
+ *                     totalHorasExtraDivididas:
+ *                       type: number
+ *                     totalBonoSalarial:
+ *                       type: number
+ *                     totalRegistros:
+ *                       type: integer
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/semana/:usuarioId', registroController.getRegistrosPorSemana);
+
+/**
+ * @swagger
+ * /api/registros/semana/{usuarioId}/aprobar:
+ *   post:
+ *     summary: Aprobar todos los registros de una semana
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fechaInicio:
+ *                 type: string
+ *                 format: date
+ *                 description: Fecha para calcular la semana
+ *                 example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Registros aprobados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 semana:
+ *                   type: object
+ *                 registrosPorDia:
+ *                   type: object
+ *                 totales:
+ *                   type: object
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/semana/:usuarioId/aprobar', registroController.aprobarRegistrosSemana);
+
 module.exports = router;

@@ -2,6 +2,7 @@ const Registro = require('../models/Registro');
 const Hora = require('../models/Hora');
 const User = require('../models/User');
 const sequelize = require('../configDb/db').sequelize;
+const { Op } = require('sequelize');
 
 
 // Obtener todos los registros con sus horas asociadas
@@ -112,6 +113,140 @@ const obtenerRegistrosPorUsuarioConInfo = async (usuarioId) => {
     ],
     order: [['fecha', 'DESC']]
   });
+};
+
+// Obtener registros por semana (lunes a domingo)
+const obtenerRegistrosPorSemana = async (usuarioId, fechaInicio) => {
+  try {
+    // Si no se proporciona fecha, usar la fecha actual
+    const fecha = fechaInicio ? new Date(fechaInicio) : new Date();
+    
+    // Obtener el lunes de la semana (día 1 = lunes)
+    const lunes = new Date(fecha);
+    const diaSemana = fecha.getDay(); // 0 = domingo, 1 = lunes, etc.
+    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1; // Si es domingo, retroceder 6 días
+    lunes.setDate(fecha.getDate() - diasDesdeLunes);
+    lunes.setHours(0, 0, 0, 0);
+    
+    // Obtener el domingo de la semana
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    domingo.setHours(23, 59, 59, 999);
+    
+    // Formatear fechas para la consulta
+    const fechaInicioStr = lunes.toISOString().split('T')[0];
+    const fechaFinStr = domingo.toISOString().split('T')[0];
+    
+    const registros = await Registro.findAll({
+      where: {
+        usuarioId,
+        fecha: {
+          [Op.between]: [fechaInicioStr, fechaFinStr]
+        }
+      },
+      attributes: [
+        'id',
+        'fecha',
+        'horaIngreso',
+        'horaSalida',
+        'ubicacion',
+        'usuario',
+        'usuarioId',
+        'numRegistro',
+        'cantidadHorasExtra',
+        'horas_extra_divididas',
+        'bono_salarial',
+        'justificacionHoraExtra',
+        'estado',
+        'createdAt',
+        'updatedAt'
+      ],
+      order: [['fecha', 'ASC'], ['horaIngreso', 'ASC']]
+    });
+      
+    // Organizar registros por día de la semana
+    const registrosPorDia = {
+      lunes: [],
+      martes: [],
+      miercoles: [],
+      jueves: [],
+      viernes: [],
+      sabado: [],
+      domingo: []
+    };
+    
+    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    
+    registros.forEach(registro => {
+      const fecha = new Date(registro.fecha);
+      const diaSemana = diasSemana[fecha.getDay()];
+      registrosPorDia[diaSemana].push(registro);
+    });
+    
+    // Calcular totales semanales
+    const totales = {
+      totalHorasExtra: 0,
+      totalHorasExtraDivididas: 0,
+      totalBonoSalarial: 0,
+      totalRegistros: registros.length
+    };
+    
+    registros.forEach(registro => {
+      totales.totalHorasExtra += Number(registro.cantidadHorasExtra) || 0;
+      totales.totalHorasExtraDivididas += Number(registro.horas_extra_divididas) || 0;
+      totales.totalBonoSalarial += Number(registro.bono_salarial) || 0;
+    });
+    
+    return {
+      semana: {
+        fechaInicio: fechaInicioStr,
+        fechaFin: fechaFinStr,
+        lunes: lunes.toISOString().split('T')[0],
+        domingo: domingo.toISOString().split('T')[0]
+      },
+      registrosPorDia,
+      totales,
+      registros: registros
+    };
+    
+  } catch (error) {
+    console.error('Error en obtenerRegistrosPorSemana:', error);
+    throw error;
+  }
+};
+
+// Aprobar registros de una semana
+const aprobarRegistrosSemana = async (usuarioId, fechaInicio) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    // Obtener registros de la semana
+    const semana = await obtenerRegistrosPorSemana(usuarioId, fechaInicio);
+    
+    // Actualizar estado de todos los registros a 'aprobado'
+    const registrosIds = semana.registros.map(r => r.id);
+    
+    if (registrosIds.length === 0) {
+      throw new Error('No hay registros para aprobar en esta semana');
+    }
+    
+    await Registro.update(
+      { estado: 'aprobado' },
+      { 
+        where: { id: { [sequelize.Op.in]: registrosIds } },
+        transaction 
+      }
+    );
+    
+    await transaction.commit();
+    
+    // Retornar registros actualizados
+    return await obtenerRegistrosPorSemana(usuarioId, fechaInicio);
+    
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 };
 
 // Lógica para dividir las horas extra
@@ -303,6 +438,8 @@ module.exports = {
   obtenerRegistrosPorUsuarioId,
   obtenerRegistrosConUsuario,
   obtenerRegistrosPorUsuarioConInfo,
+  obtenerRegistrosPorSemana,
+  aprobarRegistrosSemana,
   crearRegistro,
   actualizarRegistro,
   eliminarRegistro,
