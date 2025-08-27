@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -41,15 +41,19 @@ import {
   ViewWeek as ViewWeekIcon
 } from '@mui/icons-material';
 
-const emptyRow = () => ({
-  fecha: '',
-  horaIngreso: '',
-  horaSalida: '',
-  ubicacion: '',
-  cantidadHorasExtra: '',
-  justificacionHoraExtra: '',
-  tipoHoraId: ''
-});
+import {
+  emptyRow,
+  calcularHorasExtraRow,
+  validateRow,
+  validateNoOverlaps,
+  addDays,
+  formatDate,
+  isWeekend,
+  computeWeekFromMondayStr,
+  parseLocalISODate,
+  toMondayDateString
+} from '../../utils/horasExtrasUtils';
+import { FixedSizeList as List } from 'react-window';
 
 const CrearRegistrosBulkDialog = ({
   open,
@@ -80,6 +84,8 @@ const CrearRegistrosBulkDialog = ({
     emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()
   ]);
   const [weekInclude, setWeekInclude] = useState([true, true, true, true, true, true, true]);
+  const tableContainerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(800);
 
   const usuarioId = useMemo(() => usuarioSeleccionado?.id || null, [usuarioSeleccionado]);
 
@@ -99,75 +105,16 @@ const CrearRegistrosBulkDialog = ({
     return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
   });
 
-  const calcularHorasExtraRow = (row) => {
-    if (!row.horaIngreso || !row.horaSalida) return row.cantidadHorasExtra;
-    const [hIn, mIn] = row.horaIngreso.split(':').map(Number);
-    const [hOut, mOut] = row.horaSalida.split(':').map(Number);
-    let horas = (hOut - hIn) + (mOut - mIn) / 60;
-    if (horas < 0) horas += 24;
-    horas = Math.max(0, horas - 8);
-    return horas > 0 ? horas.toFixed(2) : '0.00';
-  };
-
-  // Auto-calc per row when times change
-  useEffect(() => {
-    setRows(prev => prev.map(r => {
+  // Derivar filas con horas calculadas (performance-friendly)
+  const derivedRows = useMemo(() => {
+    return rows.map(r => {
       if (r.horaIngreso && r.horaSalida) {
         const calc = calcularHorasExtraRow(r);
-        if (calc !== r.cantidadHorasExtra) {
-          return { ...r, cantidadHorasExtra: calc };
-        }
+        return calc !== r.cantidadHorasExtra ? { ...r, cantidadHorasExtra: calc } : r;
       }
       return r;
-    }));
-  }, [rows.map(r => `${r.horaIngreso}-${r.horaSalida}`).join('|')]);
-
-  const validateRow = (row, index) => {
-    if (!row.fecha || !row.horaIngreso || !row.horaSalida || !row.ubicacion || !row.tipoHoraId) {
-      throw new Error(`Fila ${index + 1}: campos requeridos incompletos`);
-    }
-
-    const f = new Date(row.fecha);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    if (f > today) throw new Error(`Fila ${index + 1}: la fecha no puede ser futura`);
-
-    if (row.horaIngreso >= row.horaSalida) {
-      throw new Error(`Fila ${index + 1}: la hora de salida debe ser mayor a la de ingreso`);
-    }
-
-    const cant = parseFloat(row.cantidadHorasExtra);
-    if (isNaN(cant) || cant < 0.5) {
-      throw new Error(`Fila ${index + 1}: cantidad de horas extra mínima 0.5`);
-    }
-  };
-
-  const timeToMinutes = (hhmm) => {
-    const [h, m] = hhmm.split(':').map(Number);
-    return h * 60 + m;
-  };
-
-  const validateNoOverlaps = (rowsToValidate) => {
-    const byDate = rowsToValidate.reduce((acc, row, idx) => {
-      if (!row.fecha || !row.horaIngreso || !row.horaSalida) return acc;
-      const start = timeToMinutes(row.horaIngreso);
-      let end = timeToMinutes(row.horaSalida);
-      if (end <= start) end += 24 * 60; // cruza medianoche
-      (acc[row.fecha] = acc[row.fecha] || []).push({ start, end, idx });
-      return acc;
-    }, {});
-
-    for (const fecha of Object.keys(byDate)) {
-      const list = byDate[fecha].sort((a, b) => a.start - b.start);
-      for (let i = 1; i < list.length; i++) {
-        if (list[i].start < list[i - 1].end) {
-          const a = list[i - 1].idx + 1;
-          const b = list[i].idx + 1;
-          throw new Error(`Solapamiento de horas en ${fecha} entre filas ${a} y ${b}`);
-        }
-      }
-    }
-  };
+    });
+  }, [rows]);
 
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
@@ -182,7 +129,7 @@ const CrearRegistrosBulkDialog = ({
       if (vistaSemanal) {
         if (!fechaLunes) throw new Error('Selecciona la fecha de Lunes');
         // Construir desde weekRows
-        const activos = weekRows
+        const activos = derivedWeekRows
           .map((d, i) => ({ ...d, _i: i }))
           .filter((d, i) => weekInclude[i])
           .filter(d => d.fecha && d.horaIngreso && d.horaSalida && d.ubicacion && d.tipoHoraId);
@@ -199,10 +146,10 @@ const CrearRegistrosBulkDialog = ({
           tipoHoraId: r.tipoHoraId ? parseInt(r.tipoHoraId) : undefined
         }));
       } else {
-        if (!rows.length) throw new Error('Agrega al menos un registro');
-        rows.forEach((row, idx) => validateRow(row, idx));
-        validateNoOverlaps(rows);
-        registros = rows.map(r => ({
+        if (!derivedRows.length) throw new Error('Agrega al menos un registro');
+        derivedRows.forEach((row, idx) => validateRow(row, idx));
+        validateNoOverlaps(derivedRows);
+        registros = derivedRows.map(r => ({
           fecha: r.fecha,
           horaIngreso: r.horaIngreso,
           horaSalida: r.horaSalida,
@@ -246,24 +193,6 @@ const CrearRegistrosBulkDialog = ({
     setGenOpts(prev => ({ ...prev, [field]: value }));
   };
 
-  const isWeekend = (date) => {
-    const d = date.getDay();
-    return d === 0 || d === 6;
-  };
-
-  const addDays = (date, days) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
-  };
-
-  const formatDate = (date) => {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const generarSemana = () => {
     setMensaje('');
     const { fechaInicio, dias, soloHabiles, horaIngreso, horaSalida, ubicacion, tipoHoraId, justificacionHoraExtra } = genOpts;
@@ -271,7 +200,7 @@ const CrearRegistrosBulkDialog = ({
       setMensaje('Completa los campos de generación: fecha, horas, ubicación y tipo');
       return;
     }
-    const start = new Date(fechaInicio);
+    const start = parseLocalISODate(fechaInicio);
     const generadas = [];
     let count = 0;
     let offset = 0;
@@ -302,53 +231,57 @@ const CrearRegistrosBulkDialog = ({
 
   // Semana: helpers
   const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-  const computeWeekFromMonday = (mondayStr) => {
-    if (!mondayStr) return [emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()];
-    const start = new Date(mondayStr);
-    const newWeek = new Array(7).fill(0).map((_, i) => ({ ...emptyRow(), fecha: formatDate(addDays(start, i)) }));
-    return newWeek;
-  };
 
   useEffect(() => {
     if (vistaSemanal && fechaLunes) {
-      // Validación: fechaLunes debe ser lunes real
-      const fecha = new Date(fechaLunes);
-      const esLunes = fecha.getDay() === 1; // 1 = Monday
-      if (!esLunes) {
-        // Ajustar automáticamente al lunes de esa semana
-        const day = fecha.getDay();
-        // En JS: 0=Domingo... 1=Lunes
-        const diff = day === 0 ? -6 : 1 - day; // mover al lunes
-        const lunes = addDays(fecha, diff);
-        setFechaLunes(formatDate(lunes));
+      // Validación: fechaLunes debe ser lunes real (zona local) y guardia de loop
+      const fecha = parseLocalISODate(fechaLunes);
+      const mondayStr = toMondayDateString(fecha);
+      if (mondayStr !== fechaLunes) {
+        setFechaLunes(mondayStr);
         return; // esperar siguiente efecto con fecha corregida
       }
       setWeekRows(prev => {
-        const nueva = computeWeekFromMonday(fechaLunes);
-        // mantener horas comunes si existen en genOpts
-        return nueva.map((d, i) => ({
-          ...d,
-          horaIngreso: prev[i]?.horaIngreso || genOpts.horaIngreso || '',
-          horaSalida: prev[i]?.horaSalida || genOpts.horaSalida || '',
-          ubicacion: prev[i]?.ubicacion || genOpts.ubicacion || '',
-          tipoHoraId: prev[i]?.tipoHoraId || genOpts.tipoHoraId || '',
-          justificacionHoraExtra: prev[i]?.justificacionHoraExtra || genOpts.justificacionHoraExtra || ''
-        }));
+        const base = computeWeekFromMondayStr(fechaLunes);
+        let changed = false;
+        const merged = base.map((d, i) => {
+          const combinado = {
+            ...d,
+            horaIngreso: prev[i]?.horaIngreso || genOpts.horaIngreso || '',
+            horaSalida: prev[i]?.horaSalida || genOpts.horaSalida || '',
+            ubicacion: prev[i]?.ubicacion || genOpts.ubicacion || '',
+            tipoHoraId: prev[i]?.tipoHoraId || genOpts.tipoHoraId || '',
+            justificacionHoraExtra: prev[i]?.justificacionHoraExtra || genOpts.justificacionHoraExtra || ''
+          };
+          const antes = prev[i] || emptyRow();
+          if (
+            antes.fecha !== combinado.fecha ||
+            antes.horaIngreso !== combinado.horaIngreso ||
+            antes.horaSalida !== combinado.horaSalida ||
+            antes.ubicacion !== combinado.ubicacion ||
+            antes.tipoHoraId !== combinado.tipoHoraId ||
+            antes.justificacionHoraExtra !== combinado.justificacionHoraExtra
+          ) {
+            changed = true;
+          }
+          return combinado;
+        });
+        return changed ? merged : prev;
       });
     }
   }, [vistaSemanal, fechaLunes]);
 
-  useEffect(() => {
-    if (!vistaSemanal) return;
-    // recalcular horas extra cuando cambian horas en la semana
-    setWeekRows(prev => prev.map(r => {
+  // Derivar weekRows con horas calculadas (performance-friendly)
+  const derivedWeekRows = useMemo(() => {
+    if (!vistaSemanal) return weekRows;
+    return weekRows.map(r => {
       if (r.horaIngreso && r.horaSalida) {
         const calc = calcularHorasExtraRow(r);
-        if (calc !== r.cantidadHorasExtra) return { ...r, cantidadHorasExtra: calc };
+        return calc !== r.cantidadHorasExtra ? { ...r, cantidadHorasExtra: calc } : r;
       }
       return r;
-    }));
-  }, [weekRows.map(r => `${r.horaIngreso}-${r.horaSalida}`).join('|')]);
+    });
+  }, [weekRows, vistaSemanal]);
 
   const updateWeekCell = (index, field, value) => {
     setWeekRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
@@ -364,7 +297,7 @@ const CrearRegistrosBulkDialog = ({
 
   // Resumen
   const { totalHoras, validCount, invalidCount } = useMemo(() => {
-    const target = vistaSemanal ? weekRows : rows;
+    const target = vistaSemanal ? derivedWeekRows : derivedRows;
     let total = 0;
     let valid = 0;
     let invalid = 0;
@@ -381,7 +314,20 @@ const CrearRegistrosBulkDialog = ({
       }
     });
     return { totalHoras: total, validCount: valid, invalidCount: invalid };
-  }, [vistaSemanal, weekRows, rows]);
+  }, [vistaSemanal, derivedWeekRows, derivedRows]);
+
+  // Medir ancho del contenedor para virtualización
+  useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const update = () => setContainerWidth(el.clientWidth || 800);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  const shouldVirtualize = useMemo(() => !vistaSemanal && derivedRows.length > 100, [vistaSemanal, derivedRows.length]);
+  const TBody = useMemo(() => forwardRef(function TBody(props, ref) { return <tbody ref={ref} {...props} />; }), []);
 
   return (
     <Dialog
@@ -511,7 +457,7 @@ const CrearRegistrosBulkDialog = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {weekRows.map((r, i) => (
+                  {derivedWeekRows.map((r, i) => (
                     <TableRow key={`dayrow-${i}`}>
                       <TableCell align="center">
                         <input type="checkbox" checked={weekInclude[i]} onChange={(e) => toggleWeekInclude(i, e.target.checked)} />
@@ -615,8 +561,8 @@ const CrearRegistrosBulkDialog = ({
                     <TableCell align="center">Acciones</TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
-                  {rows.map((row, index) => (
+                <TableBody ref={tableContainerRef}>
+                  {(!shouldVirtualize ? derivedRows : []).map((row, index) => (
                     <TableRow key={index} hover>
                       <TableCell sx={{ minWidth: 140 }}>
                         <TextField
@@ -742,6 +688,116 @@ const CrearRegistrosBulkDialog = ({
                       </TableCell>
                     </TableRow>
                   ))}
+                  {shouldVirtualize && (
+                    <TableRow>
+                      <TableCell colSpan={8} sx={{ p: 0 }}>
+                        <div style={{ width: '100%' }}>
+                          <List
+                            height={480}
+                            itemCount={derivedRows.length}
+                            itemSize={64}
+                            width={containerWidth}
+                          >
+                            {({ index, style }) => {
+                              const row = derivedRows[index];
+                              return (
+                                <div style={style}>
+                                  <Table size="small">
+                                    <TableBody>
+                                      <TableRow hover>
+                                        <TableCell sx={{ minWidth: 140 }}>
+                                          <TextField
+                                            type="date"
+                                            value={row.fecha}
+                                            onChange={(e) => updateRow(index, 'fecha', e.target.value)}
+                                            InputProps={{
+                                              startAdornment: (
+                                                <InputAdornment position="start">
+                                                  <CalendarTodayIcon />
+                                                </InputAdornment>
+                                              ),
+                                              inputProps: { max: new Date().toISOString().split('T')[0] }
+                                            }}
+                                            size="small"
+                                            fullWidth
+                                          />
+                                        </TableCell>
+                                        <TableCell sx={{ minWidth: 120 }}>
+                                          <TextField
+                                            type="time"
+                                            value={row.horaIngreso}
+                                            onChange={(e) => updateRow(index, 'horaIngreso', e.target.value)}
+                                            onBlur={() => updateRow(index, 'cantidadHorasExtra', calcularHorasExtraRow(row))}
+                                            InputProps={{ startAdornment: (<InputAdornment position="start"><ScheduleIcon /></InputAdornment>) }}
+                                            size="small"
+                                            fullWidth
+                                          />
+                                        </TableCell>
+                                        <TableCell sx={{ minWidth: 120 }}>
+                                          <TextField
+                                            type="time"
+                                            value={row.horaSalida}
+                                            onChange={(e) => updateRow(index, 'horaSalida', e.target.value)}
+                                            onBlur={() => updateRow(index, 'cantidadHorasExtra', calcularHorasExtraRow(row))}
+                                            InputProps={{ startAdornment: (<InputAdornment position="start"><ScheduleIcon /></InputAdornment>) }}
+                                            size="small"
+                                            fullWidth
+                                          />
+                                        </TableCell>
+                                        <TableCell sx={{ minWidth: 160 }}>
+                                          <TextField
+                                            value={row.ubicacion}
+                                            onChange={(e) => updateRow(index, 'ubicacion', e.target.value)}
+                                            InputProps={{ startAdornment: (<InputAdornment position="start"><WorkIcon /></InputAdornment>) }}
+                                            size="small"
+                                            fullWidth
+                                          />
+                                        </TableCell>
+                                        <TableCell sx={{ minWidth: 190 }}>
+                                          <FormControl fullWidth size="small">
+                                            <Select value={row.tipoHoraId} onChange={(e) => updateRow(index, 'tipoHoraId', e.target.value)} displayEmpty>
+                                              <MenuItem value=""><em>Selecciona</em></MenuItem>
+                                              {tiposHora.map(tipo => (<MenuItem key={tipo.id} value={tipo.id}>{tipo.tipo} - {tipo.denominacion}</MenuItem>))}
+                                            </Select>
+                                          </FormControl>
+                                        </TableCell>
+                                        <TableCell align="right" sx={{ minWidth: 140 }}>
+                                          <TextField
+                                            type="number"
+                                            value={row.cantidadHorasExtra}
+                                            onChange={(e) => updateRow(index, 'cantidadHorasExtra', e.target.value)}
+                                            inputProps={{ min: 0.5, step: 0.5, max: 24 }}
+                                            InputProps={{
+                                              startAdornment: (<InputAdornment position="start"><AccessTimeIcon /></InputAdornment>),
+                                              endAdornment: <InputAdornment position="end">horas</InputAdornment>
+                                            }}
+                                            size="small"
+                                            fullWidth
+                                          />
+                                        </TableCell>
+                                        <TableCell sx={{ minWidth: 220 }}>
+                                          <TextField
+                                            value={row.justificacionHoraExtra}
+                                            onChange={(e) => updateRow(index, 'justificacionHoraExtra', e.target.value)}
+                                            size="small"
+                                            fullWidth
+                                          />
+                                        </TableCell>
+                                        <TableCell align="center" sx={{ minWidth: 140 }}>
+                                          <Tooltip title="Duplicar fila"><IconButton color="primary" onClick={() => duplicateRow(index)}><DuplicateIcon /></IconButton></Tooltip>
+                                          <Tooltip title="Eliminar fila"><IconButton color="error" onClick={() => removeRow(index)} disabled={rows.length === 1}><DeleteIcon /></IconButton></Tooltip>
+                                        </TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              );
+                            }}
+                          </List>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>

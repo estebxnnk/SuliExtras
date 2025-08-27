@@ -43,16 +43,7 @@ export const useFiltrosAvanzados = (registros, usuarios = []) => {
         }
       }
 
-      // Filtro por fecha
-      if (filtros.fechaInicio || filtros.fechaFin) {
-        const fechaRegistro = new Date(registro.fecha);
-        if (filtros.fechaInicio && fechaRegistro < new Date(filtros.fechaInicio)) {
-          return false;
-        }
-        if (filtros.fechaFin && fechaRegistro > new Date(filtros.fechaFin)) {
-          return false;
-        }
-      }
+      // Filtro por fecha (deshabilitado según solicitud)
 
       // Filtro por estado
       if (filtros.estado && filtros.estado !== 'todos' && registro.estado !== filtros.estado) {

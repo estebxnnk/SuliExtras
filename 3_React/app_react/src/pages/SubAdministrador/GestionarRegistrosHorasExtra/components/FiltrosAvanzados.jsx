@@ -39,7 +39,6 @@ const FiltrosAvanzados = ({
   tiposHora,
   onClearFilters,
   isMobile = false,
-  extraControls
 }) => {
   const hasActiveFilters = search || (tipoHoraId && tipoHoraId !== 'todos') || fechaInicio || fechaFin || (estado && estado !== 'todos');
 
@@ -325,10 +324,7 @@ const FiltrosAvanzados = ({
               }
             }}
           />
-        </Grid>
-
-        {/* Controles extra (solo vista semanal por fecha) */}
-        {extraControls}
+        </Grid> 
       </Grid>
 
       {/* Información de filtros activos */}
