@@ -24,24 +24,24 @@ function NavbarSubAdmin() {
   };
 
   const items = [
+    { key: 'solicitudes', label: 'Solicitudes', to: '/panel-sub-admin?tab=solicitudes' },
     { key: 'usuarios', label: 'Usuarios', to: '/usuarios' },
     { key: 'crear', label: 'Crear Usuario', to: '/registrar-usuario' },
-    { key: 'solicitudes', label: 'Solicitudes', to: '/panel-sub-admin?tab=solicitudes' },
     { key: 'registros', label: 'Registros de horas extra', to: '/gestionar-registros-horas-extra' },
-    { key: 'reportes', label: 'Reportes de horas extra', to: '/gestionar-reportes-horas-extra' },
     { key: 'tipos', label: 'Tipos de hora', to: '/gestionar-tipos-hora-subadmin' },
+    { key: 'reportes', label: 'Reportes de horas extra', to: '/gestionar-reportes-horas-extra' },
   ];
 
   // Derivar pestaña activa desde la URL
   const activeKey = (() => {
     const path = window.location.pathname;
     const search = window.location.search;
+    if (search.includes('tab=solicitudes')) return 'solicitudes';
     if (path.includes('/usuarios')) return 'usuarios';
     if (path.includes('/registrar-usuario')) return 'crear';
     if (path.includes('/gestionar-registros-horas-extra')) return 'registros';
-    if (path.includes('/gestionar-reportes-horas-extra')) return 'reportes';
     if (path.includes('/gestionar-tipos-hora-subadmin')) return 'tipos';
-    if (search.includes('tab=solicitudes')) return 'solicitudes';
+    if (path.includes('/gestionar-reportes-horas-extra')) return 'reportes';
     return undefined;
   })();
 
