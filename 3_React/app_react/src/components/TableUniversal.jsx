@@ -140,7 +140,7 @@ const TableUniversal = ({
     }
     if (r.includes('SubAdministrador')) {
       return {
-        background: 'linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%)',
+        background: 'linear-gradient(135deg,rgb(59, 31, 162) 0%,rgb(60, 62, 167) 100%)',
         color: 'white',
         border: 'none',
       };

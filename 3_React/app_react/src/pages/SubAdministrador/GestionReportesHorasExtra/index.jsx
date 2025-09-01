@@ -37,6 +37,7 @@ import {
   HeaderGestionReportes,
   TablaUsuarios
 } from './components';
+import { DetallesUsuarioDialog, RegistrosUsuarioDialog } from './components';
 import { useGestionReportes } from './hooks/useGestionReportes';
 import { useAccionesReportes } from './hooks/useAccionesReportes';
 import { useAlertasReportes } from './hooks/useAlertasReportes';
@@ -347,301 +348,28 @@ function GestionReportesHorasExtra() {
         ]}
       />
 
-      {/* Diálogo de detalles de usuario */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 2,
-          background: 'linear-gradient(135deg, #1976d2, #1565c0)',
-          color: 'white'
-        }}>
-          <VisibilityIcon />
-          Detalles del Usuario
-          <IconButton onClick={() => setOpenDialog(false)} sx={{ ml: 'auto', color: 'white' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3, maxHeight: '80vh', overflow: 'auto' }}>
-          {usuarioSeleccionado && (
-            <Box sx={{ 
-              p: 3, 
-              background: 'rgba(25, 118, 210, 0.05)', 
-              borderRadius: 2,
-              border: '1px solid rgba(25, 118, 210, 0.2)'
-            }}>
-              <Typography variant="h5" fontWeight={600} mb={3} color="#1976d2">
-                {usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}
-              </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ 
-                  p: 2, 
-                  background: 'white', 
-                  borderRadius: 1, 
-                  border: '1px solid #e0e0e0'
-                }}>
-                  <Typography variant="body1" fontWeight={600} color="text.primary">
-                    Documento de Identidad
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                    {usuarioSeleccionado.persona?.tipoDocumento}: {usuarioSeleccionado.persona?.numeroDocumento}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ 
-                  p: 2, 
-                  background: 'white', 
-                  borderRadius: 1, 
-                  border: '1px solid #e0e0e0'
-                }}>
-                  <Typography variant="body1" fontWeight={600} color="text.primary">
-                    Información de Contacto
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                    {usuarioSeleccionado.email}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ 
-                  p: 2, 
-                  background: 'white', 
-                  borderRadius: 1, 
-                  border: '1px solid #e0e0e0'
-                }}>
-                  <Typography variant="body1" fontWeight={600} color="text.primary">
-                    Fecha de Registro
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                    {usuarioSeleccionado.createdAt ? new Date(usuarioSeleccionado.createdAt).toLocaleString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : 'No disponible'}
-              </Typography>
-                </Box>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
+      <DetallesUsuarioDialog open={openDialog} onClose={() => setOpenDialog(false)} usuario={usuarioSeleccionado} />
 
-      {/* Diálogo de registros de horas extra */}
-      <Dialog open={openRegistros} onClose={() => setOpenRegistros(false)} maxWidth="lg" fullWidth>
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 2,
-          background: 'linear-gradient(135deg, #388e3c, #2e7d32)',
-          color: 'white'
-        }}>
-          <ListAltIcon />
-          Registros de Horas Extra
-          <IconButton onClick={() => setOpenRegistros(false)} sx={{ ml: 'auto', color: 'white' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3, maxHeight: '80vh', overflow: 'auto' }}>
-          {/* Filtros del diálogo */}
-          <Box sx={{ mb: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 2 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Tipo de Hora</Typography>
-              <select
-                value={tipoHoraDialog}
-                onChange={(e) => setTipoHoraDialog(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
-              >
-                <option value="todos">Todos</option>
-                {tiposHoraDialog.map(t => (
-                  <option key={t.id} value={t.id}>{t.tipo} {t.denominacion ? `- ${t.denominacion}` : ''}</option>
-                ))}
-              </select>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Ubicación</Typography>
-              <select
-                value={ubicacionDialog}
-                onChange={(e) => setUbicacionDialog(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
-              >
-                <option value="todos">Todas</option>
-                {ubicacionesDialog.map(u => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Fecha inicio</Typography>
-              <input
-                type="date"
-                value={fechaInicioDialog}
-                onChange={(e) => setFechaInicioDialog(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
-              />
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Fecha fin</Typography>
-              <input
-                type="date"
-                value={fechaFinDialog}
-                onChange={(e) => setFechaFinDialog(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #e0e0e0' }}
-              />
-            </Box>
-          </Box>
-          {loadingRegistros ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h6" color="text.secondary">
-                Cargando registros...
-              </Typography>
-            </Box>
-          ) : (
-            <>
-              {/* Información del usuario */}
-              {usuarioSeleccionado && (
-                <Box sx={{ 
-                  mb: 3, 
-                  p: 2, 
-                  background: 'rgba(56, 142, 60, 0.1)', 
-                  borderRadius: 2,
-                  border: '1px solid rgba(56, 142, 60, 0.2)'
-                }}>
-                  <Typography variant="h6" fontWeight={600} color="#388e3c">
-                    {usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Email:</strong> {usuarioSeleccionado.email}
-                  </Typography>
-                </Box>
-              )}
-              
-              {/* Registros */}
-              {registros.length > 0 ? (
-                <Box sx={{ 
-                  background: '#f8f9fa', 
-                  borderRadius: 2, 
-                  overflow: 'hidden',
-                  border: '1px solid #dee2e6'
-                }}>
-                  <Box sx={{ 
-                    p: 2, 
-                    background: 'linear-gradient(135deg, #388e3c, #2e7d32)', 
-                    color: 'white'
-                  }}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      Registros de Horas Extra ({registrosDialogFiltrados.length})
-                    </Typography>
-                  </Box>
-                  <Box sx={{ maxHeight: 500, overflow: 'auto', p: 2 }}>
-                    <Box sx={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-                      gap: 2 
-                    }}>
-                  {registrosDialogFiltrados.map(registro => (
-                        <Box key={registro.id} sx={{ 
-                          p: 2, 
-                          background: 'white', 
-                          borderRadius: 1, 
-                          border: '1px solid #dee2e6',
-                          '&:hover': { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }
-                        }}>
-                          <Typography variant="subtitle2" fontWeight={600} color="#388e3c" sx={{ mb: 1 }}>
-                            {registro.fecha}
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1 }}>
-                            <Typography variant="body2">
-                              <strong>Horario:</strong> {registro.horaIngreso} - {registro.horaSalida}
-                            </Typography>
-                            <Typography variant="body2">
-                              <strong>Ubicación:</strong> {registro.ubicacion}
-                            </Typography>
-                            <Typography variant="body2">
-                              <strong>Horas Extra:</strong> {registro.cantidadHorasExtra}
-                            </Typography>
-                            <Typography variant="body2">
-                              <strong>Estado:</strong> 
-                              <Box component="span" sx={{ 
-                                ml: 1, 
-                                px: 1, 
-                                py: 0.5, 
-                                borderRadius: 1, 
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                color: 'white',
-                                backgroundColor: registro.estado === 'aprobado' ? '#2e7d32' : 
-                                               registro.estado === 'pendiente' ? '#ed6c02' : '#d32f2f'
-                              }}>
-                                {registro.estado}
-                              </Box>
-                            </Typography>
-                          </Box>
-                          
-                          {/* Tipos de hora */}
-                          <Box sx={{ mt: 1 }}>
-                            <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mb: 0.5 }}>
-                              Tipos de Hora:
-                            </Typography>
-                        {registro.Horas && registro.Horas.length > 0 ? (
-                          registro.Horas.map(hora => (
-                                <Box key={hora.id} sx={{ 
-                                  p: 1, 
-                                  background: 'rgba(56, 142, 60, 0.1)', 
-                                  borderRadius: 1, 
-                                  mb: 0.5 
-                                }}>
-                                  <Typography variant="body2" fontWeight={600}>
-                                    {hora.tipo}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {hora.denominacion}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                    Cantidad: {hora.RegistroHora.cantidad}
-                                  </Typography>
-                            </Box>
-                          ))
-                        ) : (
-                              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                No asignado
-                              </Typography>
-                            )}
-                          </Box>
-                          
-                          {/* Justificación */}
-                          {registro.justificacionHoraExtra && (
-                            <Box sx={{ mt: 1, p: 1, background: 'rgba(255, 193, 7, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mb: 0.5 }}>
-                                Justificación:
-                              </Typography>
-                              <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                                {registro.justificacionHoraExtra}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                    No hay registros de horas extra para este usuario
-                  </Typography>
-                        {usuarioSeleccionado && (
-                    <Typography variant="body2" color="text.secondary">
-                      Usuario: <strong>{usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}</strong> ({usuarioSeleccionado.email})
-                    </Typography>
-                        )}
-                </Box>
-                  )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <RegistrosUsuarioDialog
+        open={openRegistros}
+        onClose={() => setOpenRegistros(false)}
+        usuario={usuarioSeleccionado}
+        registros={registros}
+        loading={loadingRegistros}
+        filtros={{
+          tipoHora: tipoHoraDialog,
+          tiposHora: tiposHoraDialog,
+          ubicacion: ubicacionDialog,
+          fechaInicio: fechaInicioDialog,
+          fechaFin: fechaFinDialog
+        }}
+        onChangeFiltro={(key, value) => {
+          if (key === 'tipoHora') setTipoHoraDialog(value);
+          if (key === 'ubicacion') setUbicacionDialog(value);
+          if (key === 'fechaInicio') setFechaInicioDialog(value);
+          if (key === 'fechaFin') setFechaFinDialog(value);
+        }}
+      />
 
       {/* Diálogo de reporte general de horas extra */}
       <Dialog open={openReporte} onClose={() => setOpenReporte(false)} maxWidth="lg" fullWidth>
