@@ -127,6 +127,26 @@ function GestionarRegistrosHorasExtra() {
   const [fechaData, setFechaData] = React.useState(null);
   const [openGestion, setOpenGestion] = React.useState(false);
   const [grupoGestion, setGrupoGestion] = React.useState(null);
+  const cerrarGestion = React.useCallback(() => {
+    setOpenGestion(false);
+    setGrupoGestion(null);
+  }, []);
+
+  const handleOpenGestion = React.useCallback((grupo) => {
+    setGrupoGestion(grupo);
+    setOpenGestion(true);
+  }, []);
+
+  const handleDeleteUsuariosSeleccionados = React.useCallback(async (usuarioIds, registroIds) => {
+    try {
+      const res = await gestionarRegistrosHorasExtraService.deleteMany(registroIds);
+      showSuccess(`Eliminados: ${res.ok}/${res.total}`);
+      const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+      setFechaData(data);
+    } catch (e) {
+      showError(e.message || 'Error eliminando');
+    }
+  }, [fechaSolo, showError, showSuccess]);
 
   React.useEffect(() => {
     const cargarSemana = async () => {
@@ -334,17 +354,8 @@ function GestionarRegistrosHorasExtra() {
           fechaSolo ? (
             <RegistrosPorFechaTable
               data={fechaData}
-              onOpenGestion={(grupo) => { setGrupoGestion(grupo); setOpenGestion(true); }}
-              onDeleteUsuariosSeleccionados={async (usuarioIds, registroIds) => {
-                try {
-                  const res = await gestionarRegistrosHorasExtraService.deleteMany(registroIds);
-                  showSuccess(`Eliminados: ${res.ok}/${res.total}`);
-                  const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
-                  setFechaData(data);
-                } catch (e) {
-                  showError(e.message || 'Error eliminando');
-                }
-              }}
+              onOpenGestion={handleOpenGestion}
+              onDeleteUsuariosSeleccionados={handleDeleteUsuariosSeleccionados}
             />
           ) : (
             <RegistrosSemanaTable data={semanaData} usuarios={usuarios} />
@@ -491,13 +502,13 @@ function GestionarRegistrosHorasExtra() {
       {grupoGestion && !grupoGestion?.registrosPorDia && (
         <GestionRegistrosDialog
           open={openGestion}
-          onClose={() => setOpenGestion(false)}
+          onClose={cerrarGestion}
           usuarioGrupo={grupoGestion}
           onAprobarSeleccion={async (ids) => {
             try {
               const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'aprobado');
               showSuccess(`Aprobados: ${res.ok}/${res.total}`);
-              setOpenGestion(false);
+              cerrarGestion();
               if (fechaSolo) {
                 const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
                 setFechaData(data);
@@ -515,7 +526,7 @@ function GestionarRegistrosHorasExtra() {
             try {
               const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'rechazado');
               showSuccess(`Rechazados: ${res.ok}/${res.total}`);
-              setOpenGestion(false);
+              cerrarGestion();
               if (fechaSolo) {
                 const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
                 setFechaData(data);
@@ -529,22 +540,22 @@ function GestionarRegistrosHorasExtra() {
               showError(e.message || 'Error rechazando');
             }
           }}
-          onEditar={(r) => { setOpenGestion(false); abrirDialog(r, 'editar'); }}
-          onEliminar={(r) => { setOpenGestion(false); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
+          onEditar={(r) => { cerrarGestion(); abrirDialog(r, 'editar'); }}
+          onEliminar={(r) => { cerrarGestion(); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
         />
       )}
 
       {grupoGestion && grupoGestion?.registrosPorDia && (
         <GestionSemanaDialog
           open={openGestion}
-          onClose={() => setOpenGestion(false)}
+          onClose={cerrarGestion}
           data={{ registrosPorDia: grupoGestion.registrosPorDia, semana: fechaData?.semana }}
           usuarios={usuarios}
           onAprobarSeleccion={async (ids) => {
             try {
               const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'aprobado');
               showSuccess(`Aprobados: ${res.ok}/${res.total}`);
-              setOpenGestion(false);
+              cerrarGestion();
               if (fechaSolo) {
                 const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
                 setFechaData(data);
@@ -562,7 +573,7 @@ function GestionarRegistrosHorasExtra() {
             try {
               const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'rechazado');
               showSuccess(`Rechazados: ${res.ok}/${res.total}`);
-              setOpenGestion(false);
+              cerrarGestion();
               if (fechaSolo) {
                 const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
                 setFechaData(data);
@@ -576,8 +587,8 @@ function GestionarRegistrosHorasExtra() {
               showError(e.message || 'Error rechazando');
             }
           }}
-          onEditar={(r) => { setOpenGestion(false); abrirDialog(r, 'editar'); }}
-          onEliminar={(r) => { setOpenGestion(false); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
+          onEditar={(r) => { cerrarGestion(); abrirDialog(r, 'editar'); }}
+          onEliminar={(r) => { cerrarGestion(); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
         />
       )}
     </Box>

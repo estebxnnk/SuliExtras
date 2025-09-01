@@ -37,3 +37,6 @@ export { default as ConfirmDialogUniversal } from './ConfirmDialogUniversal';
 export { default as NavbarUniversal } from './NavbarUniversal';
 export { default as SidebarUniversal } from './SidebarUniversal';
 
+// Nuevo: Dashboard global para SubAdmin
+export { default as SubAdminDashboard } from './subadmin/SubAdminDashboard';
+
