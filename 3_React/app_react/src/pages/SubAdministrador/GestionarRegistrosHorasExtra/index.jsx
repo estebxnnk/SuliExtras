@@ -38,7 +38,7 @@ import {
   InformacionFiltros,
   RegistrosSemanaTable
 } from './components';
-import { RegistrosPorFechaTable, GestionRegistrosDialog } from './components';
+import { RegistrosPorFechaTable, GestionRegistrosDialog, GestionSemanaDialog } from './components';
 import { InitialPageLoader } from '../../../components';
 import { gestionarRegistrosHorasExtraService } from './services/gestionarRegistrosHorasExtraService';
 // Utilidades
@@ -488,49 +488,98 @@ function GestionarRegistrosHorasExtra() {
         }
       />
 
-      <GestionRegistrosDialog
-        open={openGestion}
-        onClose={() => setOpenGestion(false)}
-        usuarioGrupo={grupoGestion}
-        onAprobarSeleccion={async (ids) => {
-          try {
-            const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'aprobado');
-            showSuccess(`Aprobados: ${res.ok}/${res.total}`);
-            setOpenGestion(false);
-            if (fechaSolo) {
-              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
-              setFechaData(data);
-            } else if (usuarioSemanaId) {
-              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
-              setSemanaData(data);
-            } else {
-              await refrescarDatos();
+      {grupoGestion && !grupoGestion?.registrosPorDia && (
+        <GestionRegistrosDialog
+          open={openGestion}
+          onClose={() => setOpenGestion(false)}
+          usuarioGrupo={grupoGestion}
+          onAprobarSeleccion={async (ids) => {
+            try {
+              const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'aprobado');
+              showSuccess(`Aprobados: ${res.ok}/${res.total}`);
+              setOpenGestion(false);
+              if (fechaSolo) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+                setFechaData(data);
+              } else if (usuarioSemanaId) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+                setSemanaData(data);
+              } else {
+                await refrescarDatos();
+              }
+            } catch (e) {
+              showError(e.message || 'Error aprobando');
             }
-          } catch (e) {
-            showError(e.message || 'Error aprobando');
-          }
-        }}
-        onRechazarSeleccion={async (ids) => {
-          try {
-            const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'rechazado');
-            showSuccess(`Rechazados: ${res.ok}/${res.total}`);
-            setOpenGestion(false);
-            if (fechaSolo) {
-              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
-              setFechaData(data);
-            } else if (usuarioSemanaId) {
-              const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
-              setSemanaData(data);
-            } else {
-              await refrescarDatos();
+          }}
+          onRechazarSeleccion={async (ids) => {
+            try {
+              const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'rechazado');
+              showSuccess(`Rechazados: ${res.ok}/${res.total}`);
+              setOpenGestion(false);
+              if (fechaSolo) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+                setFechaData(data);
+              } else if (usuarioSemanaId) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+                setSemanaData(data);
+              } else {
+                await refrescarDatos();
+              }
+            } catch (e) {
+              showError(e.message || 'Error rechazando');
             }
-          } catch (e) {
-            showError(e.message || 'Error rechazando');
-          }
-        }}
-        onEditar={(r) => { setOpenGestion(false); abrirDialog(r, 'editar'); }}
-        onEliminar={(r) => { setOpenGestion(false); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
-      />
+          }}
+          onEditar={(r) => { setOpenGestion(false); abrirDialog(r, 'editar'); }}
+          onEliminar={(r) => { setOpenGestion(false); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
+        />
+      )}
+
+      {grupoGestion && grupoGestion?.registrosPorDia && (
+        <GestionSemanaDialog
+          open={openGestion}
+          onClose={() => setOpenGestion(false)}
+          data={{ registrosPorDia: grupoGestion.registrosPorDia, semana: fechaData?.semana }}
+          usuarios={usuarios}
+          onAprobarSeleccion={async (ids) => {
+            try {
+              const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'aprobado');
+              showSuccess(`Aprobados: ${res.ok}/${res.total}`);
+              setOpenGestion(false);
+              if (fechaSolo) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+                setFechaData(data);
+              } else if (usuarioSemanaId) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+                setSemanaData(data);
+              } else {
+                await refrescarDatos();
+              }
+            } catch (e) {
+              showError(e.message || 'Error aprobando');
+            }
+          }}
+          onRechazarSeleccion={async (ids) => {
+            try {
+              const res = await gestionarRegistrosHorasExtraService.updateManyEstado(ids, 'rechazado');
+              showSuccess(`Rechazados: ${res.ok}/${res.total}`);
+              setOpenGestion(false);
+              if (fechaSolo) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorFecha(fechaSolo);
+                setFechaData(data);
+              } else if (usuarioSemanaId) {
+                const data = await gestionarRegistrosHorasExtraService.getRegistrosPorSemana(usuarioSemanaId, fechaInicioSemana || undefined);
+                setSemanaData(data);
+              } else {
+                await refrescarDatos();
+              }
+            } catch (e) {
+              showError(e.message || 'Error rechazando');
+            }
+          }}
+          onEditar={(r) => { setOpenGestion(false); abrirDialog(r, 'editar'); }}
+          onEliminar={(r) => { setOpenGestion(false); abrirConfirmDialog('eliminar', r, 'Confirmar Eliminación', '¿Eliminar este registro?'); }}
+        />
+      )}
     </Box>
   );
 }
