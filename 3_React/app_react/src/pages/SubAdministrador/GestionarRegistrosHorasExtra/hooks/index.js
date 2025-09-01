@@ -5,3 +5,4 @@ export { useGestionarRegistros } from './useGestionarRegistros';
 export { useAccionesRegistros } from './useAccionesRegistros';
 export { useEstadosRegistros } from './useEstadosRegistros';
 export { useCrearRegistro } from './useCrearRegistro';
+export { useCrearRegistrosBulk } from './useCrearRegistrosBulk';

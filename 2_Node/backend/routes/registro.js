@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const registroController = require('../controllers/registroController');
+const { 
+  validarCrearRegistrosBulk, 
+  validarLogicaNegocio, 
+  manejarErroresValidacion 
+} = require('../validators/registroValidator');
 
 /**
  * @swagger
@@ -339,5 +344,366 @@ router.get('/debug', registroController.debugRegistros);
  *         description: Error en la solicitud
  */
 router.post('/dividir-horas', registroController.createRegistroConDivisionHoras);
+
+/**
+ * @swagger
+ * /api/registros/bulk:
+ *   post:
+ *     summary: Crear múltiples registros de horas extra
+ *     tags: [Registros]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - registros
+ *               - usuarioId
+ *             properties:
+ *               registros:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - fecha
+ *                     - horaIngreso
+ *                     - horaSalida
+ *                     - ubicacion
+ *                     - cantidadHorasExtra
+ *                   properties:
+ *                     fecha:
+ *                       type: string
+ *                       format: date
+ *                       example: "2024-01-15"
+ *                     horaIngreso:
+ *                       type: string
+ *                       example: "18:00"
+ *                     horaSalida:
+ *                       type: string
+ *                       example: "20:00"
+ *                     ubicacion:
+ *                       type: string
+ *                       example: "Oficina Principal"
+ *                     cantidadHorasExtra:
+ *                       type: number
+ *                       example: 2.5
+ *                     justificacionHoraExtra:
+ *                       type: string
+ *                       example: "Proyecto urgente"
+ *               usuarioId:
+ *                 type: integer
+ *                 description: ID del usuario que crea los registros
+ *                 example: 1
+ *     responses:
+ *       201:
+ *         description: Registros creados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 total:
+ *                   type: integer
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Datos de entrada inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/bulk', 
+  validarCrearRegistrosBulk, 
+  validarLogicaNegocio, 
+  registroController.crearRegistrosBulk
+);
+
+/**
+ * @swagger
+ * /api/registros/semana/{usuarioId}:
+ *   get:
+ *     summary: Obtener registros organizados por semana (lunes a domingo)
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *       - in: query
+ *         name: fechaInicio
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha para calcular la semana (opcional, usa fecha actual si no se proporciona)
+ *     responses:
+ *       200:
+ *         description: Registros organizados por semana
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 semana:
+ *                   type: object
+ *                   properties:
+ *                     fechaInicio:
+ *                       type: string
+ *                       format: date
+ *                     fechaFin:
+ *                       type: string
+ *                       format: date
+ *                     lunes:
+ *                       type: string
+ *                       format: date
+ *                     domingo:
+ *                       type: string
+ *                       format: date
+ *                 registrosPorDia:
+ *                   type: object
+ *                   properties:
+ *                     lunes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     martes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     miercoles:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     jueves:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     viernes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     sabado:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                     domingo:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Registro'
+ *                 totales:
+ *                   type: object
+ *                   properties:
+ *                     totalHorasExtra:
+ *                       type: number
+ *                     totalHorasExtraDivididas:
+ *                       type: number
+ *                     totalBonoSalarial:
+ *                       type: number
+ *                     totalRegistros:
+ *                       type: integer
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+/**
+ * @swagger
+ * /api/registros/fecha/{fecha}:
+ *   get:
+ *     summary: Obtener registros de todos los usuarios para una fecha específica
+ *     description: Retorna todos los registros de una fecha específica organizados por usuario, con totales individuales y generales
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: fecha
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha para obtener registros (formato YYYY-MM-DD)
+ *         example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Registros obtenidos exitosamente organizados por usuario
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Registros obtenidos para la fecha 2024-01-15"
+ *                 fecha:
+ *                   type: string
+ *                   format: date
+ *                   description: Fecha consultada
+ *                   example: "2024-01-15"
+ *                 registrosPorUsuario:
+ *                   type: object
+ *                   description: Registros agrupados por ID de usuario
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       usuarioId:
+ *                         type: integer
+ *                         description: ID del usuario
+ *                         example: 1
+ *                       email:
+ *                         type: string
+ *                         description: Email del usuario
+ *                         example: "usuario@empresa.com"
+ *                       nombre:
+ *                         type: string
+ *                         description: Nombre del usuario
+ *                         example: "Juan"
+ *                       apellido:
+ *                         type: string
+ *                         description: Apellido del usuario
+ *                         example: "Pérez"
+ *                       registros:
+ *                         type: array
+ *                         description: Lista de registros del usuario para esa fecha
+ *                         items:
+ *                           $ref: '#/components/schemas/Registro'
+ *                       totales:
+ *                         type: object
+ *                         description: Totales del usuario para esa fecha
+ *                         properties:
+ *                           totalHorasExtra:
+ *                             type: number
+ *                             description: Total de horas extra del usuario
+ *                             example: 8.5
+ *                           totalHorasExtraDivididas:
+ *                             type: number
+ *                             description: Total de horas extra divididas (máx 2 por registro)
+ *                             example: 2.0
+ *                           totalBonoSalarial:
+ *                             type: number
+ *                             description: Total de bono salarial del usuario
+ *                             example: 6.5
+ *                           totalRegistros:
+ *                             type: integer
+ *                             description: Cantidad total de registros del usuario
+ *                             example: 2
+ *                 totalesGenerales:
+ *                   type: object
+ *                   description: Totales generales de todos los usuarios para esa fecha
+ *                   properties:
+ *                     totalHorasExtra:
+ *                       type: number
+ *                       description: Total de horas extra de todos los usuarios
+ *                       example: 15.5
+ *                     totalHorasExtraDivididas:
+ *                       type: number
+ *                       description: Total de horas extra divididas de todos los usuarios
+ *                       example: 4.0
+ *                     totalBonoSalarial:
+ *                       type: number
+ *                       description: Total de bono salarial de todos los usuarios
+ *                       example: 11.5
+ *                     totalRegistros:
+ *                       type: integer
+ *                       description: Cantidad total de registros de todos los usuarios
+ *                       example: 4
+ *                     totalUsuarios:
+ *                       type: integer
+ *                       description: Cantidad total de usuarios con registros
+ *                       example: 2
+ *                 registros:
+ *                   type: array
+ *                   description: Lista completa de todos los registros de la fecha
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Fecha requerida o formato inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "La fecha es requerida"
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Error interno del servidor al obtener registros por fecha"
+ *                 details:
+ *                   type: string
+ *                   example: "Error de conexión a la base de datos"
+ */
+router.get('/fecha/:fecha', registroController.getRegistrosPorFecha);
+
+router.get('/semana/:usuarioId', registroController.getRegistrosPorSemana);
+
+/**
+ * @swagger
+ * /api/registros/semana/{usuarioId}/aprobar:
+ *   post:
+ *     summary: Aprobar todos los registros de una semana
+ *     tags: [Registros]
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fechaInicio:
+ *                 type: string
+ *                 format: date
+ *                 description: Fecha para calcular la semana
+ *                 example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Registros aprobados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 semana:
+ *                   type: object
+ *                 registrosPorDia:
+ *                   type: object
+ *                 totales:
+ *                   type: object
+ *                 registros:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Registro'
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/semana/:usuarioId/aprobar', registroController.aprobarRegistrosSemana);
 
 module.exports = router;

@@ -180,6 +180,117 @@ const createRegistroConDivisionHoras = async (req, res) => {
   }
 };
 
+const crearRegistrosBulk = async (req, res) => {
+  try {
+    const { registros, usuarioId } = req.body;
+    
+    // Las validaciones ya se realizan en el middleware de validación
+    
+    // Crear registros usando la lógica existente
+    const registrosCreados = await registroLogic.crearRegistrosBulk(registros, usuarioId);
+    
+    res.status(201).json({
+      message: `${registrosCreados.length} registros creados exitosamente`,
+      total: registrosCreados.length,
+      registros: registrosCreados
+    });
+    
+  } catch (err) {
+    console.error('Error al crear registros bulk:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al crear registros'
+    });
+  }
+};
+
+// Obtener registros organizados por semana
+const getRegistrosPorSemana = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    const { fechaInicio } = req.query; // Opcional: fecha para calcular la semana
+    
+    if (!usuarioId) {
+      return res.status(400).json({ 
+        error: 'El usuarioId es requerido' 
+      });
+    }
+    
+    const semana = await registroLogic.obtenerRegistrosPorSemana(usuarioId, fechaInicio);
+    
+    res.status(200).json({
+      message: `Registros de la semana del ${semana.semana.fechaInicio} al ${semana.semana.fechaFin}`,
+      semana: semana.semana,
+      registrosPorDia: semana.registrosPorDia,
+      totales: semana.totales,
+      registros: semana.registros
+    });
+    
+  } catch (err) {
+    console.error('Error al obtener registros por semana:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al obtener registros por semana'
+    });
+  }
+};
+
+// Obtener registros de la semana a partir de una fecha (todos los usuarios)
+const getRegistrosPorFecha = async (req, res) => {
+  try {
+    const { fecha } = req.params;
+    
+    if (!fecha) {
+      return res.status(400).json({ 
+        error: 'La fecha es requerida' 
+      });
+    }
+    
+    const registrosFecha = await registroLogic.obtenerRegistrosPorFecha(fecha);
+    
+    res.status(200).json({
+      message: `Registros de la semana del ${registrosFecha.semana.fechaInicio} al ${registrosFecha.semana.fechaFin}`,
+      semana: registrosFecha.semana,
+      usuarios: registrosFecha.usuarios,
+      totales: registrosFecha.totales
+    });
+    
+  } catch (err) {
+    console.error('Error al obtener registros por fecha:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al obtener registros por fecha'
+    });
+  }
+};
+
+// Aprobar todos los registros de una semana
+const aprobarRegistrosSemana = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    const { fechaInicio } = req.body; // Fecha para calcular la semana
+    
+    if (!usuarioId) {
+      return res.status(400).json({ 
+        error: 'El usuarioId es requerido' 
+      });
+    }
+    
+    const semana = await registroLogic.aprobarRegistrosSemana(usuarioId, fechaInicio);
+    
+    res.status(200).json({
+      message: `Registros de la semana del ${semana.semana.fechaInicio} al ${semana.semana.fechaFin} aprobados exitosamente`,
+      semana: semana.semana,
+      registrosPorDia: semana.registrosPorDia,
+      totales: semana.totales,
+      registros: semana.registros
+    });
+    
+  } catch (err) {
+    console.error('Error al aprobar registros de la semana:', err);
+    res.status(500).json({ 
+      error: err.message || 'Error interno del servidor al aprobar registros'
+    });
+  }
+};
+
 module.exports = {
   getAllRegistros,
   getRegistroById,
@@ -187,9 +298,13 @@ module.exports = {
   getRegistrosByUsuarioId,
   getRegistrosConUsuario,
   getRegistrosPorUsuarioConInfo,
+  getRegistrosPorSemana,
+  getRegistrosPorFecha,
+  aprobarRegistrosSemana,
   debugRegistros,
   createRegistro,
   updateRegistro,
   deleteRegistro,
-  createRegistroConDivisionHoras
+  createRegistroConDivisionHoras,
+  crearRegistrosBulk
 };

@@ -36,8 +36,7 @@ import { FiltrosPanel } from './components/FiltrosPanel';
 import { KPICards } from './components/KPICards';
 import { UsuariosTable } from './components/UsuariosTable';
 import { GraficoUsuarios } from './components/GraficoUsuarios';
-import HeaderPanelSubAdmin from './components/HeaderPanelSubAdmin';
-import LayoutSubAdmin from './components/LayoutSubAdmin';
+import { SubAdminDashboard } from '../../../components';
 
 function PanelSubAdmin() {
   const theme = useTheme();
@@ -71,62 +70,51 @@ function PanelSubAdmin() {
   }
 
   return (
-    <LayoutSubAdmin>
-      <HeaderPanelSubAdmin
-        title="Panel de Sub Administrador"
-        subtitle="Gestión integral de usuarios y registros del sistema"
-        refreshing={loading}
-        onRefresh={handleRefresh}
-        showAddButton={false}
-        icon={InfoIcon}
-        iconColor="#1976d2"
-        gradientColors={["#1976d2", "#1565c0"]}
+    <SubAdminDashboard refreshing={loading} onRefresh={handleRefresh}>
+      {/* Filtros */}
+      <FiltrosPanel
+        rolFiltro={rolFiltro}
+        datePreset={datePreset}
+        roles={roles}
+        onRolChange={handleFiltroRol}
+        onDatePresetChange={setDatePreset}
+        isMobile={isMobile}
       />
 
-        {/* Filtros */}
-        <FiltrosPanel
-          rolFiltro={rolFiltro}
-          datePreset={datePreset}
-          roles={roles}
-          onRolChange={handleFiltroRol}
-          onDatePresetChange={setDatePreset}
-          isMobile={isMobile}
-        />
+      {/* KPIs */}
+      <KPICards
+        usuarios={usuarios}
+        registros={registros}
+        datePreset={datePreset}
+        isMobile={isMobile}
+      />
 
-        {/* KPIs */}
-        <KPICards
-          usuarios={usuarios}
-          registros={registros}
-          datePreset={datePreset}
-          isMobile={isMobile}
-        />
-
-        {/* Gráfico y Tabla */}
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid item xs={12} lg={6}>
-            <GraficoUsuarios usuarios={usuarios} isMobile={isMobile} />
-          </Grid>
-          <Grid item xs={12} lg={6}>
-            <UsuariosTable
-              usuarios={usuarios}
-              rolFiltro={rolFiltro}
-              datePreset={datePreset}
-              onVerUsuario={handleOpenUsuario}
-              isMobile={isMobile}
-            />
-          </Grid>
+      {/* Gráfico y Tabla */}
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid item xs={12} lg={6}>
+          <GraficoUsuarios usuarios={usuarios} isMobile={isMobile} />
         </Grid>
+        <Grid item xs={12} lg={6}>
+          <UsuariosTable
+            usuarios={usuarios}
+            rolFiltro={rolFiltro}
+            datePreset={datePreset}
+            onVerUsuario={handleOpenUsuario}
+            isMobile={isMobile}
+          />
+        </Grid>
+      </Grid>
 
-        {/* Diálogo de Usuario */}
-        <UsuarioDialog
-          open={modalUsuario.open}
-          usuario={modalUsuario.usuario}
-          registros={modalUsuario.registros}
-          onClose={handleCloseUsuario}
-          isMobile={isMobile}
-        />
-      </LayoutSubAdmin>
-    );
+      {/* Diálogo de Usuario */}
+      <UsuarioDialog
+        open={modalUsuario.open}
+        usuario={modalUsuario.usuario}
+        registros={modalUsuario.registros}
+        onClose={handleCloseUsuario}
+        isMobile={isMobile}
+      />
+    </SubAdminDashboard>
+  );
 }
 
 export default PanelSubAdmin; 
