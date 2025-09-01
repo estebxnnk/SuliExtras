@@ -144,6 +144,101 @@ const mapearRegistrosPorDia = (registros) => {
   return registrosPorDia;
 };
 
+// Agrupa por día y dentro de cada día por usuario
+const mapearRegistrosPorDiaYUsuario = (registros) => {
+  const estructuraInicial = () => ({ usuarios: {} });
+  const resultado = {
+    lunes: estructuraInicial(),
+    martes: estructuraInicial(),
+    miercoles: estructuraInicial(),
+    jueves: estructuraInicial(),
+    viernes: estructuraInicial(),
+    sabado: estructuraInicial(),
+    domingo: estructuraInicial()
+  };
+
+  registros.forEach((registro) => {
+    const fechaStr = typeof registro.fecha === 'string' 
+      ? registro.fecha 
+      : format(new Date(registro.fecha), 'yyyy-MM-dd');
+    const fecha = parseISO(fechaStr);
+    const isoDay = getISODay(fecha); // 1..7
+    const diaSemana = diasSemanaNombres[isoDay - 1];
+
+    const usuariosDia = resultado[diaSemana].usuarios;
+    const key = registro.usuarioId;
+    if (!usuariosDia[key]) {
+      usuariosDia[key] = {
+        usuarioId: registro.usuarioId,
+        usuario: registro.usuario,
+        registros: [],
+        totales: {
+          totalHorasExtra: 0,
+          totalHorasExtraDivididas: 0,
+          totalBonoSalarial: 0,
+          totalRegistros: 0
+        }
+      };
+    }
+
+    const bucket = usuariosDia[key];
+    bucket.registros.push(registro);
+    bucket.totales.totalHorasExtra += Number(registro.cantidadHorasExtra) || 0;
+    bucket.totales.totalHorasExtraDivididas += Number(registro.horas_extra_divididas) || 0;
+    bucket.totales.totalBonoSalarial += Number(registro.bono_salarial) || 0;
+    bucket.totales.totalRegistros += 1;
+  });
+
+  return resultado;
+};
+
+// Agrupa por usuario y dentro de cada usuario por día
+const mapearRegistrosPorUsuarioYDia = (registros) => {
+  const usuarios = {};
+  const diasVacios = () => ({
+    lunes: [],
+    martes: [],
+    miercoles: [],
+    jueves: [],
+    viernes: [],
+    sabado: [],
+    domingo: []
+  });
+
+  registros.forEach((registro) => {
+    const fechaStr = typeof registro.fecha === 'string' 
+      ? registro.fecha 
+      : format(new Date(registro.fecha), 'yyyy-MM-dd');
+    const fecha = parseISO(fechaStr);
+    const isoDay = getISODay(fecha); // 1..7
+    const diaSemana = diasSemanaNombres[isoDay - 1];
+
+    const key = registro.usuarioId;
+    if (!usuarios[key]) {
+      usuarios[key] = {
+        usuarioId: registro.usuarioId,
+        usuario: registro.usuario,
+        registrosPorDia: diasVacios(),
+        totales: {
+          totalHorasExtra: 0,
+          totalHorasExtraDivididas: 0,
+          totalBonoSalarial: 0,
+          totalRegistros: 0
+        }
+      };
+    }
+
+    const u = usuarios[key];
+    u.registrosPorDia[diaSemana].push(registro);
+    u.totales.totalHorasExtra += Number(registro.cantidadHorasExtra) || 0;
+    u.totales.totalHorasExtraDivididas += Number(registro.horas_extra_divididas) || 0;
+    u.totales.totalBonoSalarial += Number(registro.bono_salarial) || 0;
+    u.totales.totalRegistros += 1;
+  });
+
+  return usuarios;
+};
+
 const calcularTotalesBasicos = (registros) => {
   const totales = {
     totalHorasExtra: 0,
@@ -198,8 +293,8 @@ const obtenerRegistrosPorSemana = async (usuarioId, fechaInicio) => {
       order: [['fecha', 'ASC'], ['horaIngreso', 'ASC']]
     });
       
-    // Organizar registros por día de la semana
-    const registrosPorDia = mapearRegistrosPorDia(registros);
+    // Organizar por usuario y por día para la semana de un usuario
+    const usuarios = mapearRegistrosPorUsuarioYDia(registros);
     
     // Calcular totales semanales
     const totales = calcularTotalesBasicos(registros);
@@ -211,9 +306,8 @@ const obtenerRegistrosPorSemana = async (usuarioId, fechaInicio) => {
         lunes: fechaInicioStr,
         domingo: fechaFinStr
       },
-      registrosPorDia,
-      totales,
-      registros: registros
+      usuarios,
+      totales
     };
     
   } catch (error) {
@@ -287,8 +381,8 @@ const obtenerRegistrosPorFecha = async (fecha) => {
       order: [['fecha', 'ASC'], ['horaIngreso', 'ASC']]
     });
 
-    // Organizar exactamente como obtenerRegistrosPorSemana
-    const registrosPorDia = mapearRegistrosPorDia(registros);
+    // Organizar por usuario y por día (estructura solicitada)
+    const usuarios = mapearRegistrosPorUsuarioYDia(registros);
     const totales = calcularTotalesBasicos(registros);
 
     return {
@@ -298,9 +392,8 @@ const obtenerRegistrosPorFecha = async (fecha) => {
         lunes: fechaInicioStr,
         domingo: fechaFinStr
       },
-      registrosPorDia,
-      totales,
-      registros: registros
+      usuarios,
+      totales
     };
     
   } catch (error) {

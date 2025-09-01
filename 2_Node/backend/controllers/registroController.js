@@ -249,9 +249,8 @@ const getRegistrosPorFecha = async (req, res) => {
     res.status(200).json({
       message: `Registros de la semana del ${registrosFecha.semana.fechaInicio} al ${registrosFecha.semana.fechaFin}`,
       semana: registrosFecha.semana,
-      registrosPorDia: registrosFecha.registrosPorDia,
-      totales: registrosFecha.totales,
-      registros: registrosFecha.registros
+      usuarios: registrosFecha.usuarios,
+      totales: registrosFecha.totales
     });
     
   } catch (err) {
