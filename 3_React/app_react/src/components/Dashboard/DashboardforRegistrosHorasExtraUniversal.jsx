@@ -2,7 +2,7 @@ import React from 'react';
 import HeaderUniversal from '../HeaderUniversal';
 import LayoutUniversal from '../LayoutUniversal';
 
-function SubAdminDashboard({
+function DashboardforRegistrosHorasExtraUniversal({
   title = 'Panel de Sub Administrador',
   subtitle = 'Gestión integral de usuarios y registros del sistema',
   refreshing = false,
@@ -22,6 +22,6 @@ function SubAdminDashboard({
   );
 }
 
-export default SubAdminDashboard;
+export default DashboardforRegistrosHorasExtraUniversal;
 
 

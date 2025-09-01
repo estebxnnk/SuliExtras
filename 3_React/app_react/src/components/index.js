@@ -36,7 +36,8 @@ export { InitialPageLoader } from './spinners/SpinnersUniversal';
 export { default as ConfirmDialogUniversal } from './ConfirmDialogUniversal';
 export { default as NavbarUniversal } from './NavbarUniversal';
 export { default as SidebarUniversal } from './SidebarUniversal';
+export { default as RegistrarUsuarioUniversal } from './users/RegistrarUsuarioUniversal';
 
 // Nuevo: Dashboard global para SubAdmin
-export { default as SubAdminDashboard } from './subadmin/SubAdminDashboard';
+export { default as DashboardforRegistrosHorasExtraUniversal } from './Dashboard/DashboardforRegistrosHorasExtraUniversal';
 

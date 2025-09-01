@@ -36,7 +36,7 @@ import { FiltrosPanel } from './components/FiltrosPanel';
 import { KPICards } from './components/KPICards';
 import { UsuariosTable } from './components/UsuariosTable';
 import { GraficoUsuarios } from './components/GraficoUsuarios';
-import { SubAdminDashboard } from '../../../components';
+import { DashboardforRegistrosHorasExtraUniversal } from '../../../components';
 
 function PanelSubAdmin() {
   const theme = useTheme();
@@ -70,7 +70,7 @@ function PanelSubAdmin() {
   }
 
   return (
-    <SubAdminDashboard refreshing={loading} onRefresh={handleRefresh}>
+    <DashboardforRegistrosHorasExtraUniversal refreshing={loading} onRefresh={handleRefresh}>
       {/* Filtros */}
       <FiltrosPanel
         rolFiltro={rolFiltro}
@@ -113,7 +113,7 @@ function PanelSubAdmin() {
         onClose={handleCloseUsuario}
         isMobile={isMobile}
       />
-    </SubAdminDashboard>
+    </DashboardforRegistrosHorasExtraUniversal>
   );
 }
 
