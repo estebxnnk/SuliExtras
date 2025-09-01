@@ -4,6 +4,7 @@ const User = require('../models/User');
 const sequelize = require('../configDb/db').sequelize;
 const { Op } = require('sequelize');
 const Persona = require('../models/Persona');
+const { startOfISOWeek, endOfISOWeek, parseISO, format, isValid, getISODay } = require('date-fns');
 
 // Obtener todos los registros con sus horas asociadas
 const obtenerRegistros = async () => {
@@ -115,27 +116,60 @@ const obtenerRegistrosPorUsuarioConInfo = async (usuarioId) => {
   });
 };
 
+// Helpers reutilizables para agrupar por día y calcular totales
+const diasSemanaNombres = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+
+const crearEstructuraRegistrosPorDia = () => ({
+  lunes: [],
+  martes: [],
+  miercoles: [],
+  jueves: [],
+  viernes: [],
+  sabado: [],
+  domingo: []
+});
+
+const mapearRegistrosPorDia = (registros) => {
+  const registrosPorDia = crearEstructuraRegistrosPorDia();
+  registros.forEach((registro) => {
+    // Tomar la fecha como string (DATEONLY) para evitar desfases de timezone
+    const fechaStr = typeof registro.fecha === 'string' 
+      ? registro.fecha 
+      : format(new Date(registro.fecha), 'yyyy-MM-dd');
+    const fecha = parseISO(fechaStr);
+    const isoDay = getISODay(fecha); // 1 (lunes) .. 7 (domingo)
+    const diaSemana = diasSemanaNombres[isoDay - 1];
+    registrosPorDia[diaSemana].push(registro);
+  });
+  return registrosPorDia;
+};
+
+const calcularTotalesBasicos = (registros) => {
+  const totales = {
+    totalHorasExtra: 0,
+    totalHorasExtraDivididas: 0,
+    totalBonoSalarial: 0,
+    totalRegistros: registros.length
+  };
+  registros.forEach((registro) => {
+    totales.totalHorasExtra += Number(registro.cantidadHorasExtra) || 0;
+    totales.totalHorasExtraDivididas += Number(registro.horas_extra_divididas) || 0;
+    totales.totalBonoSalarial += Number(registro.bono_salarial) || 0;
+  });
+  return totales;
+};
+
 // Obtener registros por semana (lunes a domingo)
 const obtenerRegistrosPorSemana = async (usuarioId, fechaInicio) => {
   try {
-    // Si no se proporciona fecha, usar la fecha actual
-    const fecha = fechaInicio ? new Date(fechaInicio) : new Date();
-    
-    // Obtener el lunes de la semana (día 1 = lunes)
-    const lunes = new Date(fecha);
-    const diaSemana = fecha.getDay(); // 0 = domingo, 1 = lunes, etc.
-    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1; // Si es domingo, retroceder 6 días
-    lunes.setDate(fecha.getDate() - diasDesdeLunes);
-    lunes.setHours(0, 0, 0, 0);
-    
-    // Obtener el domingo de la semana
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    domingo.setHours(23, 59, 59, 999);
+    // Si no se proporciona fecha, usar la fecha actual y obtener inicio/fin de semana ISO
+    const base = fechaInicio ? parseISO(fechaInicio) : new Date();
+    const lunes = startOfISOWeek(base);
+    const domingo = endOfISOWeek(base);
     
     // Formatear fechas para la consulta
-    const fechaInicioStr = lunes.toISOString().split('T')[0];
-    const fechaFinStr = domingo.toISOString().split('T')[0];
+    const fechaInicioStr = format(lunes, 'yyyy-MM-dd');
+    const fechaFinStr = format(domingo, 'yyyy-MM-dd');
     
     const registros = await Registro.findAll({
       where: {
@@ -165,44 +199,17 @@ const obtenerRegistrosPorSemana = async (usuarioId, fechaInicio) => {
     });
       
     // Organizar registros por día de la semana
-    const registrosPorDia = {
-      lunes: [],
-      martes: [],
-      miercoles: [],
-      jueves: [],
-      viernes: [],
-      sabado: [],
-      domingo: []
-    };
-    
-    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-    
-    registros.forEach(registro => {
-      const fecha = new Date(registro.fecha);
-      const diaSemana = diasSemana[fecha.getDay()];
-      registrosPorDia[diaSemana].push(registro);
-    });
+    const registrosPorDia = mapearRegistrosPorDia(registros);
     
     // Calcular totales semanales
-    const totales = {
-      totalHorasExtra: 0,
-      totalHorasExtraDivididas: 0,
-      totalBonoSalarial: 0,
-      totalRegistros: registros.length
-    };
-    
-    registros.forEach(registro => {
-      totales.totalHorasExtra += Number(registro.cantidadHorasExtra) || 0;
-      totales.totalHorasExtraDivididas += Number(registro.horas_extra_divididas) || 0;
-      totales.totalBonoSalarial += Number(registro.bono_salarial) || 0;
-    });
+    const totales = calcularTotalesBasicos(registros);
     
     return {
       semana: {
         fechaInicio: fechaInicioStr,
         fechaFin: fechaFinStr,
-        lunes: lunes.toISOString().split('T')[0],
-        domingo: domingo.toISOString().split('T')[0]
+        lunes: fechaInicioStr,
+        domingo: fechaFinStr
       },
       registrosPorDia,
       totales,
@@ -249,50 +256,50 @@ const aprobarRegistrosSemana = async (usuarioId, fechaInicio) => {
   }
 };
 
-// Obtener registros por fecha específica (todos los usuarios)
+// Obtener registros de la semana a partir de una fecha (todos los usuarios)
 const obtenerRegistrosPorFecha = async (fecha) => {
   try {
-    // Validar y formatear fecha
-    const fechaObj = new Date(fecha);
-    if (isNaN(fechaObj.getTime())) {
+    // Usar la fecha recibida (o actual) para obtener el lunes y domingo de esa semana (ISO)
+    const base = fecha ? parseISO(fecha) : new Date();
+    if (!isValid(base)) {
       throw new Error('Formato de fecha inválido. Use YYYY-MM-DD');
     }
-    
-    const fechaStr = fechaObj.toISOString().split('T')[0];
-    
-    // Obtener registros de la base de datos
+
+    const lunes = startOfISOWeek(base);
+    const domingo = endOfISOWeek(base);
+
+    const fechaInicioStr = format(lunes, 'yyyy-MM-dd');
+    const fechaFinStr = format(domingo, 'yyyy-MM-dd');
+
+    // Obtener registros de toda la semana para todos los usuarios
     const registros = await Registro.findAll({
-      where: { fecha: fechaStr },
+      where: {
+        fecha: {
+          [Op.between]: [fechaInicioStr, fechaFinStr]
+        }
+      },
       attributes: [
         'id', 'fecha', 'horaIngreso', 'horaSalida', 'ubicacion',
         'usuario', 'usuarioId', 'numRegistro', 'cantidadHorasExtra',
         'horas_extra_divididas', 'bono_salarial', 'justificacionHoraExtra',
         'estado', 'createdAt', 'updatedAt'
       ],
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'email'],
-          include: [
-            {
-              model: Persona,
-              as: 'persona',
-              attributes: ['nombres', 'apellidos', 'numeroDocumento'] // pon aquí las columnas que necesites
-            }
-          ]
-        }
-      ],
-      order: [['usuarioId', 'ASC'], ['horaIngreso', 'ASC']]
+      order: [['fecha', 'ASC'], ['horaIngreso', 'ASC']]
     });
-    
-    // Procesar y organizar datos
-    const { registrosPorUsuario, totalesGenerales } = procesarRegistrosPorUsuario(registros);
-    
+
+    // Organizar exactamente como obtenerRegistrosPorSemana
+    const registrosPorDia = mapearRegistrosPorDia(registros);
+    const totales = calcularTotalesBasicos(registros);
+
     return {
-      fecha: fechaStr,
-      registrosPorUsuario,
-      totalesGenerales,
+      semana: {
+        fechaInicio: fechaInicioStr,
+        fechaFin: fechaFinStr,
+        lunes: fechaInicioStr,
+        domingo: fechaFinStr
+      },
+      registrosPorDia,
+      totales,
       registros: registros
     };
     

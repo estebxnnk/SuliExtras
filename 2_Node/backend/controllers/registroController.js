@@ -233,7 +233,7 @@ const getRegistrosPorSemana = async (req, res) => {
   }
 };
 
-// Obtener registros por fecha específica (todos los usuarios)
+// Obtener registros de la semana a partir de una fecha (todos los usuarios)
 const getRegistrosPorFecha = async (req, res) => {
   try {
     const { fecha } = req.params;
@@ -247,10 +247,10 @@ const getRegistrosPorFecha = async (req, res) => {
     const registrosFecha = await registroLogic.obtenerRegistrosPorFecha(fecha);
     
     res.status(200).json({
-      message: `Registros obtenidos para la fecha ${registrosFecha.fecha}`,
-      fecha: registrosFecha.fecha,
-      registrosPorUsuario: registrosFecha.registrosPorUsuario,
-      totalesGenerales: registrosFecha.totalesGenerales,
+      message: `Registros de la semana del ${registrosFecha.semana.fechaInicio} al ${registrosFecha.semana.fechaFin}`,
+      semana: registrosFecha.semana,
+      registrosPorDia: registrosFecha.registrosPorDia,
+      totales: registrosFecha.totales,
       registros: registrosFecha.registros
     });
     
