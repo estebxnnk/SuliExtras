@@ -37,3 +37,6 @@ export { default as ConfirmDialogUniversal } from './ConfirmDialogUniversal';
 export { default as NavbarUniversal } from './NavbarUniversal';
 export { default as SidebarUniversal } from './SidebarUniversal';
 
+// Componentes de diálogos globales
+export * from './dialog';
+

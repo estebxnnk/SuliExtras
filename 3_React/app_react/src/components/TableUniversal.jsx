@@ -26,7 +26,8 @@ import {
   Warning as WarningIcon,
   Info as InfoIcon,
   Person as PersonIcon,
-  LocationOn as LocationOnIcon
+  LocationOn as LocationOnIcon,
+  AttachMoney as AttachMoneyIcon
 } from '@mui/icons-material';
 
 const TableUniversal = ({
@@ -326,7 +327,20 @@ const TableUniversal = ({
                         ) : column.id === 'sede' ? (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LocationOnIcon sx={{ fontSize: 18, color: '#ef5350' }} />
-                            <Typography variant="body2">{row.sede?.nombre || 'No asignada'}</Typography>
+                            <Typography variant="body2">{row.usuario?.sede?.nombre || 'No asignada'}</Typography>
+                          </Box>
+                        ) : column.id === 'salario' ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <AttachMoneyIcon sx={{ fontSize: 16, color: '#4caf50' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {row.persona?.salario ? 
+                                `$${parseFloat(row.persona.salario).toLocaleString('es-CO', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                })}` : 
+                                'No asignado'
+                              }
+                            </Typography>
                           </Box>
                         ) : (
                           row[column.id]
