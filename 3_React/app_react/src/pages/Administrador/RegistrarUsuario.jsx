@@ -9,6 +9,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 const tiposDocumento = [
   { value: 'CC', label: 'Cédula de Ciudadanía' },
@@ -32,6 +33,7 @@ function RegistrarUsuarioAdministrativo() {
   const [apellidos, setApellidos] = useState('');
   const [correoPersona, setCorreoPersona] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [salario, setSalario] = useState('');
   // Otros
   const [mensaje, setMensaje] = useState('');
   const [exito, setExito] = useState(false);
@@ -61,26 +63,31 @@ function RegistrarUsuarioAdministrativo() {
     setMensaje('');
     setExito(false);
     if (!email || !password || !rolId || !tipoDocumento || !numeroDocumento || !nombres || !apellidos || !correoPersona || !fechaNacimiento) {
-      setMensaje('Por favor, completa todos los campos.');
+      setMensaje('Por favor, completa todos los campos requeridos.');
       return;
     }
     try {
+      const requestData = {
+        email,
+        password,
+        rolId,
+        persona: {
+          tipoDocumento,
+          numeroDocumento,
+          nombres,
+          apellidos,
+          correo: correoPersona,
+          fechaNacimiento,
+          salario: salario ? parseFloat(salario) : null,
+        },
+      };
+      
+      console.log('🚀 Enviando datos de registro:', requestData);
+      
       const response = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          rolId,
-          persona: {
-            tipoDocumento,
-            numeroDocumento,
-            nombres,
-            apellidos,
-            correo: correoPersona,
-            fechaNacimiento,
-          },
-        }),
+        body: JSON.stringify(requestData),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -312,6 +319,22 @@ function RegistrarUsuarioAdministrativo() {
               InputProps={{
                 startAdornment: (
                   <CalendarMonthIcon sx={{ color: '#1976d2', mr: 1 }} />
+                ),
+              }}
+            />
+            <TextField
+              label="Salario (Opcional)"
+              type="number"
+              value={salario}
+              onChange={e => setSalario(e.target.value)}
+              variant="outlined"
+              margin="normal"
+              fullWidth
+              placeholder="Ej: 1500000"
+              inputProps={{ min: 0, step: 1000 }}
+              InputProps={{
+                startAdornment: (
+                  <AttachMoneyIcon sx={{ color: '#1976d2', mr: 1 }} />
                 ),
               }}
             />

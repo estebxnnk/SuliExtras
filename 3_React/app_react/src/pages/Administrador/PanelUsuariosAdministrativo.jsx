@@ -12,6 +12,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningIcon from '@mui/icons-material/Warning';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NavbarAdminstrativo from './NavbarAdminstrativo';
 
 function PanelUsuariosAdministrativo() {
@@ -29,6 +30,40 @@ function PanelUsuariosAdministrativo() {
   const [alerta, setAlerta] = useState({ tipo: '', mensaje: '' });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: '', usuario: null });
 
+  // Funciones para formatear y validar salario
+  const formatSalaryInput = (value) => {
+    // Remover caracteres no numéricos excepto punto
+    let cleanValue = value.replace(/[^\d.]/g, '');
+    
+    // Asegurar que solo haya un punto decimal
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) {
+      cleanValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limitar a 2 decimales
+    if (parts[1] && parts[1].length > 2) {
+      cleanValue = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    // Limitar a 9 dígitos antes del punto decimal
+    if (parts[0].length > 9) {
+      cleanValue = parts[0].substring(0, 9) + (parts[1] ? '.' + parts[1] : '');
+    }
+    
+    return cleanValue;
+  };
+
+  const formatSalaryDisplay = (value) => {
+    if (!value || value === '') return '';
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return '';
+    return numValue.toLocaleString('es-CO', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+  };
+
   useEffect(() => {
     fetchUsuarios();
     fetchRoles();
@@ -39,6 +74,11 @@ function PanelUsuariosAdministrativo() {
     try {
       const response = await fetch('http://localhost:3000/api/usuarios');
       const data = await response.json();
+      console.log('🔍 Datos de usuarios recibidos:', data);
+      if (data.length > 0) {
+        console.log('🔍 Estructura del primer usuario:', data[0]);
+        console.log('🔍 Salario del primer usuario:', data[0].salario);
+      }
       setUsuarios(data);
     } catch (error) {
       setMensaje('No se pudieron cargar los usuarios.');
@@ -74,6 +114,7 @@ function PanelUsuariosAdministrativo() {
       correo: usuario.persona?.correo || '',
       fechaNacimiento: usuario.persona?.fechaNacimiento ? usuario.persona.fechaNacimiento.substring(0, 10) : '',
       rolId: usuario.rol?.id || '',
+      salario: usuario.persona?.salario || '',
     });
     setOpenDialog(true);
   };
@@ -114,9 +155,12 @@ function PanelUsuariosAdministrativo() {
         apellidos: editData.apellidos,
         correo: editData.correo,
         fechaNacimiento: editData.fechaNacimiento,
+        salario: editData.salario ? parseFloat(editData.salario) : null,
       },
     };
     try {
+      console.log('🚀 Enviando datos de actualización:', dataToSend);
+      
       const response = await fetch(`http://localhost:3000/api/usuarios/${usuarioSeleccionado.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -212,6 +256,7 @@ function PanelUsuariosAdministrativo() {
                 <TableCell>Apellidos</TableCell>
                 <TableCell>Correo</TableCell>
                 <TableCell>Fecha Nac.</TableCell>
+                <TableCell>Salario</TableCell>
                 <TableCell>Rol</TableCell>
                 <TableCell align="center">Acciones</TableCell>
               </TableRow>
@@ -226,6 +271,12 @@ function PanelUsuariosAdministrativo() {
                   <TableCell>{usuario.persona?.apellidos}</TableCell>
                   <TableCell>{usuario.persona?.correo}</TableCell>
                   <TableCell>{usuario.persona?.fechaNacimiento ? usuario.persona.fechaNacimiento.substring(0, 10) : ''}</TableCell>
+                  <TableCell>
+                    {usuario.persona?.salario ? 
+                      `$${formatSalaryDisplay(usuario.persona.salario)}` : 
+                      'No asignado'
+                    }
+                  </TableCell>
                   <TableCell>{usuario.rol?.nombre}</TableCell>
                   <TableCell align="center">
                     <IconButton onClick={() => handleVer(usuario)} title="Ver detalles" sx={{ color: 'green' }}>
@@ -245,7 +296,7 @@ function PanelUsuariosAdministrativo() {
               ))}
               {usuariosFiltrados.length === 0 && !loading && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">No hay usuarios registrados.</TableCell>
+                  <TableCell colSpan={10} align="center">No hay usuarios registrados.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -274,6 +325,7 @@ function PanelUsuariosAdministrativo() {
               <Typography><b>Número de Documento:</b> {usuarioSeleccionado.persona?.numeroDocumento}</Typography>
               <Typography><b>Correo:</b> {usuarioSeleccionado.persona?.correo}</Typography>
               <Typography><b>Fecha de Nacimiento:</b> {usuarioSeleccionado.persona?.fechaNacimiento ? usuarioSeleccionado.persona.fechaNacimiento.substring(0, 10) : ''}</Typography>
+              <Typography><b>Salario:</b> {usuarioSeleccionado.persona?.salario ? `$${formatSalaryDisplay(usuarioSeleccionado.persona.salario)}` : 'No asignado'}</Typography>
               <Typography><b>Rol:</b> {usuarioSeleccionado.rol?.nombre}</Typography>
             </Box>
           )}
@@ -350,6 +402,22 @@ function PanelUsuariosAdministrativo() {
                 InputProps={{
                   startAdornment: (
                     <CalendarMonthIcon sx={{ color: '#1976d2', mr: 1 }} />
+                  ),
+                }}
+              />
+              <TextField
+                label="Salario"
+                value={editData.salario}
+                onChange={e => {
+                  const formattedValue = formatSalaryInput(e.target.value);
+                  setEditData({ ...editData, salario: formattedValue });
+                }}
+                fullWidth
+                placeholder="Ej: 1500000.00"
+                helperText="Máximo 9 dígitos antes del punto decimal y 2 decimales"
+                InputProps={{
+                  startAdornment: (
+                    <AttachMoneyIcon sx={{ color: '#1976d2', mr: 1 }} />
                   ),
                 }}
               />
