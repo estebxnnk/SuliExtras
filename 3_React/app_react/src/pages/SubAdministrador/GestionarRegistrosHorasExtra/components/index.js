@@ -24,6 +24,8 @@ export { default as TablaRegistros } from './TablaRegistros';
 export { default as RegistrosSemanaTable } from './RegistrosSemanaTable';
 export { default as RegistrosPorFechaTable } from './RegistrosPorFechaTable';
 export { default as GestionRegistrosDialog } from './Dialogs/GestionRegistrosDialog';
+export { default as WeeklyControls } from './WeeklyControls';
+export { default as VistaToggle } from './VistaToggle';
 
 // Componentes de estadísticas y filtros
 export { default as FiltrosAvanzados } from './FiltrosAvanzados';

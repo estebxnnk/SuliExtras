@@ -16,6 +16,9 @@ import {
   useCrearRegistro,
   useCrearRegistrosBulk
 } from './hooks';
+import useVistaSemanal from './hooks/useVistaSemanal';
+import useListaRegistros from './hooks/useListaRegistros';
+import useAccionesUI from './hooks/useAccionesUI';
 
 // Componentes optimizados
 import {
@@ -36,7 +39,9 @@ import {
   CrearRegistroDialog,
   CrearRegistrosBulkDialog,
   InformacionFiltros,
-  RegistrosSemanaTable
+  RegistrosSemanaTable,
+  WeeklyControls,
+  VistaToggle
 } from './components';
 import { RegistrosPorFechaTable, GestionRegistrosDialog, GestionSemanaDialog } from './components';
 import { InitialPageLoader } from '../../../components';
@@ -111,20 +116,24 @@ function GestionarRegistrosHorasExtra() {
   // Calcular estadísticas
   const estadisticasAdicionales = calcularEstadisticas(registros, registrosFiltrados, estadisticasFiltros);
 
-  // Paginación
-  const registrosPaginados = registrosFiltrados.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  // Paginación (hook separado)
+  const { registrosPaginados } = useListaRegistros(registrosFiltrados, page, rowsPerPage);
 
-  // Vista dinámica (unitaria / semanal)
-  const [vistaSemanal, setVistaSemanal] = React.useState(false);
-  const onToggleVista = () => setVistaSemanal(v => !v);
-  const [semanaData, setSemanaData] = React.useState(null);
-  const [usuarioSemanaId, setUsuarioSemanaId] = React.useState('');
-  const [fechaInicioSemana, setFechaInicioSemana] = React.useState('');
-  const [fechaSolo, setFechaSolo] = React.useState('');
-  const [fechaData, setFechaData] = React.useState(null);
+  // Vista dinámica (unitaria / semanal) con hook separado
+  const {
+    vistaSemanal,
+    setVistaSemanal,
+    semanaData,
+    setSemanaData,
+    usuarioSemanaId,
+    setUsuarioSemanaId,
+    fechaInicioSemana,
+    setFechaInicioSemana,
+    fechaSolo,
+    setFechaSolo,
+    fechaData,
+    setFechaData,
+  } = useVistaSemanal(showError);
   const [openGestion, setOpenGestion] = React.useState(false);
   const [grupoGestion, setGrupoGestion] = React.useState(null);
   const cerrarGestion = React.useCallback(() => {
@@ -174,12 +183,8 @@ function GestionarRegistrosHorasExtra() {
     cargarFecha();
   }, [vistaSemanal, fechaSolo]);
 
-  // Funciones de acción optimizadas
-  const handleVer = (registro) => abrirDialog(registro, 'ver');
-  const handleEditar = (registro) => abrirDialog(registro, 'editar');
-  const handleAprobar = (registro) => abrirConfirmDialog('aprobar', registro, 'Confirmar Aprobación', `¿Estás seguro que deseas APROBAR el registro ${registro.numRegistro}?`);
-  const handleRechazar = (registro) => abrirConfirmDialog('rechazar', registro, 'Confirmar Rechazo', `¿Estás seguro que deseas RECHAZAR el registro ${registro.numRegistro}?`);
-  const handleEliminar = (registro) => abrirConfirmDialog('eliminar', registro, 'Confirmar Eliminación', `¿Estás seguro que deseas ELIMINAR el registro ${registro.numRegistro}?`);
+  // Funciones de acción (hook UI)
+  const { handleVer, handleEditar, handleAprobar, handleRechazar, handleEliminar } = useAccionesUI(abrirDialog, abrirConfirmDialog);
 
   const handleGuardarEdicion = async () => {
     try {
@@ -291,44 +296,31 @@ function GestionarRegistrosHorasExtra() {
           onClearFilters={limpiarFiltros}
           isMobile={false}
           extraControls={vistaSemanal ? (
-            <>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
-                <span style={{ fontSize: 12, color: '#666' }}>Vista semanal:</span>
-                <select value={usuarioSemanaId} onChange={(e) => setUsuarioSemanaId(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
-                  <option value="">Seleccione usuario</option>
-                  {usuarios.map(u => (
-                    <option key={u.id} value={u.id}>{u.persona?.nombres} {u.persona?.apellidos} - {u.email}</option>
-                  ))}
-                </select>
-                <input type="date" value={fechaInicioSemana} onChange={(e) => setFechaInicioSemana(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
-                <span style={{ fontSize: 12, color: '#666' }}>o Fecha única:</span>
-                <input type="date" value={fechaSolo} onChange={(e) => setFechaSolo(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
-              </Box>
-            </>
+            <WeeklyControls
+              usuarios={usuarios}
+              usuarioSemanaId={usuarioSemanaId}
+              setUsuarioSemanaId={setUsuarioSemanaId}
+              fechaInicioSemana={fechaInicioSemana}
+              setFechaInicioSemana={setFechaInicioSemana}
+              fechaSolo={fechaSolo}
+              setFechaSolo={setFechaSolo}
+            />
           ) : null}
         />
 
         {/* Toggle dentro del contenedor (no modifica header) */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <button onClick={() => setVistaSemanal(false)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #1976d2', background: vistaSemanal ? '#fff' : '#1976d2', color: vistaSemanal ? '#1976d2' : '#fff', cursor: 'pointer', fontWeight: 700 }}>Vista unitaria</button>
-          <button onClick={() => setVistaSemanal(true)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #1976d2', background: vistaSemanal ? '#1976d2' : '#fff', color: vistaSemanal ? '#fff' : '#1976d2', cursor: 'pointer', fontWeight: 700 }}>Vista semanal</button>
-          {vistaSemanal && (
-            <select value={usuarioSemanaId} onChange={(e) => setUsuarioSemanaId(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
+          <VistaToggle vistaSemanal={vistaSemanal} setVistaSemanal={setVistaSemanal}>
+            <select value={usuarioSemanaId} onChange={(e) => setUsuarioSemanaId(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: 8 }}>
               <option value="">Seleccione usuario</option>
               {usuarios.map(u => (
                 <option key={u.id} value={u.id}>{u.persona?.nombres} {u.persona?.apellidos} - {u.email}</option>
               ))}
             </select>
-          )}
-          {vistaSemanal && (
-            <input type="date" value={fechaInicioSemana} onChange={(e) => setFechaInicioSemana(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
-          )}
-          {vistaSemanal && (
-            <>
-              <span style={{ alignSelf: 'center', color: '#666' }}>o Fecha única:</span>
-              <input type="date" value={fechaSolo} onChange={(e) => setFechaSolo(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }} />
-            </>
-          )}
+            <input type="date" value={fechaInicioSemana} onChange={(e) => setFechaInicioSemana(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: 8 }} />
+            <span style={{ alignSelf: 'center', color: '#666' }}>o Fecha única:</span>
+            <input type="date" value={fechaSolo} onChange={(e) => setFechaSolo(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: 8 }} />
+          </VistaToggle>
         </Box>
 
         {!vistaSemanal ? (

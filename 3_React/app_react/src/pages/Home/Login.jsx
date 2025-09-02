@@ -51,7 +51,7 @@ function Login() {
         } else if (data.rol === 'JefeDirecto') {
           navigate('/panel-jefe-directo');
         } else if (data.rol === 'Empleado') {
-          navigate('/panel-empleado');
+          navigate('/gestionar-registros-empleado');
         } else if (data.rol === 'InventoryManager') {
           navigate('/panel-inventory-manager');
         }else {
