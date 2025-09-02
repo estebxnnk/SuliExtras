@@ -7,10 +7,12 @@ function DashboardforRegistrosHorasExtraUniversal({
   subtitle = 'Gestión integral de usuarios y registros del sistema',
   refreshing = false,
   onRefresh,
-  children
+  children,
+  NavbarComponent,
+  navbarProps
 }) {
   return (
-    <LayoutUniversal>
+    <LayoutUniversal NavbarComponent={NavbarComponent} navbarProps={navbarProps}>
       <HeaderUniversal
         title={title}
         subtitle={subtitle}

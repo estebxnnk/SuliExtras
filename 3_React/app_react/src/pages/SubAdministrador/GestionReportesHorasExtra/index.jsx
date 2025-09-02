@@ -28,6 +28,7 @@ import {
   SubAdminSuccessSpinnerUniversal,
   InitialPageLoader
 } from '../../../components';
+import NavbarSubAdmin from '../NavbarSubAdmin';
 
 import {
   FiltrosAvanzados,
@@ -268,7 +269,7 @@ function GestionReportesHorasExtra() {
   }
 
   return (
-    <LayoutUniversal>
+    <LayoutUniversal NavbarComponent={NavbarSubAdmin}>
       {initialLoading && (
         <InitialPageLoader open title="Cargando Registros" subtitle="Preparando datos y componentes" iconColor="#1976d2" />
       )}
