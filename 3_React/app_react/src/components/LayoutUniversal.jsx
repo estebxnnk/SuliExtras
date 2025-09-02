@@ -3,7 +3,7 @@ import {
   Box,
   Paper
 } from '@mui/material';
-import NavbarSubAdmin from '../pages/SubAdministrador/NavbarSubAdmin';
+import NavbarUniversal from './NavbarUniversal';
 
 /**
  * Layout universal que se basa 100% en el estilo del módulo GestionarRegistrosHorasExtra
@@ -25,7 +25,7 @@ const LayoutUniversal = ({
       flexDirection: 'column'
     }}>
       {/* Navbar */}
-      {showNavbar && <NavbarSubAdmin />}
+      {showNavbar && <NavbarUniversal />}
       
       {/* Contenedor principal con el mismo estilo */}
       <Paper elevation={8} sx={{ 

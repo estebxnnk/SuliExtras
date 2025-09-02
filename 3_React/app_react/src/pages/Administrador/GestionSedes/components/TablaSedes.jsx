@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubAdminTableUniversal } from '../../../../components';
+import { TableUniversal } from '../../../../components';
 import { Chip, Box, Typography } from '@mui/material';
 import BusinessIcon from '@mui/icons-material/Business';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -123,7 +123,7 @@ const TablaSedes = ({
   ];
 
   return (
-    <SubAdminTableUniversal
+    <TableUniversal
       data={data}
       columns={columns}
       title="Sedes del Sistema"
@@ -136,6 +136,7 @@ const TablaSedes = ({
       showPagination={true}
       emptyMessage="No se encontraron sedes"
       customActions={customActions}
+      actions={[]}
       headerColor="#1976d2"
       isUserTable={false}
       isMobile={false}

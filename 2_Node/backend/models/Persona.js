@@ -27,6 +27,10 @@ const Persona = sequelize.define('Persona', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  salario: {
+    type: DataTypes.DECIMAL(11, 2),
+    allowNull: true,
+  },
 }, {
   timestamps: true,
 });

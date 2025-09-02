@@ -27,8 +27,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import LayoutAdministrador from '../components/LayoutAdministrador';
 import { 
-  LayoutUniversal, 
   SubAdminUniversalAlertUniversal,
   StatsUniversal,
   SubAdminLoadingSpinner,
@@ -233,7 +233,7 @@ function GestionSedes() {
   };
 
   return (
-    <LayoutUniversal>
+    <LayoutAdministrador>
       <HeaderGestionSedes
         title="Gestión de Sedes"
         subtitle="Administra las sedes y sus horarios de trabajo"
@@ -890,122 +890,403 @@ function GestionSedes() {
       </Dialog>
 
       {/* Diálogo de formulario crear/editar sede */}
-      <Dialog open={openFormulario} onClose={() => setOpenFormulario(false)} maxWidth="md" fullWidth>
+      <Dialog 
+        open={openFormulario} 
+        onClose={() => setOpenFormulario(false)} 
+        maxWidth="lg" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        {/* Header mejorado con gradiente y efectos */}
         <DialogTitle sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           gap: 2,
-          background: modoEdicion ? 'linear-gradient(135deg, #ff9800, #f57c00)' : 'linear-gradient(135deg, #4caf50, #388e3c)',
-          color: 'white'
+          background: modoEdicion 
+            ? 'linear-gradient(135deg, #ff9800 0%, #f57c00 50%, #ef6c00 100%)' 
+            : 'linear-gradient(135deg, #4caf50 0%, #388e3c 50%, #2e7d32 100%)',
+          color: 'white',
+          p: 3,
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(10px)'
+          }
         }}>
-          {modoEdicion ? <EditIcon /> : <AddIcon />}
-          {modoEdicion ? 'Editar Sede' : 'Nueva Sede'}
-          <IconButton onClick={() => setOpenFormulario(false)} sx={{ ml: 'auto', color: 'white' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 2, 
+            position: 'relative',
+            zIndex: 1
+          }}>
+            <Box sx={{
+              p: 1.5,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {modoEdicion ? <EditIcon sx={{ fontSize: 28 }} /> : <AddIcon sx={{ fontSize: 28 }} />}
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={700}>
+                {modoEdicion ? 'Editar Sede' : 'Nueva Sede'}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                {modoEdicion ? 'Modifica la información de la sede' : 'Completa los datos para crear una nueva sede'}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton 
+            onClick={() => setOpenFormulario(false)} 
+            sx={{ 
+              ml: 'auto', 
+              color: 'white',
+              background: 'rgba(255,255,255,0.1)',
+              '&:hover': {
+                background: 'rgba(255,255,255,0.2)',
+                transform: 'scale(1.1)'
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Nombre de la Sede"
-                value={formData.nombre}
-                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                required
-                InputProps={{
-                  startAdornment: <BusinessIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Ciudad"
-                value={formData.ciudad}
-                onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Dirección"
-                value={formData.direccion}
-                onChange={(e) => setFormData({...formData, direccion: e.target.value})}
-                required
-                
-                multiline
-                rows={2}
-                InputProps={{
-                  startAdornment: <LocationOnIcon sx={{ mr: 1, color: 'text.secondary', alignSelf: 'flex-start', mt: 1 }} />
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Teléfono"
-                value={formData.telefono}
-                onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                InputProps={{
-                  startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                InputProps={{
-                  startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Descripción"
-                value={formData.descripcion}
-                onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
-                multiline
-                rows={3}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.estado}
-                    onChange={(e) => setFormData({...formData, estado: e.target.checked})}
-                    color="primary"
+
+        <DialogContent sx={{ 
+          p: 0,
+          background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+          minHeight: '500px'
+        }}>
+          {/* Contenido principal con diseño mejorado */}
+          <Box sx={{ p: 4 }}>
+            {/* Sección de información básica */}
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              background: 'white', 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid rgba(0,0,0,0.05)'
+            }}>
+              <Typography variant="h6" fontWeight={600} color="primary" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <BusinessIcon />
+                Información Básica
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Nombre de la Sede"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                    required
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: <BusinessIcon sx={{ mr: 1, color: '#4caf50' }} />
+                    }}
                   />
-                }
-                label="Sede activa"
-              />
-            </Grid>
-          </Grid>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Ciudad"
+                    value={formData.ciudad}
+                    onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
+                    required
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: <LocationOnIcon sx={{ mr: 1, color: '#4caf50' }} />
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Dirección Completa"
+                    value={formData.direccion}
+                    onChange={(e) => setFormData({...formData, direccion: e.target.value})}
+                    required
+                    multiline
+                    rows={2}
+                    variant="outlined"
+                    placeholder="Ingresa la dirección completa de la sede"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: <LocationOnIcon sx={{ mr: 1, color: '#4caf50', alignSelf: 'flex-start', mt: 1 }} />
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Sección de contacto */}
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              background: 'white', 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid rgba(0,0,0,0.05)'
+            }}>
+              <Typography variant="h6" fontWeight={600} color="primary" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PhoneIcon />
+                Información de Contacto
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Teléfono"
+                    value={formData.telefono}
+                    onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                    variant="outlined"
+                    placeholder="Ej: +57 300 123 4567"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: <PhoneIcon sx={{ mr: 1, color: '#4caf50' }} />
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    variant="outlined"
+                    placeholder="Ej: sede@empresa.com"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: <EmailIcon sx={{ mr: 1, color: '#4caf50' }} />
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Sección de descripción y estado */}
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              background: 'white', 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid rgba(0,0,0,0.05)'
+            }}>
+              <Typography variant="h6" fontWeight={600} color="primary" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <BusinessIcon />
+                Información Adicional
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Descripción de la Sede"
+                    value={formData.descripcion}
+                    onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    placeholder="Describe las características especiales, servicios o información relevante de esta sede"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#4caf50',
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ 
+                    p: 2, 
+                    background: 'rgba(76, 175, 80, 0.05)', 
+                    borderRadius: 2,
+                    border: '1px solid rgba(76, 175, 80, 0.2)'
+                  }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.estado}
+                          onChange={(e) => setFormData({...formData, estado: e.target.checked})}
+                          color="success"
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#4caf50',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#4caf50',
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body1" fontWeight={600} color="text.primary">
+                            Sede Activa
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formData.estado ? 'La sede está disponible para operaciones' : 'La sede está temporalmente deshabilitada'}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-            <Button onClick={() => setOpenFormulario(false)} variant="outlined">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSubmitFormulario} 
-              variant="contained"
-              disabled={!formData.nombre || !formData.direccion || !formData.ciudad}
-              sx={{
-                background: modoEdicion ? 'linear-gradient(135deg, #ff9800, #f57c00)' : 'linear-gradient(135deg, #4caf50, #388e3c)',
-                '&:hover': {
-                  background: modoEdicion ? 'linear-gradient(135deg, #f57c00, #ef6c00)' : 'linear-gradient(135deg, #388e3c, #2e7d32)'
-                }
-              }}
-            >
-              {modoEdicion ? 'Actualizar' : 'Crear'} Sede
-            </Button>
+          {/* Footer con botones mejorados */}
+          <Box sx={{ 
+            p: 3, 
+            background: 'white',
+            borderTop: '1px solid rgba(0,0,0,0.05)',
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            gap: 2
+          }}>
+            <Typography variant="body2" color="text.secondary">
+              {modoEdicion ? 'Modifica los campos necesarios y guarda los cambios' : 'Completa todos los campos requeridos para crear la sede'}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button 
+                onClick={() => setOpenFormulario(false)} 
+                variant="outlined"
+                size="large"
+                sx={{
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  borderColor: '#ccc',
+                  color: '#666',
+                  '&:hover': {
+                    borderColor: '#999',
+                    background: 'rgba(0,0,0,0.04)'
+                  }
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSubmitFormulario} 
+                variant="contained"
+                size="large"
+                disabled={!formData.nombre || !formData.direccion || !formData.ciudad}
+                sx={{
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  background: modoEdicion 
+                    ? 'linear-gradient(135deg, #ff9800, #f57c00)' 
+                    : 'linear-gradient(135deg, #4caf50, #388e3c)',
+                  boxShadow: modoEdicion 
+                    ? '0 4px 12px rgba(255, 152, 0, 0.3)' 
+                    : '0 4px 12px rgba(76, 175, 80, 0.3)',
+                  '&:hover': {
+                    background: modoEdicion 
+                      ? 'linear-gradient(135deg, #f57c00, #ef6c00)' 
+                      : 'linear-gradient(135deg, #388e3c, #2e7d32)',
+                    boxShadow: modoEdicion 
+                      ? '0 6px 16px rgba(255, 152, 0, 0.4)' 
+                      : '0 6px 16px rgba(76, 175, 80, 0.4)',
+                    transform: 'translateY(-1px)'
+                  },
+                  '&:disabled': {
+                    background: '#e0e0e0',
+                    color: '#9e9e9e',
+                    boxShadow: 'none'
+                  }
+                }}
+              >
+                {modoEdicion ? 'Actualizar Sede' : 'Crear Sede'}
+              </Button>
+            </Box>
           </Box>
         </DialogContent>
       </Dialog>
@@ -1075,7 +1356,7 @@ function GestionSedes() {
         showLogo={true}
         autoHideDuration={4000}
       />
-    </LayoutUniversal>
+    </LayoutAdministrador>
   );
 }
 
