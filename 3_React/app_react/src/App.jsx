@@ -32,6 +32,9 @@ import PanelEmpleado from './pages/Empleado/PanelEmpleado';
 import MisRegistros from './pages/Empleado/MisRegistros';
 import CrearRegistroHorasEmpleado from './pages/Empleado/CrearRegistroHorasEmpleado';
 
+
+import GestionarRegistrosEmpleado from './pages/Empleado/GestionarRegistrosEmpleado';
+
 // Rol InventoryManager
 import PanelInventoryManager from './pages/InventoriManager/PanelInventoryManager';
 import GestionarDispositivos from './pages/InventoriManager/GestionarDispositivos';
@@ -169,6 +172,11 @@ function App() {
         <Route path="/gestionar-tipos-hora-subadmin" element={
           <ProtectedRoute allowedRoles={['SubAdministrador']}>
             <GestionarTiposHoraSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-registros-empleado" element={
+          <ProtectedRoute allowedRoles={['Empleado']}>
+            <GestionarRegistrosEmpleado />
           </ProtectedRoute>
         } />
       </Routes>
