@@ -29,6 +29,7 @@ import {
   StatsUniversal,
   FiltersUniversal
 } from '../../../components';
+import NavbarSubAdmin from '../NavbarSubAdmin';
 import UsuariosTable from './components/UsuariosTable';
 import useUserFiltersUniversal from '../../../components/hooks/useUserFiltersUniversal';
 
@@ -114,7 +115,7 @@ function PanelUsuariosSubAdmin() {
   }
 
   return (
-    <LayoutUniversal>
+    <LayoutUniversal NavbarComponent={NavbarSubAdmin}>
       <HeaderUniversal
         title="Gestión de Usuarios"
         subtitle={`Administra usuarios | Total: ${usuarios.length} | Roles: ${roles.length}`}
