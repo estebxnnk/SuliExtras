@@ -26,9 +26,7 @@ function NavbarAdminstrativo() {
   const items = [
     { key: 'dashboard', label: 'Dashboard', to: '/panel-admin' },
     { key: 'usuarios', label: 'Usuarios', to: '/usuarios-administrativo' },
-    { key: 'crear_usuario', label: 'Crear Usuario', to: '/registrar-usuario-administrativo' },
     { key: 'sedes', label: 'Gestionar Sedes', to: '/gestion-sedes' },
-    { key: 'roles', label: 'Gestionar Roles', to: '/gestion-roles' }, // Example route for roles
     { key: 'solicitudes', label: 'Solicitudes', to: '/panel-admin?tab=solicitudes' },
   ];
 
@@ -38,9 +36,7 @@ function NavbarAdminstrativo() {
     const search = window.location.search;
 
     if (path.includes('/usuarios-administrativo')) return 'usuarios';
-    if (path.includes('/registrar-usuario-administrativo')) return 'crear_usuario';
     if (path.includes('/gestion-sedes')) return 'sedes';
-    if (path.includes('/gestion-roles')) return 'roles';
     if (search.includes('tab=solicitudes')) return 'solicitudes';
     if (path.includes('/panel-admin')) return 'dashboard';
     

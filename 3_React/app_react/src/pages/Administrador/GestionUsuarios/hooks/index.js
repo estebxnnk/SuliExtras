@@ -1,0 +1,1 @@
+export { usePanelUsuariosAdmin } from './usePanelUsuariosAdmin';

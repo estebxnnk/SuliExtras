@@ -8,6 +8,7 @@ import NavbarUniversal from './NavbarUniversal';
 /**
  * Layout universal que se basa 100% en el estilo del módulo GestionarRegistrosHorasExtra
  * Mantiene la misma estética visual y estructura
+ * Soporta inyección de navbar personalizado por módulo
  */
 const LayoutUniversal = ({ 
   children,
@@ -15,7 +16,7 @@ const LayoutUniversal = ({
   maxWidth = 1400,
   showNavbar = true,
   NavbarComponent,
-  navbarProps
+  navbarProps = {}
 }) => {
   return (
     <Box sx={{ 
@@ -26,8 +27,12 @@ const LayoutUniversal = ({
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Navbar */}
-      {showNavbar && (NavbarComponent ? <NavbarComponent {...navbarProps} /> : <NavbarUniversal />)}
+      {/* Navbar - Inyección de componente personalizado */}
+      {showNavbar && (
+        NavbarComponent ? 
+          <NavbarComponent {...navbarProps} /> : 
+          <NavbarUniversal />
+      )}
       
       {/* Contenedor principal con el mismo estilo */}
       <Paper elevation={8} sx={{ 

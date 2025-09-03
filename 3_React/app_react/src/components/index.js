@@ -41,3 +41,6 @@ export { default as RegistrarUsuarioUniversal } from './users/RegistrarUsuarioUn
 // Nuevo: Dashboard global para SubAdmin
 export { default as DashboardforRegistrosHorasExtraUniversal } from './Dashboard/DashboardforRegistrosHorasExtraUniversal';
 
+// Componentes de diálogos globales
+export * from './dialog';
+

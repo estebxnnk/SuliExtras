@@ -18,7 +18,6 @@ import GestionarTiposHoraSubAdmin from './pages/SubAdministrador/GestionarTiposH
 //Rol Administrador
 import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
 import PanelUsuariosAdministrativo from './pages/Administrador/PanelUsuariosAdministrativo';
-import RegistrarUsuario from './pages/Administrador/RegistrarUsuario';
 import GestionSedes from './pages/Administrador/GestionSedes/index';
 
 //Rol JefeDirecto
@@ -82,11 +81,6 @@ function App() {
         <Route path="/gestion-sedes" element={
           <ProtectedRoute allowedRoles={['Administrador']}>
             <GestionSedes />
-          </ProtectedRoute>
-        } />
-        <Route path="/registrar-usuario-administrativo" element={
-          <ProtectedRoute allowedRoles={['Administrador']}>
-            <RegistrarUsuario />
           </ProtectedRoute>
         } />
         <Route path="/panel-jefe-directo" element={
