@@ -4,6 +4,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import SearchIcon from '@mui/icons-material/Search';
 import { LayoutUniversal, HeaderUniversal, UniversalAlert, ConfirmDialogUniversal, InitialPageLoader, CreateSuccessSpinner, EditSuccessSpinner, DeleteSuccessSpinner } from '../../../components';
+import NavbarSubAdmin from '../NavbarSubAdmin';
 import { useTiposHora } from './hooks/useTiposHora';
 import TiposHoraCards from './components/TiposHoraCards';
 import TipoHoraDialog from './components/TipoHoraDialog';
@@ -53,7 +54,7 @@ function GestionarTiposHoraSubAdmin() {
   };
 
   return (
-    <LayoutUniversal>
+    <LayoutUniversal NavbarComponent={NavbarSubAdmin}>
       <HeaderUniversal
         title="Gestionar Tipos de Hora"
         subtitle={`Administración de tipos con recargos`}

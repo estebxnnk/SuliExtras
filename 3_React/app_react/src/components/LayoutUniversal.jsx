@@ -13,7 +13,9 @@ const LayoutUniversal = ({
   children,
   backgroundImage = "/img/Recepcion.jpg",
   maxWidth = 1400,
-  showNavbar = true
+  showNavbar = true,
+  NavbarComponent,
+  navbarProps
 }) => {
   return (
     <Box sx={{ 
@@ -25,7 +27,7 @@ const LayoutUniversal = ({
       flexDirection: 'column'
     }}>
       {/* Navbar */}
-      {showNavbar && <NavbarUniversal />}
+      {showNavbar && (NavbarComponent ? <NavbarComponent {...navbarProps} /> : <NavbarUniversal />)}
       
       {/* Contenedor principal con el mismo estilo */}
       <Paper elevation={8} sx={{ 

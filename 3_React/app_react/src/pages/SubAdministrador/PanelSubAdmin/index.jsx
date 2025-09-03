@@ -37,6 +37,7 @@ import { KPICards } from './components/KPICards';
 import { UsuariosTable } from './components/UsuariosTable';
 import { GraficoUsuarios } from './components/GraficoUsuarios';
 import { DashboardforRegistrosHorasExtraUniversal } from '../../../components';
+import NavbarSubAdmin from '../NavbarSubAdmin';
 
 function PanelSubAdmin() {
   const theme = useTheme();
@@ -70,7 +71,11 @@ function PanelSubAdmin() {
   }
 
   return (
-    <DashboardforRegistrosHorasExtraUniversal refreshing={loading} onRefresh={handleRefresh}>
+    <DashboardforRegistrosHorasExtraUniversal
+      refreshing={loading}
+      onRefresh={handleRefresh}
+      NavbarComponent={NavbarSubAdmin}
+    >
       {/* Filtros */}
       <FiltrosPanel
         rolFiltro={rolFiltro}
