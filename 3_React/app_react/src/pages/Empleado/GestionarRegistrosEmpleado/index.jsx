@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import NavbarEmpleado from '../NavbarEmpleado';
 import {
   LayoutUniversal,
   SubAdminUniversalAlertUniversal,
@@ -8,6 +7,7 @@ import {
   InitialPageLoader,
   StatsUniversal
 } from '../../../components';
+import NavbarEmpleado from '../NavbarEmpleado';
 import HeaderGestionRegistrosEmpleado from './components/HeaderGestionRegistrosEmpleado';
 import FiltrosAvanzadosEmpleado from './components/FiltrosAvanzadosEmpleado';
 import TablaRegistrosEmpleado from './components/TablaRegistrosEmpleado';
@@ -89,8 +89,7 @@ function GestionarRegistrosEmpleado() {
   }, [initialize]);
 
   return (
-    <LayoutUniversal>
-      <NavbarEmpleado />
+    <LayoutUniversal NavbarComponent={NavbarEmpleado}>
 
       <InitialPageLoader open={loadingState.initialOpen} title="Cargando" subtitle="Preparando datos" iconColor="#1976d2" />
 
