@@ -15,7 +15,7 @@ export { default as StateChangeSuccessSpinner } from './alertsAndSpinners/StateC
 export { default as ConfirmDialogWithLogo } from './ConfirmDialogWithLogo';
 export { default as RegistroDialog } from './Dialogs/RegistroDialog';
 export { default as CrearRegistroDialog } from './Dialogs/CrearRegistroDialog';
-export { default as CrearRegistrosBulkDialog } from './Dialogs/CrearRegistrosBulkDialog';
+export { default as CrearRegistrosBulkDialog } from './Dialogs/CrearRegistrosSemanalesSubAdmin';
 export { default as DialogoRegistro } from './Dialogs/DialogoRegistro';
 export { default as GestionSemanaDialog } from './Dialogs/GestionSemanaDialog';
 

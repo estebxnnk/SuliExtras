@@ -19,6 +19,7 @@ import {
 import useVistaSemanal from './hooks/useVistaSemanal';
 import useListaRegistros from './hooks/useListaRegistros';
 import useAccionesUI from './hooks/useAccionesUI';
+import CrearRegistrosSemanalesSubAdmin from './components/Dialogs/CrearRegistrosSemanalesSubAdmin';
 
 // Componentes optimizados
 import {
@@ -37,7 +38,6 @@ import {
   TablaRegistros,
   DialogoRegistro,
   CrearRegistroDialog,
-  CrearRegistrosBulkDialog,
   InformacionFiltros,
   RegistrosSemanaTable,
   WeeklyControls,
@@ -388,7 +388,7 @@ function GestionarRegistrosHorasExtra() {
       />
 
       {/* Diálogo de Crear Registros (Bulk) */}
-      <CrearRegistrosBulkDialog
+      <CrearRegistrosSemanalesSubAdmin
         open={openBulk}
         onClose={cerrarBulk}
         tiposHora={tiposHora}

@@ -55,7 +55,7 @@ import {
 } from '../../utils/horasExtrasUtils';
 import { FixedSizeList as List } from 'react-window';
 
-const CrearRegistrosBulkDialog = ({
+const CrearRegistrosSemanalesSubAdmin = ({
   open,
   onClose,
   tiposHora = [],
@@ -839,6 +839,6 @@ const CrearRegistrosBulkDialog = ({
   );
 };
 
-export default CrearRegistrosBulkDialog;
+export default CrearRegistrosSemanalesSubAdmin;
 
 
