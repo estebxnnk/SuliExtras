@@ -22,6 +22,11 @@ export const registrosHorasExtraService = {
     const response = await fetch(`${API_BASE_URL}/usuarios`);
     if (!response.ok) throw new Error('Error al obtener usuarios');
     return response.json();
+  },
+  async getUsuarioById(id) {
+    const response = await fetch(`${API_BASE_URL}/usuarios/${id}`);
+    if (!response.ok) throw new Error('Error al obtener usuario');
+    return response.json();
   }
 };
 

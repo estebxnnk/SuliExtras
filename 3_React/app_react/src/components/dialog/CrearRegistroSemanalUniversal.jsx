@@ -51,7 +51,9 @@ const CrearRegistroSemanalUniversal = ({
   usuarios = [],
   onCrearRegistrosBulk,
   loading: loadingProp = false,
-  isMobile
+  isMobile,
+  defaultUsuarioId,
+  hideEmployeeSelector = false
 }) => {
   const {
     usuarioSeleccionado,
@@ -85,7 +87,7 @@ const CrearRegistroSemanalUniversal = ({
     toggleWeekInclude,
     toggleAllWeekInclude,
     setMensaje
-  } = useCrearRegistroSemanal({ usuarios, onCrearRegistrosBulk, onClose, loadingProp });
+  } = useCrearRegistroSemanal({ usuarios, onCrearRegistrosBulk, onClose, loadingProp, defaultUsuarioId });
 
   const TBody = React.useMemo(() => forwardRef(function TBody(props, ref) { return <tbody ref={ref} {...props} />; }), []);
 
@@ -147,6 +149,7 @@ const CrearRegistroSemanalUniversal = ({
             Empleado
           </Typography>
           <Grid container spacing={3}>
+            {!hideEmployeeSelector && (
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>Empleado</InputLabel>
@@ -168,6 +171,7 @@ const CrearRegistroSemanalUniversal = ({
                 </Select>
               </FormControl>
             </Grid>
+            )}
             {usuarioSeleccionado && (
               <Grid item xs={12} md={6}>
                 <Card sx={{ p: 2, background: '#e3f2fd', border: '1px solid #bbdefb' }}>

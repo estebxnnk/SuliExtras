@@ -16,7 +16,7 @@ import { registrosHorasExtraService } from '../services/registrosHorasExtraServi
 /**
  * Hook para manejar toda la lógica del diálogo de creación semanal de registros
  */
-export const useCrearRegistroSemanal = ({ usuarios = [], onCrearRegistrosBulk, onClose, loadingProp = false }) => {
+export const useCrearRegistroSemanal = ({ usuarios = [], onCrearRegistrosBulk, onClose, loadingProp = false, defaultUsuarioId = null }) => {
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [rows, setRows] = useState([emptyRow()]);
   const [mensaje, setMensaje] = useState('');
@@ -48,6 +48,28 @@ export const useCrearRegistroSemanal = ({ usuarios = [], onCrearRegistrosBulk, o
     const usuario = usuarios.find(u => u.id === usuarioIdValue) || null;
     setUsuarioSeleccionado(usuario);
   };
+
+  // Selección por defecto del usuario cuando se provee defaultUsuarioId
+  useEffect(() => {
+    if (!defaultUsuarioId) return;
+    const idStr = String(defaultUsuarioId);
+    const match = Array.isArray(usuarios) && usuarios.length
+      ? usuarios.find(u => String(u.id) === idStr)
+      : null;
+
+    // Si encontramos el usuario completo, hidratar/actualizar
+    if (match) {
+      if (!usuarioSeleccionado || String(usuarioSeleccionado.id) !== idStr || !usuarioSeleccionado.persona) {
+        setUsuarioSeleccionado(match);
+      }
+      return;
+    }
+
+    // En ausencia de datos completos, asegurar al menos un placeholder con el id
+    if (!usuarioSeleccionado || String(usuarioSeleccionado.id) !== idStr) {
+      setUsuarioSeleccionado({ id: defaultUsuarioId });
+    }
+  }, [defaultUsuarioId, usuarios, usuarioSeleccionado]);
 
   const updateRow = (index, field, value) => {
     setRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
