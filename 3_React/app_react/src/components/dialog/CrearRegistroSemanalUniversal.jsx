@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -41,20 +41,8 @@ import {
   ViewWeek as ViewWeekIcon
 } from '@mui/icons-material';
 
-import {
-  emptyRow,
-  calcularHorasExtraRow,
-  validateRow,
-  validateNoOverlaps,
-  addDays,
-  formatDate,
-  isWeekend,
-  computeWeekFromMondayStr,
-  parseLocalISODate,
-  toMondayDateString
-} from '../utils/horasExtrasUtils';
-import { registrosHorasExtraService } from '../services/registrosHorasExtraService';
 import { FixedSizeList as List } from 'react-window';
+import useCrearRegistroSemanal from '../hooks/useCrearRegistroSemanal';
 
 const CrearRegistroSemanalUniversal = ({
   open,
@@ -65,272 +53,41 @@ const CrearRegistroSemanalUniversal = ({
   loading: loadingProp = false,
   isMobile
 }) => {
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
-  const [rows, setRows] = useState([emptyRow()]);
-  const [mensaje, setMensaje] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [genOpts, setGenOpts] = useState({
-    fechaInicio: '',
-    dias: 5,
-    soloHabiles: true,
-    horaIngreso: '',
-    horaSalida: '',
-    ubicacion: '',
-    tipoHoraId: '',
-    justificacionHoraExtra: ''
-  });
-  const [vistaSemanal, setVistaSemanal] = useState(true);
-  const [fechaLunes, setFechaLunes] = useState('');
-  const [weekRows, setWeekRows] = useState([
-    emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()
-  ]);
-  const [weekInclude, setWeekInclude] = useState([true, true, true, true, true, true, true]);
-  const tableContainerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(800);
+  const {
+    usuarioSeleccionado,
+    rows,
+    mensaje,
+    loading,
+    vistaSemanal,
+    fechaLunes,
+    weekRows,
+    weekInclude,
+    tableContainerRef,
+    containerWidth,
+    usuarioId,
+    derivedRows,
+    derivedWeekRows,
+    totalHoras,
+    validCount,
+    invalidCount,
+    shouldVirtualize,
+    dayNames,
+    setVistaSemanal,
+    setFechaLunes,
+    handleUsuarioChange,
+    updateRow,
+    addRow,
+    removeRow,
+    duplicateRow,
+    handleSubmit,
+    handleClose,
+    updateWeekCell,
+    toggleWeekInclude,
+    toggleAllWeekInclude,
+    setMensaje
+  } = useCrearRegistroSemanal({ usuarios, onCrearRegistrosBulk, onClose, loadingProp });
 
-  const usuarioId = useMemo(() => usuarioSeleccionado?.id || null, [usuarioSeleccionado]);
-
-  const handleUsuarioChange = (usuarioIdValue) => {
-    const usuario = usuarios.find(u => u.id === usuarioIdValue) || null;
-    setUsuarioSeleccionado(usuario);
-  };
-
-  const updateRow = (index, field, value) => {
-    setRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
-  };
-
-  const addRow = () => setRows(prev => [...prev, emptyRow()]);
-  const removeRow = (index) => setRows(prev => prev.filter((_, i) => i !== index));
-  const duplicateRow = (index) => setRows(prev => {
-    const copy = { ...prev[index] };
-    return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
-  });
-
-  // Derivar filas con horas calculadas (performance-friendly)
-  const derivedRows = useMemo(() => {
-    return rows.map(r => {
-      if (r.horaIngreso && r.horaSalida && (r.cantidadHorasExtra === '' || r.cantidadHorasExtra === undefined || r.cantidadHorasExtra === null)) {
-        const calc = calcularHorasExtraRow(r);
-        return { ...r, cantidadHorasExtra: calc };
-      }
-      return r;
-    });
-  }, [rows]);
-
-  const handleSubmit = async (e) => {
-    e?.preventDefault?.();
-    setMensaje('');
-    setLoading(true);
-
-    try {
-      if (!usuarioId) {
-        throw new Error('Debes seleccionar un empleado');
-      }
-      let registros = [];
-      if (vistaSemanal) {
-        if (!fechaLunes) throw new Error('Selecciona la fecha de Lunes');
-        // Construir desde weekRows
-        const activos = derivedWeekRows
-          .map((d, i) => ({ ...d, _i: i }))
-          .filter((d, i) => weekInclude[i])
-          .filter(d => d.fecha && d.horaIngreso && d.horaSalida && d.ubicacion && d.tipoHoraId);
-        if (!activos.length) throw new Error('Completa al menos un día de la semana');
-        activos.forEach((r, idx) => validateRow(r, idx));
-        validateNoOverlaps(activos);
-        registros = activos.map(r => ({
-          fecha: r.fecha,
-          horaIngreso: r.horaIngreso,
-          horaSalida: r.horaSalida,
-          ubicacion: r.ubicacion,
-          cantidadHorasExtra: parseFloat(r.cantidadHorasExtra || 0),
-          justificacionHoraExtra: r.justificacionHoraExtra || '',
-          tipoHoraId: r.tipoHoraId ? parseInt(r.tipoHoraId) : undefined
-        }));
-      } else {
-        if (!derivedRows.length) throw new Error('Agrega al menos un registro');
-        derivedRows.forEach((row, idx) => validateRow(row, idx));
-        validateNoOverlaps(derivedRows);
-        registros = derivedRows.map(r => ({
-          fecha: r.fecha,
-          horaIngreso: r.horaIngreso,
-          horaSalida: r.horaSalida,
-          ubicacion: r.ubicacion,
-          cantidadHorasExtra: parseFloat(r.cantidadHorasExtra),
-          justificacionHoraExtra: r.justificacionHoraExtra || '',
-          tipoHoraId: r.tipoHoraId ? parseInt(r.tipoHoraId) : undefined
-        }));
-      }
-
-      const payload = { usuarioId, registros };
-
-      const result = onCrearRegistrosBulk
-        ? await onCrearRegistrosBulk(payload)
-        : await registrosHorasExtraService.createRegistrosBulk(payload);
-      if (result) {
-        setMensaje('¡Registros creados exitosamente!');
-        setRows([emptyRow()]);
-        setWeekRows([emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
-        setTimeout(() => {
-          onClose?.();
-          setMensaje('');
-        }, 1500);
-      }
-    } catch (error) {
-      setMensaje(error.message || 'Error al crear los registros');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    setRows([emptyRow()]);
-    setUsuarioSeleccionado(null);
-    setMensaje('');
-    setWeekRows([emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
-    setFechaLunes('');
-    setWeekInclude([true, true, true, true, true, true, true]);
-    onClose?.();
-  };
-
-  const handleGenOptChange = (field, value) => {
-    setGenOpts(prev => ({ ...prev, [field]: value }));
-  };
-
-  const generarSemana = () => {
-    setMensaje('');
-    const { fechaInicio, dias, soloHabiles, horaIngreso, horaSalida, ubicacion, tipoHoraId, justificacionHoraExtra } = genOpts;
-    if (!fechaInicio || !horaIngreso || !horaSalida || !ubicacion || !tipoHoraId) {
-      setMensaje('Completa los campos de generación: fecha, horas, ubicación y tipo');
-      return;
-    }
-    const start = parseLocalISODate(fechaInicio);
-    const generadas = [];
-    let count = 0;
-    let offset = 0;
-    while (count < Number(dias) && offset < 31) { // tope seguridad
-      const d = addDays(start, offset);
-      offset += 1;
-      if (soloHabiles && isWeekend(d)) continue;
-      const base = {
-        fecha: formatDate(d),
-        horaIngreso,
-        horaSalida,
-        ubicacion,
-        tipoHoraId,
-        justificacionHoraExtra: justificacionHoraExtra || ''
-      };
-      const cantidadHorasExtra = calcularHorasExtraRow(base);
-      generadas.push({ ...base, cantidadHorasExtra });
-      count += 1;
-    }
-
-    if (!generadas.length) {
-      setMensaje('No se generaron filas. Verifica rango y filtros.');
-      return;
-    }
-
-    setRows(generadas);
-  };
-
-  // Semana: helpers
-  const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-  useEffect(() => {
-    if (vistaSemanal && fechaLunes) {
-      // Validación: fechaLunes debe ser lunes real (zona local) y guardia de loop
-      const fecha = parseLocalISODate(fechaLunes);
-      const mondayStr = toMondayDateString(fecha);
-      if (mondayStr !== fechaLunes) {
-        setFechaLunes(mondayStr);
-        return; // esperar siguiente efecto con fecha corregida
-      }
-      setWeekRows(prev => {
-        const base = computeWeekFromMondayStr(fechaLunes);
-        let changed = false;
-        const merged = base.map((d, i) => {
-          const combinado = {
-            ...d,
-            horaIngreso: prev[i]?.horaIngreso || genOpts.horaIngreso || '',
-            horaSalida: prev[i]?.horaSalida || genOpts.horaSalida || '',
-            ubicacion: prev[i]?.ubicacion || genOpts.ubicacion || '',
-            tipoHoraId: prev[i]?.tipoHoraId || genOpts.tipoHoraId || '',
-            justificacionHoraExtra: prev[i]?.justificacionHoraExtra || genOpts.justificacionHoraExtra || ''
-          };
-          const antes = prev[i] || emptyRow();
-          if (
-            antes.fecha !== combinado.fecha ||
-            antes.horaIngreso !== combinado.horaIngreso ||
-            antes.horaSalida !== combinado.horaSalida ||
-            antes.ubicacion !== combinado.ubicacion ||
-            antes.tipoHoraId !== combinado.tipoHoraId ||
-            antes.justificacionHoraExtra !== combinado.justificacionHoraExtra
-          ) {
-            changed = true;
-          }
-          return combinado;
-        });
-        return changed ? merged : prev;
-      });
-    }
-  }, [vistaSemanal, fechaLunes]);
-
-  // Derivar weekRows con horas calculadas (performance-friendly)
-  const derivedWeekRows = useMemo(() => {
-    if (!vistaSemanal) return weekRows;
-    return weekRows.map(r => {
-      if (r.horaIngreso && r.horaSalida && (r.cantidadHorasExtra === '' || r.cantidadHorasExtra === undefined || r.cantidadHorasExtra === null)) {
-        const calc = calcularHorasExtraRow(r);
-        return { ...r, cantidadHorasExtra: calc };
-      }
-      return r;
-    });
-  }, [weekRows, vistaSemanal]);
-
-  const updateWeekCell = (index, field, value) => {
-    setWeekRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
-  };
-
-  const toggleWeekInclude = (index, checked) => {
-    setWeekInclude(prev => prev.map((v, i) => i === index ? checked : v));
-  };
-
-  const toggleAllWeekInclude = (checked) => {
-    setWeekInclude(new Array(7).fill(checked));
-  };
-
-  // Resumen
-  const { totalHoras, validCount, invalidCount } = useMemo(() => {
-    const target = vistaSemanal ? derivedWeekRows : derivedRows;
-    let total = 0;
-    let valid = 0;
-    let invalid = 0;
-    target.forEach((r, idx) => {
-      const hasData = r.fecha || r.horaIngreso || r.horaSalida || r.ubicacion || r.tipoHoraId || r.cantidadHorasExtra;
-      if (!hasData) return;
-      try {
-        validateRow(r, idx);
-        valid += 1;
-        const c = parseFloat(r.cantidadHorasExtra || 0);
-        if (!isNaN(c)) total += c;
-      } catch (_) {
-        invalid += 1;
-      }
-    });
-    return { totalHoras: total, validCount: valid, invalidCount: invalid };
-  }, [vistaSemanal, derivedWeekRows, derivedRows]);
-
-  // Medir ancho del contenedor para virtualización
-  useEffect(() => {
-    const el = tableContainerRef.current;
-    if (!el) return;
-    const update = () => setContainerWidth(el.clientWidth || 800);
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  const shouldVirtualize = useMemo(() => !vistaSemanal && derivedRows.length > 100, [vistaSemanal, derivedRows.length]);
-  const TBody = useMemo(() => forwardRef(function TBody(props, ref) { return <tbody ref={ref} {...props} />; }), []);
+  const TBody = React.useMemo(() => forwardRef(function TBody(props, ref) { return <tbody ref={ref} {...props} />; }), []);
 
   return (
     <Dialog
@@ -411,6 +168,26 @@ const CrearRegistroSemanalUniversal = ({
                 </Select>
               </FormControl>
             </Grid>
+            {usuarioSeleccionado && (
+              <Grid item xs={12} md={6}>
+                <Card sx={{ p: 2, background: '#e3f2fd', border: '1px solid #bbdefb' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: '#0d47a1' }}>{usuarioSeleccionado.persona?.nombres?.[0]}</Avatar>
+                    <Box>
+                      <Typography fontWeight={700} sx={{ fontSize: 16, color: '#0d47a1' }}>
+                        Empleado seleccionado:
+                      </Typography>
+                      <Typography fontWeight={700} sx={{ fontSize: 17 }}>
+                        {usuarioSeleccionado.persona?.nombres} {usuarioSeleccionado.persona?.apellidos}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>
+                        {usuarioSeleccionado.email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Card>
+              </Grid>
+            )}
           </Grid>
         </Card>
 
