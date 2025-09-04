@@ -10,7 +10,8 @@ const HeaderGestionRegistrosEmpleado = ({
   search,
   onSearchChange,
   refreshing,
-  onRefresh
+  onRefresh,
+  onOpenCrearMultiple
 }) => {
   const navigate = useNavigate();
   return (
@@ -34,6 +35,15 @@ const HeaderGestionRegistrosEmpleado = ({
           sx={{ fontWeight: 700 }}
         >
           Crear nuevo registro
+        </Button>,
+        <Button
+          key="crear-multiples"
+          variant="outlined"
+          color="primary"
+          onClick={onOpenCrearMultiple}
+          sx={{ fontWeight: 700 }}
+        >
+          Crear múltiples
         </Button>
       ]}
     />

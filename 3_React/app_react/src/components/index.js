@@ -44,3 +44,7 @@ export { default as DashboardforRegistrosHorasExtraUniversal } from './Dashboard
 // Componentes de diálogos globales
 export * from './dialog';
 
+// Servicios y utilidades compartidas
+export * as RegistrosHorasExtraUtils from './utils/horasExtrasUtils';
+export { registrosHorasExtraService } from './services/registrosHorasExtraService';
+

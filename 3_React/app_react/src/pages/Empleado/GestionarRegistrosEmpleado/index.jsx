@@ -9,6 +9,7 @@ import {
 } from '../../../components';
 import NavbarEmpleado from '../NavbarEmpleado';
 import HeaderGestionRegistrosEmpleado from './components/HeaderGestionRegistrosEmpleado';
+import CrearRegistrosSemanalEmpleadoDialog from './components/CrearRegistrosSemanalEmpleadoDialog';
 import FiltrosAvanzadosEmpleado from './components/FiltrosAvanzadosEmpleado';
 import TablaRegistrosEmpleado from './components/TablaRegistrosEmpleado';
 import DetallesRegistroDialog from './components/Dialogs/DetallesRegistroDialog';
@@ -84,6 +85,8 @@ function GestionarRegistrosEmpleado() {
     setLastUpdate
   });
 
+  const [openCrearMultiple, setOpenCrearMultiple] = React.useState(false);
+
   useEffect(() => {
     initialize();
   }, [initialize]);
@@ -91,7 +94,7 @@ function GestionarRegistrosEmpleado() {
   return (
     <LayoutUniversal NavbarComponent={NavbarEmpleado}>
 
-      <InitialPageLoader open={loadingState.initialOpen} title="Cargando" subtitle="Preparando datos" iconColor="#1976d2" />
+      <InitialPageLoader open={Boolean(loadingState.initialOpen && loadingState.open)} title="Cargando" subtitle="Preparando datos" iconColor="#1976d2" />
 
       <HeaderGestionRegistrosEmpleado
         title="Gestión de Registros de Horas Extra"
@@ -100,6 +103,7 @@ function GestionarRegistrosEmpleado() {
         onSearchChange={setSearch}
         refreshing={loadingState.open}
         onRefresh={handleRefresh}
+        onOpenCrearMultiple={() => setOpenCrearMultiple(true)}
       />
 
       <FiltrosAvanzadosEmpleado
@@ -167,7 +171,7 @@ function GestionarRegistrosEmpleado() {
       />
 
       <SubAdminLoadingSpinner
-        open={loadingState.open}
+        open={Boolean(loadingState.open && !loadingState.initialOpen)}
         message={loadingState.message}
         size={loadingState.size}
         showLogo={true}
@@ -181,6 +185,15 @@ function GestionarRegistrosEmpleado() {
           onClose={hideSuccess}
         />
       )}
+
+      {/* Diálogo para crear múltiples registros del empleado autenticado */}
+      <CrearRegistrosSemanalEmpleadoDialog
+        open={openCrearMultiple}
+        onClose={() => setOpenCrearMultiple(false)}
+        tiposHora={tiposHora}
+        usuarios={[]}
+        onCreado={() => handleRefresh()}
+      />
     </LayoutUniversal>
   );
 }

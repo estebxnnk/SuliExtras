@@ -33,7 +33,7 @@ export const useAccionesRegistrosEmpleado = ({
 
   const handleRefresh = useCallback(async () => {
     try {
-      setLoadingState({ open: true, message: 'Actualizando...', size: 'small' });
+      setLoadingState({ open: true, message: 'Actualizando...', size: 'small', initialOpen: false });
       const regs = await registrosEmpleadoService.fetchRegistros();
       setRegistros(regs);
       setLastUpdate(Date.now());
@@ -41,7 +41,7 @@ export const useAccionesRegistrosEmpleado = ({
     } catch (error) {
       setAlertState({ open: true, type: 'error', message: 'No se pudieron actualizar: ' + error.message, title: 'Error' });
     } finally {
-      setLoadingState({ open: false, message: '', size: 'small' });
+      setLoadingState({ open: false, message: '', size: 'small', initialOpen: false });
     }
   }, [setAlertState, setLoadingState, setRegistros, setLastUpdate]);
 
@@ -73,7 +73,7 @@ export const useAccionesRegistrosEmpleado = ({
       const registro = getRegistro ? getRegistro() : null;
       const id = registro?.id;
       if (!id) return setConfirmDialog({ open: false, registro: null });
-      setLoadingState({ open: true, message: 'Eliminando...', size: 'small' });
+      setLoadingState({ open: true, message: 'Eliminando...', size: 'small', initialOpen: false });
       await registrosEmpleadoService.deleteRegistro(id);
       setAlertState({ open: true, type: 'success', message: 'Registro eliminado exitosamente', title: 'Éxito' });
       setConfirmDialog({ open: false, registro: null });
@@ -83,13 +83,13 @@ export const useAccionesRegistrosEmpleado = ({
     } catch (error) {
       setAlertState({ open: true, type: 'error', message: 'No se pudo eliminar: ' + error.message, title: 'Error' });
     } finally {
-      setLoadingState({ open: false, message: '', size: 'small' });
+      setLoadingState({ open: false, message: '', size: 'small', initialOpen: false });
     }
   }, [setAlertState, setLoadingState, setConfirmDialog, setRegistros, setLastUpdate]);
 
   const handleGuardarEdicion = useCallback(async (id, payload) => {
     try {
-      setLoadingState({ open: true, message: 'Guardando...', size: 'small' });
+      setLoadingState({ open: true, message: 'Guardando...', size: 'small', initialOpen: false });
       await registrosEmpleadoService.updateRegistro(id, payload);
       setAlertState({ open: true, type: 'success', message: 'Registro actualizado exitosamente', title: 'Éxito' });
       setOpenEdit(false);
@@ -99,7 +99,7 @@ export const useAccionesRegistrosEmpleado = ({
     } catch (error) {
       setAlertState({ open: true, type: 'error', message: 'No se pudo actualizar: ' + error.message, title: 'Error' });
     } finally {
-      setLoadingState({ open: false, message: '', size: 'small' });
+      setLoadingState({ open: false, message: '', size: 'small', initialOpen: false });
     }
   }, [setAlertState, setLoadingState, setOpenEdit, setRegistros, setLastUpdate]);
 
