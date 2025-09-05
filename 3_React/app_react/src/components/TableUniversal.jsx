@@ -130,8 +130,9 @@ const TableUniversal = ({
   };
 
   // Estilos para chips de rol (por nombre)
-  const getRoleChipSx = (roleName = '') => {
-    const r = roleName.toLowerCase();
+  const getRoleChipSx = (roleName) => {
+    const safe = typeof roleName === 'string' ? roleName : (roleName ?? '');
+    const r = safe.toLowerCase();
     if (r.includes('admin')) {
       return {
         background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
@@ -139,7 +140,7 @@ const TableUniversal = ({
         border: 'none',
       };
     }
-    if (r.includes('SubAdministrador')) {
+    if (r.includes('subadministrador')) {
       return {
         background: 'linear-gradient(135deg,rgb(59, 31, 162) 0%,rgb(60, 62, 167) 100%)',
         color: 'white',
