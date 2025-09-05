@@ -1,0 +1,84 @@
+package com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos
+
+import com.inventory.Demo.modulos.Categoria.model.Categoria
+import com.inventory.Demo.modulos.Empleado.model.Empleado
+import com.inventory.Demo.modulos.Sede.model.Sede
+import com.inventory.Demo.modulos.Dispositivo.model.Dispositivo
+import com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
+import jakarta.persistence.Column
+import jakarta.persistence.DiscriminatorValue
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
+import java.time.LocalDate
+import jakarta.persistence.ElementCollection
+import jakarta.persistence.CollectionTable
+import jakarta.persistence.Embeddable
+import jakarta.persistence.JoinColumn
+
+// Data class para mantenimiento
+@Embeddable
+data class MantenimientoEntry(
+    val fecha: LocalDate,
+    val mantenimientoRealizado: Boolean,
+    val observacion: String? = null
+)
+
+@Entity
+@DiscriminatorValue("COMPUTADOR")
+@Table(name = "computadores")
+class Computador(
+
+    val nombreEquipo: String?,
+
+    @Column(length = 100)
+    val procesador: String?,
+
+    @Column(length = 20)
+    val ram: String?,
+
+    @Column(length = 50)
+    val almacenamiento: String?,
+
+    val almacenamiento2: String?,
+
+    val mac: String?,
+
+    val ip: String?,
+
+    val ofimatica: String?,
+
+    val antivirus: String?,
+
+    @Column(name = "tenable")
+    val tenable: Boolean? = null, 
+
+    @Column(length = 100)
+    val sistemaOperativo: String?,
+
+    @Column(columnDefinition = "TEXT")
+    val softwareAdicional: String? = null,
+
+    @ElementCollection
+    @CollectionTable(name = "mantenimientos_computador", joinColumns = [JoinColumn(name = "computador_id")])
+    val mantenimiento: List<MantenimientoEntry>? = null,
+
+    // Campos heredados
+    dispositivoId: Long = 0,
+    item: String?,
+    serial: String?,
+    modelo: String?,
+    marca: String?,
+    categoria: Categoria? = null,
+    sede: Sede? = null,
+    estado: EstadoDispositivo,
+    clasificacion: String,
+    fechaAdquisicion: LocalDate? = null,
+    costo: Double? = null,
+    funcional: Boolean? = null,
+    codigoActivo: String? = null,
+    tipo: String?,
+    observaciones: String? = null,
+) : Dispositivo(
+    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, funcional, codigoActivo, tipo, observaciones
+)

@@ -10,6 +10,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import WorkIcon from '@mui/icons-material/Work';
+import { LayoutUniversal } from '../../components';
 import NavbarEmpleado from './NavbarEmpleado';
 
 function CrearRegistroHorasEmpleado() {
@@ -124,9 +125,8 @@ function CrearRegistroHorasEmpleado() {
   };
 
   return (
-    <Box minHeight="100vh" width="100vw" sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
-      <NavbarEmpleado />
-      <Paper elevation={6} sx={{ borderRadius: 3, p: 4, maxWidth: 800, margin: '120px auto 40px auto', background: 'rgba(255,255,255,0.95)' }}>
+    <LayoutUniversal NavbarComponent={NavbarEmpleado}>
+      <Paper elevation={6} sx={{ borderRadius: 3, p: 4, maxWidth: 800, margin: '0 auto 40px auto', background: 'rgba(255,255,255,0.95)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <Button
             startIcon={<ArrowBackIcon />}
@@ -356,7 +356,7 @@ function CrearRegistroHorasEmpleado() {
           </Box>
         </Box>
       </Paper>
-    </Box>
+    </LayoutUniversal>
   );
 }
 

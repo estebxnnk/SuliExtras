@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useContext } from 'react';
-import NavbarEmpleado from './NavbarEmpleado';
+import LayoutEmpleado from './components/LayoutEmpleado';
 import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, TextField, MenuItem, InputAdornment, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Avatar, Divider, IconButton, TableContainer, Alert } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -153,9 +153,8 @@ function MisRegistros() {
   };
 
   return (
-    <Box minHeight="100vh" width="100vw" sx={{ background: "url('/img/Recepcion.jpg') no-repeat center center", backgroundSize: 'cover', p: 4 }}>
-      <NavbarEmpleado />
-      <Paper elevation={6} sx={{ borderRadius: 3, p: 4, maxWidth: 1400, margin: '120px auto 40px auto', background: 'rgba(255,255,255,0.95)', position: 'relative' }}>
+    <LayoutEmpleado>
+      <Paper elevation={6} sx={{ borderRadius: 3, p: 4, maxWidth: 1400, margin: '0 auto 40px auto', background: 'rgba(255,255,255,0.95)', position: 'relative' }}>
         <Typography variant="h4" fontWeight={700} mb={2} color="#222">
           Mis Registros de Horas Extra
         </Typography>
@@ -415,7 +414,7 @@ function MisRegistros() {
           </DialogActions>
         </Dialog>
       </Paper>
-    </Box>
+    </LayoutEmpleado>
   );
 }
 

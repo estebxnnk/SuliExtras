@@ -14,13 +14,18 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
-    "@mui/x-charts": "^8.7.0",
+    "@mui/x-charts": "^8.9.2",
+    "@mui/x-date-pickers": "^8.9.2",
+    "date-fns": "^4.1.0",
     "docx": "^9.5.1",
+    "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
-    "swiper": "^11.2.10"
+    "react-window": "^1.8.11",
+    "swiper": "^11.2.10",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

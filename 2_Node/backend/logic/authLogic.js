@@ -23,7 +23,8 @@ class AuthLogic {
       rol: user.rol ? user.rol.nombre : null,
       nombres: user.persona ? user.persona.nombres : null,
       apellidos: user.persona ? user.persona.apellidos : null,
-      correo: user.persona ? user.persona.correo : null
+      correo: user.persona ? user.persona.correo : null,
+      salario: user.persona ? user.persona.salario : null
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
     return { token, rol: payload.rol, usuario: payload };

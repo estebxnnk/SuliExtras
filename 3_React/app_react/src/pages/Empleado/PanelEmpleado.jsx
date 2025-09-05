@@ -4,6 +4,7 @@ import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningIcon from '@mui/icons-material/Warning';
+import { LayoutUniversal } from '../../components';
 import NavbarEmpleado from './NavbarEmpleado';
 
 function PanelEmpleado() {
@@ -106,20 +107,8 @@ function PanelEmpleado() {
   }, [registrosFiltrados]);
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        width: '100vw',
-        background: `url('/img/Recepcion.jpg') no-repeat center center`,
-        backgroundSize: 'cover',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        py: { xs: 2, md: 6 },
-      }}
-    >
-      <NavbarEmpleado />
-      <Box sx={{ flex: 1, width: '100%', maxWidth: 1400, mx: 'auto', mt: 10, mb: 4, px: { xs: 1, sm: 2 }, overflow: 'hidden' }}>
+    <LayoutUniversal NavbarComponent={NavbarEmpleado}>
+      <Box sx={{ flex: 1, width: '100%', maxWidth: 1400, mx: 'auto', mb: 4, px: { xs: 1, sm: 2 }, overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
           <Typography variant="h3" fontWeight={900} color="#0d47a1" sx={{ textShadow: '0 2px 8px #b6d0f7' }}>
             Dashboard Empleado
@@ -250,7 +239,7 @@ function PanelEmpleado() {
           </CardContent>
         </Card>
       </Box>
-    </Box>
+    </LayoutUniversal>
   );
 }
 

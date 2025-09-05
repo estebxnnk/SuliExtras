@@ -14,6 +14,7 @@ const Persona = require('./models/Persona');
 const Rol = require('./models/Roles');
 const Hora = require('./models/Hora');
 const Registro = require('./models/Registro');
+const Sede = require('./models/Sede');
 const Administrador = require('./models/Administrador');
 const Empleado = require('./models/Empleado');
 const JefeDirecto = require('./models/JefeDirecto');
@@ -28,7 +29,7 @@ app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const corsOptions = {
-    origin: 'http://localhost:5050', // Cambia esto al dominio de tu frontend
+    origin: '*', // Cambia esto al dominio de tu frontend
     methods: ['GET', 'POST', 'PUT','PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -45,6 +46,17 @@ const registerRoutes = require('./routes/register');
 const usuariosRoutes = require('./routes/usuarios');
 const horaRoutes = require('./routes/hora');
 const registroRoutes = require('./routes/registro');
+const sedeRoutes = require('./routes/sede');
+
+// Configurar asociaciones después de cargar todos los modelos
+// Relaciones existentes
+User.belongsTo(Persona, { foreignKey: 'personaId', as: 'persona' });
+User.belongsTo(Rol, { foreignKey: 'rolId', as: 'rol' });
+Rol.hasMany(User, { foreignKey: 'rolId', as: 'usuarios' });
+
+// Relaciones con Sede
+User.belongsTo(Sede, { foreignKey: 'sedeId', as: 'sede' });
+Sede.hasMany(User, { foreignKey: 'sedeId', as: 'usuarios' });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', rolRoutes);
@@ -52,6 +64,7 @@ app.use('/api/auth/register', registerRoutes);
 app.use('/api/horas', horaRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/sedes', sedeRoutes);
 
 
 const PORT = process.env.PORT || 3000;

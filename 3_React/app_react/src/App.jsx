@@ -1,20 +1,24 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from '../security/ProtectedRoute';
 
 //Home
-import Home from './pages/Home';
-import Contactanos from './pages/Contactanos';
-import Login from './pages/Login';
+import Home from './pages/Home/Home';
+import Contactanos from './pages/Home/Contactanos';
+import Login from './pages/Home/Login';
 
 //Rol Sub Administrador
-import PanelSubAdmin from './pages/SubAdministrador/PanelSubAdmin';
-import RegistrarUsuarioSubAdmin from './pages/SubAdministrador/RegistrarUsuarioSubAdmin';
-import PanelUsuariosSubAdmin from './pages/SubAdministrador/PanelUsuariosSubAdmin';
+import PanelSubAdmin from './pages/SubAdministrador/PanelSubAdmin/index';
+import RegistrarUsuarioSubAdmin from './pages/SubAdministrador/GestionarUsuarios/RegistrarUsuarioSubAdmin';
+import PanelUsuariosSubAdmin from './pages/SubAdministrador/GestionarUsuarios/index';
+import CrearRegistroHorasExtraSubAdmin from './pages/SubAdministrador/GestionarRegistrosHorasExtra';
+import GestionReportesHorasExtra from './pages/SubAdministrador/GestionReportesHorasExtra';
+import GestionarRegistrosHorasExtra from './pages/SubAdministrador/GestionarRegistrosHorasExtra';
+import GestionarTiposHoraSubAdmin from './pages/SubAdministrador/GestionarTiposHora';
 
 //Rol Administrador
 import PanelAdministrativo from './pages/Administrador/PanelAdministrativo';
 import PanelUsuariosAdministrativo from './pages/Administrador/PanelUsuariosAdministrativo';
-import RegistrarUsuario from './pages/Administrador/RegistrarUsuario';
+import GestionSedes from './pages/Administrador/GestionSedes/index';
 
 //Rol JefeDirecto
 import PanelJefeDirecto from './pages/JefeDirecto/PanelJefeDirecto';
@@ -27,6 +31,20 @@ import PanelUsuarios from './pages/JefeDirecto/PanelUsuarios';
 import PanelEmpleado from './pages/Empleado/PanelEmpleado';
 import MisRegistros from './pages/Empleado/MisRegistros';
 import CrearRegistroHorasEmpleado from './pages/Empleado/CrearRegistroHorasEmpleado';
+
+
+import GestionarRegistrosEmpleado from './pages/Empleado/GestionarRegistrosEmpleado';
+
+// Rol InventoryManager
+import PanelInventoryManager from './pages/InventoriManager/PanelInventoryManager';
+import GestionarDispositivos from './pages/InventoriManager/GestionarDispositivos';
+// Componente
+import AsignacionesDialog from './pages/InventoriManager/components/AsignacionesDialog';
+import GestionarCategorias from './pages/InventoriManager/GestionarCategorias';
+import GestionarSedes from './pages/InventoriManager/GestionarSedes';
+import ReportesInventario from './pages/InventoriManager/ReportesInventario';
+import EstadisticasDispositivos from './pages/InventoriManager/EstadisticasDispositivos';
+
 
 function App() {
   return (
@@ -60,9 +78,9 @@ function App() {
             <PanelUsuariosAdministrativo />
           </ProtectedRoute>
         } />
-        <Route path="/registrar-usuario-administrativo" element={
+        <Route path="/gestion-sedes" element={
           <ProtectedRoute allowedRoles={['Administrador']}>
-            <RegistrarUsuario />
+            <GestionSedes />
           </ProtectedRoute>
         } />
         <Route path="/panel-jefe-directo" element={
@@ -73,6 +91,12 @@ function App() {
         <Route path="/registros-horas-extra" element={
           <ProtectedRoute allowedRoles={['JefeDirecto']}>
             <PanelRegistrosHorasExtra />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/crear-registros-horas-extra" element={
+          <ProtectedRoute allowedRoles={['JefeDirecto']}>
+            <CrearRegistroHorasExtra />
           </ProtectedRoute>
         } />
         <Route path="/crear-registro-horas" element={
@@ -98,6 +122,61 @@ function App() {
         <Route path="/mis-registros" element={
           <ProtectedRoute allowedRoles={['Empleado']}>
             <MisRegistros />
+          </ProtectedRoute>
+        } />
+        <Route path="/panel-inventory-manager" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <PanelInventoryManager />
+          </ProtectedRoute>
+        } />
+        <Route path="/dispositivos" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <GestionarDispositivos />
+          </ProtectedRoute>
+        } />
+        <Route path="/categorias" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <GestionarCategorias />
+          </ProtectedRoute>
+        } />
+        <Route path="/sedes" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <GestionarSedes />
+          </ProtectedRoute>
+        } />
+        <Route path="/reportes-inventario" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <ReportesInventario />
+          </ProtectedRoute>
+        } />
+        <Route path="/estadisticas-dispositivos" element={
+          <ProtectedRoute allowedRoles={['InventoryManager']}>
+            <EstadisticasDispositivos />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-registros-horas-extra" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <GestionarRegistrosHorasExtra />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-reportes-horas-extra" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <GestionReportesHorasExtra />
+          </ProtectedRoute>
+        } />
+        <Route path="/crear-registro-horas-extra-subadmin" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <CrearRegistroHorasExtraSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-tipos-hora-subadmin" element={
+          <ProtectedRoute allowedRoles={['SubAdministrador']}>
+            <GestionarTiposHoraSubAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/gestionar-registros-empleado" element={
+          <ProtectedRoute allowedRoles={['Empleado']}>
+            <GestionarRegistrosEmpleado />
           </ProtectedRoute>
         } />
       </Routes>

@@ -1,0 +1,49 @@
+package com.inventory.Demo.modulos.Dispositivo.model.TiposDispositivos
+
+import com.inventory.Demo.modulos.Categoria.model.Categoria
+import com.inventory.Demo.modulos.Empleado.model.Empleado
+import com.inventory.Demo.modulos.Sede.model.Sede
+import com.inventory.Demo.modulos.Dispositivo.model.Dispositivo
+import com.inventory.Demo.modulos.Dispositivo.model.EstadoDispositivo
+import jakarta.persistence.Column
+import jakarta.persistence.DiscriminatorValue
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
+import java.time.LocalDate
+import com.inventory.Demo.modulos.Accesorio.model.Accesorio
+
+@Entity
+@DiscriminatorValue("PDA")
+@Table(name = "pdas")
+class Pda(
+    @Column(name = "numero_pda", nullable = false, length = 50)
+    val numeroPda: String,
+
+    @Column(name = "sistema_operativo_pda", nullable = false, length = 100)
+    val sistemaOperativoPda: String,
+
+    @Column(name = "email_asociado", length = 100)
+    val emailAsociado: String? = null,
+
+    @Column(name = "contrasena_email", length = 255)
+    val contrasenaEmail: String? = null,
+
+    // Campos heredados
+    dispositivoId: Long = 0,
+    item: String?,
+    serial: String?,
+    modelo: String?,
+    marca: String?,
+    categoria: Categoria? = null,
+    sede: Sede? = null,
+    estado: EstadoDispositivo,
+    clasificacion: String,
+    fechaAdquisicion: LocalDate? = null,
+    costo: Double? = null,
+    funcional: Boolean? = null,
+    codigoActivo: String? = null,
+    tipo: String?,
+    observaciones: String? = null,
+) : Dispositivo(
+    dispositivoId, item, serial, modelo, marca, categoria, sede, estado, clasificacion, fechaAdquisicion, costo, funcional, codigoActivo, tipo, observaciones
+)
