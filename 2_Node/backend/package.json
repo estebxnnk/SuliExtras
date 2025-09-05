@@ -7,6 +7,7 @@
     "dev": "nodemon index.js",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
+    "seed:sedes-json": "node scripts/sembrarSedesConHorariosJSON.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
