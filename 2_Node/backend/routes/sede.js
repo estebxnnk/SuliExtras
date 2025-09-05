@@ -189,6 +189,60 @@ router.get('/buscar', authMiddleware, sedeController.buscarSedes);
 
 /**
  * @swagger
+ * /api/sedes/usuario/{usuarioId}:
+ *   get:
+ *     summary: Obtener sede por ID de usuario
+ *     tags: [Sedes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *         example: 2
+ *     responses:
+ *       200:
+ *         description: Sede del usuario obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Sede del usuario obtenida exitosamente"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     usuario:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                           example: 2
+ *                         email:
+ *                           type: string
+ *                           example: "usuario@ejemplo.com"
+ *                         persona:
+ *                           $ref: '#/components/schemas/Persona'
+ *                         rol:
+ *                           $ref: '#/components/schemas/Rol'
+ *                     sede:
+ *                       $ref: '#/components/schemas/Sede'
+ *       400:
+ *         description: ID de usuario requerido
+ *       404:
+ *         description: Usuario no encontrado o sin sede asignada
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/usuario/:usuarioId', authMiddleware, sedeController.obtenerSedePorUsuario);
+
+/**
+ * @swagger
  * /api/sedes/{sedeId}:
  *   get:
  *     summary: Obtener una sede por ID
