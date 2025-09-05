@@ -5,6 +5,7 @@ const sequelize = require('../configDb/db').sequelize;
 const { Op } = require('sequelize');
 const Persona = require('../models/Persona');
 const { startOfISOWeek, endOfISOWeek, parseISO, format, isValid, getISODay } = require('date-fns');
+const SedeLogic = require('./SedeLogic');
 
 // Obtener todos los registros con sus horas asociadas
 const obtenerRegistros = async () => {
@@ -474,6 +475,84 @@ function dividirHorasExtra(cantidad) {
   return { horas_extra_divididas, bono_salarial, cantidadHorasExtra };
 }
 
+// Helpers para cálculo de horas extra basado en sede
+function timeStringToMinutes(hhmm) {
+  if (!hhmm || typeof hhmm !== 'string') return null;
+  const [h, m] = hhmm.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function seleccionarHorarioActivoPrincipal(horarios) {
+  if (!Array.isArray(horarios) || horarios.length === 0) return null;
+  const activos = horarios.filter(h => h && h.activo);
+  const lista = activos.length > 0 ? activos : horarios;
+  // Escoger el que tenga mayor horaSalida en minutos (máximo final de jornada)
+  let seleccionado = null;
+  let maxSalida = -1;
+  for (const h of lista) {
+    const salidaMin = timeStringToMinutes(h.horaSalida);
+    if (salidaMin !== null && salidaMin > maxSalida) {
+      seleccionado = h;
+      maxSalida = salidaMin;
+    }
+  }
+  return seleccionado;
+}
+
+function calcularHorasExtraSegunSede(horaSalidaRegistro, sede) {
+  if (!sede) return 0;
+  const horario = seleccionarHorarioActivoPrincipal(sede.horarios || []);
+  if (!horario) return 0;
+  const salidaRegMin = timeStringToMinutes(horaSalidaRegistro);
+  const salidaHorMin = timeStringToMinutes(horario.horaSalida);
+  if (salidaRegMin === null || salidaHorMin === null) return 0;
+  // Si la hora de salida del registro sobrepasa la del horario de sede, contar excedente
+  const excedente = Math.max(0, salidaRegMin - salidaHorMin);
+  return parseFloat((excedente / 60).toFixed(2));
+}
+
+function normalizarTipoBusqueda(base) {
+  if (!base || typeof base !== 'string') return null;
+  // Quitar puntos y espacios, poner mayúsculas
+  return base.replace(/[\.\s]/g, '').toUpperCase();
+}
+
+async function encontrarHoraPorTipoFlexible(tipoCorto, respaldoDenominacion) {
+  const candidato = normalizarTipoBusqueda(tipoCorto); // p.ej HED o HEN
+  const variantes = candidato ? [candidato, `${candidato[0]}.${candidato[1]}.${candidato[2]}`] : [];
+  let hora = null;
+  if (variantes.length > 0) {
+    hora = await Hora.findOne({ where: { tipo: { [Op.in]: variantes } } });
+  }
+  if (!hora && respaldoDenominacion) {
+    hora = await Hora.findOne({ where: { denominacion: respaldoDenominacion } });
+  }
+  return hora;
+}
+
+function overlapMinutes(aStart, aEnd, bStart, bEnd) {
+  const start = Math.max(aStart, bStart);
+  const end = Math.min(aEnd, bEnd);
+  return Math.max(0, end - start);
+}
+
+function calcularDistribucionDiurnaNocturna(extraStartMin, extraEndMin) {
+  // Nocturno 22:00-06:00, considerado en dos bloques relativos
+  if (extraEndMin <= extraStartMin) return { minutosNocturnos: 0, minutosDiurnos: 0 };
+  const bloquesNocturnos = [
+    [1320, 1440], // 22:00-24:00
+    [1440, 1800]  // 00:00-06:00 siguiente día
+  ];
+  let minutosNocturnos = 0;
+  for (const [bStart, bEnd] of bloquesNocturnos) {
+    minutosNocturnos += overlapMinutes(extraStartMin, extraEndMin, bStart, bEnd);
+  }
+  const total = extraEndMin - extraStartMin;
+  const minutosDiurnos = Math.max(0, total - minutosNocturnos);
+  return { minutosNocturnos, minutosDiurnos };
+}
+
 // Nuevo registro especial con lógica de división de horas
 const crearRegistroConDivisionHoras = async (data) => {
   const { cantidadHorasExtra, usuarioId, usuario, ...registroData } = data;
@@ -499,6 +578,85 @@ const crearRegistroConDivisionHoras = async (data) => {
     horas_extra_divididas,
     bono_salarial
   });
+
+  return nuevoRegistro;
+};
+
+// Crear registro calculando automáticamente horas extra en base a la sede del usuario
+const crearRegistroAutoHorasExtra = async (data) => {
+  const { usuarioId, usuario, cantidadHorasExtra, numRegistro, ...registroData } = data;
+
+  if (!usuarioId) {
+    throw new Error('El usuarioId es requerido para crear un registro');
+  }
+
+  const user = await User.findByPk(usuarioId);
+  if (!user) {
+    throw new Error(`No se encontró un usuario con el ID: ${usuarioId}`);
+  }
+
+  // Obtener sede del usuario para determinar horario
+  let sedeUsuario = null;
+  try {
+    const info = await SedeLogic.obtenerSedePorUsuario(usuarioId);
+    sedeUsuario = info?.sede || null;
+  } catch (e) {
+    // Si no hay sede o falla, continuar pero con 0 horas extra
+    sedeUsuario = null;
+  }
+
+  // Calcular horas extra automáticamente en función del horario de la sede
+  const horasExtraCalculadas = calcularHorasExtraSegunSede(registroData.horaSalida, sedeUsuario);
+
+  // Dividir las horas extra como en la lógica existente
+  const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(horasExtraCalculadas));
+
+  // Generar número de registro si no viene
+  const numReg = numRegistro || generarNumeroRegistro();
+
+  const nuevoRegistro = await Registro.create({
+    ...registroData,
+    usuarioId,
+    usuario: user.email,
+    numRegistro: numReg,
+    cantidadHorasExtra: Number(horasExtraCalculadas),
+    horas_extra_divididas,
+    bono_salarial
+  });
+
+  // Asociar tipos de hora según distribución diurna/nocturna hasta el máximo reportable (2)
+  try {
+    const horario = seleccionarHorarioActivoPrincipal(sedeUsuario?.horarios || []);
+    if (horario && horasExtraCalculadas > 0 && horas_extra_divididas > 0) {
+      const salidaHorMin = timeStringToMinutes(horario.horaSalida);
+      const salidaRegMin = timeStringToMinutes(registroData.horaSalida);
+      const extraStartMin = salidaHorMin;
+      const extraEndMin = salidaRegMin >= salidaHorMin ? salidaRegMin : salidaRegMin + 1440;
+      const { minutosNocturnos, minutosDiurnos } = calcularDistribucionDiurnaNocturna(extraStartMin, extraEndMin);
+
+      const horasNocturnas = parseFloat((minutosNocturnos / 60).toFixed(2));
+      const horasDiurnas = Math.max(0, parseFloat((horasExtraCalculadas - horasNocturnas).toFixed(2)));
+
+      let restante = horas_extra_divididas;
+
+      // Buscar registros de Catálogo Hora: HEN = extra nocturna, HED = extra diurna
+      const horaNocturna = await encontrarHoraPorTipoFlexible('HEN', 'Hora extra nocturna');
+      const horaDiurna = await encontrarHoraPorTipoFlexible('HED', 'Hora extra diurna');
+
+      if (horaNocturna && restante > 0 && horasNocturnas > 0) {
+        const cant = Math.min(restante, horasNocturnas);
+        await nuevoRegistro.addHora(horaNocturna, { through: { cantidad: cant } });
+        restante = parseFloat((restante - cant).toFixed(2));
+      }
+
+      if (horaDiurna && restante > 0 && horasDiurnas > 0) {
+        const cant = Math.min(restante, horasDiurnas);
+        await nuevoRegistro.addHora(horaDiurna, { through: { cantidad: cant } });
+      }
+    }
+  } catch (asocErr) {
+    console.warn('No se pudo asociar tipos de hora:', asocErr?.message || asocErr);
+  }
 
   return nuevoRegistro;
 };
@@ -662,5 +820,6 @@ module.exports = {
   actualizarRegistro,
   eliminarRegistro,
   crearRegistroConDivisionHoras,
-  crearRegistrosBulk
+  crearRegistrosBulk,
+  crearRegistroAutoHorasExtra
 };
