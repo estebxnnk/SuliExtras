@@ -247,6 +247,38 @@ const eliminarHorario = async (req, res) => {
   }
 };
 
+/**
+ * Obtener sede por ID de usuario
+ */
+const obtenerSedePorUsuario = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    
+    if (!usuarioId) {
+      return res.status(400).json({
+        error: 'ID de usuario requerido'
+      });
+    }
+    
+    const resultado = await sedeLogic.obtenerSedePorUsuario(usuarioId);
+    
+    res.status(200).json({
+      message: 'Sede del usuario obtenida exitosamente',
+      data: resultado
+    });
+  } catch (error) {
+    console.error('Error al obtener sede por usuario:', error);
+    
+    if (error.message === 'Usuario no encontrado' || 
+        error.message === 'El usuario no tiene una sede asignada' ||
+        error.message === 'La sede asignada al usuario no existe') {
+      return res.status(404).json({ error: error.message });
+    }
+    
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   crearSede,
   listarSedes,
@@ -257,5 +289,6 @@ module.exports = {
   obtenerEstadisticasSede,
   buscarSedes,
   agregarHorario,
-  eliminarHorario
+  eliminarHorario,
+  obtenerSedePorUsuario
 };
