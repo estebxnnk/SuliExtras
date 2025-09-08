@@ -749,7 +749,7 @@ const eliminarRegistro = async (id) => {
   return { mensaje: 'Registro eliminado' };
 };
 
-// Crear múltiples registros usando la misma lógica de división de horas
+// Crear múltiples registros calculando por sede y asociando tipos HEN/HED
 const crearRegistrosBulk = async (registrosData, usuarioId) => {
   // Validar que se proporcione usuarioId
   if (!usuarioId) {
@@ -762,37 +762,83 @@ const crearRegistrosBulk = async (registrosData, usuarioId) => {
     throw new Error(`No se encontró un usuario con el ID: ${usuarioId}`);
   }
 
+  // Intentar obtener sede del usuario una sola vez
+  let sedeUsuario = null;
+  try {
+    const info = await SedeLogic.obtenerSedePorUsuario(usuarioId);
+    sedeUsuario = info?.sede || null;
+  } catch (_) {
+    sedeUsuario = null;
+  }
+
+  // Resolver referencias a tipos de hora una sola vez
+  const horaNocturna = await encontrarHoraPorTipoFlexible('HEN', 'Hora extra nocturna');
+  const horaDiurna = await encontrarHoraPorTipoFlexible('HED', 'Hora extra diurna');
+
   const transaction = await sequelize.transaction();
-  
   try {
     const registrosCreados = [];
-    
+
     for (const registroData of registrosData) {
-      const { cantidadHorasExtra, ...otrosDatos } = registroData;
-      
-      // Dividir las horas extra usando la misma función
+      const { cantidadHorasExtra: cantidadHorasExtraEntrada, ...otrosDatos } = registroData;
+
+      // Calcular horas extra con sede SIEMPRE (ignorar entrada)
+      const cantidadHorasExtra = calcularHorasExtraSegunSede(otrosDatos.horaSalida, sedeUsuario);
+
+      // Dividir horas extra para campos reportables
       const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
-      
+
       // Generar número de registro único
       const numRegistro = generarNumeroRegistro();
-      
-      // Crear el registro con la misma lógica
+
+      // Crear registro
       const nuevoRegistro = await Registro.create({
         ...otrosDatos,
         usuarioId,
         usuario: user.email,
-        numRegistro: numRegistro,
+        numRegistro,
         cantidadHorasExtra: Number(cantidadHorasExtra),
         horas_extra_divididas,
         bono_salarial
       }, { transaction });
-      
+
+      // Asociar tipos de hora (máx 2 horas reportables) según distribución
+      try {
+        if (sedeUsuario && horas_extra_divididas > 0 && cantidadHorasExtra > 0) {
+          const horario = seleccionarHorarioActivoPrincipal(sedeUsuario.horarios || []);
+          if (horario) {
+            const salidaHorMin = timeStringToMinutes(horario.horaSalida);
+            const salidaRegMin = timeStringToMinutes(otrosDatos.horaSalida);
+            const extraStartMin = salidaHorMin;
+            const extraEndMin = salidaRegMin >= salidaHorMin ? salidaRegMin : salidaRegMin + 1440;
+            const { minutosNocturnos, minutosDiurnos } = calcularDistribucionDiurnaNocturna(extraStartMin, extraEndMin);
+
+            const horasNocturnas = parseFloat((minutosNocturnos / 60).toFixed(2));
+            const horasDiurnas = Math.max(0, parseFloat((cantidadHorasExtra - horasNocturnas).toFixed(2)));
+
+            let restante = horas_extra_divididas;
+
+            if (horaNocturna && restante > 0 && horasNocturnas > 0) {
+              const cant = Math.min(restante, horasNocturnas);
+              await nuevoRegistro.addHora(horaNocturna, { through: { cantidad: cant }, transaction });
+              restante = parseFloat((restante - cant).toFixed(2));
+            }
+
+            if (horaDiurna && restante > 0 && horasDiurnas > 0) {
+              const cant = Math.min(restante, horasDiurnas);
+              await nuevoRegistro.addHora(horaDiurna, { through: { cantidad: cant }, transaction });
+            }
+          }
+        }
+      } catch (asocErr) {
+        console.warn('Asociación HEN/HED falló en bulk:', asocErr?.message || asocErr);
+      }
+
       registrosCreados.push(nuevoRegistro);
     }
-    
+
     await transaction.commit();
     return registrosCreados;
-    
   } catch (error) {
     await transaction.rollback();
     throw error;

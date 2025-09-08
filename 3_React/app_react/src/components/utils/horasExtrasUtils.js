@@ -60,11 +60,7 @@ export const validateRow = (row, index) => {
   if (row.horaIngreso >= row.horaSalida) {
     throw new Error(`Fila ${index + 1}: la hora de salida debe ser mayor a la de ingreso`);
   }
-
-  const cant = parseFloat(row.cantidadHorasExtra);
-  if (isNaN(cant) || cant < 0.5) {
-    throw new Error(`Fila ${index + 1}: cantidad de horas extra mínima 0.5`);
-  }
+  // cantidadHorasExtra ahora es opcional; el backend la calcula.
 };
 
 export const validateNoOverlaps = (rowsToValidate) => {
