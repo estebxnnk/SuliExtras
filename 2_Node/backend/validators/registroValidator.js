@@ -7,7 +7,7 @@ const validarCrearRegistro = [
     .withMessage('La fecha es requerida')
     .isISO8601()
     .withMessage('Formato de fecha inválido. Use YYYY-MM-DD'),
-  
+    
   body('horaIngreso')
     .notEmpty()
     .withMessage('La hora de ingreso es requerida')

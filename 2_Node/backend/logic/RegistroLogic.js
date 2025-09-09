@@ -6,6 +6,7 @@ const { Op } = require('sequelize');
 const Persona = require('../models/Persona');
 const { startOfISOWeek, endOfISOWeek, parseISO, format, isValid, getISODay } = require('date-fns');
 const SedeLogic = require('./SedeLogic');
+const HoraLogic = require('./HoraLogic');
 
 // Obtener todos los registros con sus horas asociadas
 const obtenerRegistros = async () => {
@@ -483,6 +484,117 @@ function timeStringToMinutes(hhmm) {
   return h * 60 + m;
 }
 
+// Helper para verificar si una fecha es festiva (días festivos colombianos)
+function esFechaFestiva(fecha) {
+  const fechaObj = new Date(fecha);
+  const mes = fechaObj.getMonth() + 1; // getMonth() retorna 0-11
+  const dia = fechaObj.getDate();
+  
+  // Festivos fijos más comunes en Colombia
+  const festivosFijos = [
+    { mes: 1, dia: 1 },   // Año Nuevo
+    { mes: 5, dia: 1 },   // Día del Trabajo
+    { mes: 7, dia: 20 },  // Día de la Independencia
+    { mes: 8, dia: 7 },   // Batalla de Boyacá
+    { mes: 12, dia: 8 },  // Inmaculada Concepción
+    { mes: 12, dia: 25 }  // Navidad
+  ];
+  
+  return festivosFijos.some(festivo => festivo.mes === mes && festivo.dia === dia);
+}
+
+// Helper para determinar si una hora está en horario nocturno (18:00 - 06:00)
+function esHorarioNocturno(hora) {
+  const minutos = timeStringToMinutes(hora);
+  if (minutos === null) return false;
+  // Nocturno: 18:00 (1080 min) - 06:00 (360 min del día siguiente)
+  return minutos >= 1080 || minutos <= 360;
+}
+
+// Helper para determinar si una hora está en horario nocturno estricto (22:00 - 06:00)
+function esHorarioNocturnoEstricto(hora) {
+  const minutos = timeStringToMinutes(hora);
+  if (minutos === null) return false;
+  // Nocturno estricto: 22:00 (1320 min) - 06:00 (360 min del día siguiente)
+  return minutos >= 1320 || minutos <= 360;
+}
+
+// Helper mejorado para calcular distribución de horas por tipo
+function calcularDistribucionHorasPorTipo(horaInicio, horaFin, fecha, esHoraExtra = false) {
+  const inicioMin = timeStringToMinutes(horaInicio);
+  const finMin = timeStringToMinutes(horaFin);
+  const esFestivo = esFechaFestiva(fecha);
+  
+  if (inicioMin === null || finMin === null) {
+    return { diurnas: 0, nocturnas: 0, festivasDiurnas: 0, festivasNocturnas: 0 };
+  }
+  
+  // Ajustar si la hora de fin es menor que la de inicio (cruce de medianoche)
+  const finAjustado = finMin < inicioMin ? finMin + 1440 : finMin;
+  
+  let minutosDiurnos = 0;
+  let minutosNocturnos = 0;
+  
+  // Calcular distribución minuto por minuto para mayor precisión
+  for (let min = inicioMin; min < finAjustado; min++) {
+    const horaActualMin = min % 1440;
+    const horaActual = Math.floor(horaActualMin / 60);
+    const minutoActual = horaActualMin % 60;
+    const horaStr = String(horaActual).padStart(2, '0') + ':' + String(minutoActual).padStart(2, '0');
+    
+    // Usar la regla de 18:00 (6 PM) como límite nocturno
+    if (esHorarioNocturno(horaStr)) {
+      minutosNocturnos++;
+    } else {
+      minutosDiurnos++;
+    }
+  }
+  
+  const horasDiurnas = parseFloat((minutosDiurnos / 60).toFixed(2));
+  const horasNocturnas = parseFloat((minutosNocturnos / 60).toFixed(2));
+  
+  if (esFestivo) {
+    return {
+      diurnas: 0,
+      nocturnas: 0,
+      festivasDiurnas: horasDiurnas,
+      festivasNocturnas: horasNocturnas
+    };
+  }
+  
+  return {
+    diurnas: horasDiurnas,
+    nocturnas: horasNocturnas,
+    festivasDiurnas: 0,
+    festivasNocturnas: 0
+  };
+}
+
+// Función para determinar el tipo de hora correcto basado en parámetros
+function determinarTipoHora(horaInicio, horaFin, fecha, esHoraExtra = false) {
+  const esFestivo = esFechaFestiva(fecha);
+  const distribucion = calcularDistribucionHorasPorTipo(horaInicio, horaFin, fecha, esHoraExtra);
+  
+  // Determinar el tipo predominante
+  let tipoPredominante = 'diurno';
+  if (distribucion.nocturnas > distribucion.diurnas) {
+    tipoPredominante = 'nocturno';
+  }
+  if (distribucion.festivasNocturnas > 0) {
+    tipoPredominante = 'festivoNocturno';
+  }
+  if (distribucion.festivasDiurnas > 0 && distribucion.festivasNocturnas === 0) {
+    tipoPredominante = 'festivoDiurno';
+  }
+  
+  return {
+    tipo: tipoPredominante,
+    distribucion,
+    esFestivo,
+    esHoraExtra
+  };
+}
+
 function seleccionarHorarioActivoPrincipal(horarios) {
   if (!Array.isArray(horarios) || horarios.length === 0) return null;
   const activos = horarios.filter(h => h && h.activo);
@@ -529,6 +641,123 @@ async function encontrarHoraPorTipoFlexible(tipoCorto, respaldoDenominacion) {
     hora = await Hora.findOne({ where: { denominacion: respaldoDenominacion } });
   }
   return hora;
+}
+
+// Método auxiliar para determinar el tipo de hora correcto basado en condiciones
+async function determinarTipoHoraCorrect(horaIngreso, horaSalida, fecha, esHoraExtra = false) {
+  const esFestivo = esFechaFestiva(fecha);
+  const salidaMin = timeStringToMinutes(horaSalida);
+  
+  // Determinar si es nocturno (después de las 18:00)
+  const esNocturno = salidaMin >= 1080; // 18:00 = 1080 minutos
+  
+  let tipoHoraBuscado = null;
+  
+  if (esHoraExtra) {
+    // Para horas extra
+    if (esFestivo && esNocturno) {
+      tipoHoraBuscado = 'H.E.F.N.'; // Hora Extra Festiva Nocturna
+    } else if (esFestivo && !esNocturno) {
+      tipoHoraBuscado = 'H.E.F.D.'; // Hora Extra Festiva Diurna
+    } else if (!esFestivo && esNocturno) {
+      tipoHoraBuscado = 'H.E.N.'; // Hora Extra Nocturna
+    } else {
+      tipoHoraBuscado = 'H.E.D.'; // Hora Extra Diurna
+    }
+  } else {
+    // Para recargos de horario regular
+    if (esFestivo && esNocturno) {
+      tipoHoraBuscado = 'R.F.NOC.'; // Recargo Festivo Nocturno
+    } else if (esFestivo && !esNocturno) {
+      tipoHoraBuscado = 'R.F.'; // Recargo Festivo
+    } else if (!esFestivo && esNocturno) {
+      tipoHoraBuscado = 'R.NOC.'; // Recargo Nocturno
+    } else {
+      return null; // No hay recargo para horario diurno regular
+    }
+  }
+  
+  try {
+    // Usar HoraLogic para obtener el tipo de hora correcto
+    const tipoHora = await HoraLogic.obtenerHoraPorTipo(tipoHoraBuscado);
+    return tipoHora;
+  } catch (error) {
+    console.warn(`No se encontró tipo de hora: ${tipoHoraBuscado}`);
+    return null;
+  }
+}
+
+// Método auxiliar simplificado para asignar horas automáticamente
+async function asignarHoraAutomaticamente(registro, horaIngreso, horaSalida, fecha, cantidadHoras, esHoraExtra = false, transaction = null) {
+  if (cantidadHoras <= 0) return null;
+  
+  try {
+    const tipoHora = await determinarTipoHoraCorrect(horaIngreso, horaSalida, fecha, esHoraExtra);
+    
+    if (tipoHora && tipoHora.id) {
+      // Asignar usando el ID correcto del modelo
+      await registro.addHora(tipoHora.id, {
+        through: { cantidad: cantidadHoras },
+        transaction
+      });
+      
+      console.log(`✅ Asignado: ${tipoHora.tipo} - ${cantidadHoras} horas`);
+      
+      return {
+        tipo: tipoHora.tipo,
+        denominacion: tipoHora.denominacion,
+        cantidad: cantidadHoras,
+        id: tipoHora.id
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error en asignarHoraAutomaticamente:', error);
+    return null;
+  }
+}
+
+// Función simplificada para asociar horas usando el nuevo método auxiliar
+async function asociarHorasSegunCondiciones(registro, horaIngreso, horaSalida, fecha, cantidadHorasExtra, horas_extra_divididas, transaction = null) {
+  const asociaciones = [];
+  
+  try {
+    // 1. Asignar horas extra si existen
+    if (cantidadHorasExtra > 0 && horas_extra_divididas > 0) {
+      const asociacionExtra = await asignarHoraAutomaticamente(
+        registro, horaIngreso, horaSalida, fecha, horas_extra_divididas, true, transaction
+      );
+      if (asociacionExtra) {
+        asociaciones.push(asociacionExtra);
+      }
+    }
+    
+    // 2. Asignar recargos para horario regular si aplica
+    const salidaMin = timeStringToMinutes(horaSalida);
+    const esFestivo = esFechaFestiva(fecha);
+    const esNocturno = salidaMin >= 1080; // Después de las 18:00
+    
+    // Solo asignar recargos si es festivo o nocturno
+    if (esFestivo || esNocturno) {
+      // Calcular horas de trabajo regular (sin horas extra)
+      const horasRegulares = Math.max(0, 8 - cantidadHorasExtra); // Asumiendo jornada de 8 horas
+      
+      if (horasRegulares > 0) {
+        const asociacionRecargo = await asignarHoraAutomaticamente(
+          registro, horaIngreso, horaSalida, fecha, horasRegulares, false, transaction
+        );
+        if (asociacionRecargo) {
+          asociaciones.push(asociacionRecargo);
+        }
+      }
+    }
+    
+    return asociaciones;
+  } catch (error) {
+    console.error('Error en asociarHorasSegunCondiciones:', error);
+    return asociaciones;
+  }
 }
 
 function overlapMinutes(aStart, aEnd, bStart, bEnd) {
@@ -749,11 +978,15 @@ const eliminarRegistro = async (id) => {
   return { mensaje: 'Registro eliminado' };
 };
 
-// Crear múltiples registros calculando por sede y asociando tipos HEN/HED
-const crearRegistrosBulk = async (registrosData, usuarioId) => {
-  // Validar que se proporcione usuarioId
+// Crear múltiples registros con validación automática completa de tipos de hora
+const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
+  // Validaciones iniciales
   if (!usuarioId) {
     throw new Error('El usuarioId es requerido para crear registros');
+  }
+
+  if (!Array.isArray(registrosData) || registrosData.length === 0) {
+    throw new Error('Se requiere un array de datos de registros no vacío');
   }
 
   // Verificar que el usuario existe
@@ -762,83 +995,157 @@ const crearRegistrosBulk = async (registrosData, usuarioId) => {
     throw new Error(`No se encontró un usuario con el ID: ${usuarioId}`);
   }
 
-  // Intentar obtener sede del usuario una sola vez
+  // Opciones de configuración
+  const {
+    calcularHorasExtraAutomaticamente = true,
+    asociarTiposHoraAutomaticamente = true,
+    validarHorarios = true,
+    incluirRecargos = true
+  } = opciones;
+
+  // Obtener sede del usuario una sola vez
   let sedeUsuario = null;
   try {
     const info = await SedeLogic.obtenerSedePorUsuario(usuarioId);
     sedeUsuario = info?.sede || null;
-  } catch (_) {
+  } catch (error) {
+    console.warn('No se pudo obtener la sede del usuario:', error.message);
     sedeUsuario = null;
   }
 
-  // Resolver referencias a tipos de hora una sola vez
-  const horaNocturna = await encontrarHoraPorTipoFlexible('HEN', 'Hora extra nocturna');
-  const horaDiurna = await encontrarHoraPorTipoFlexible('HED', 'Hora extra diurna');
+  // Los tipos de hora se obtendrán dinámicamente usando HoraLogic
 
   const transaction = await sequelize.transaction();
   try {
     const registrosCreados = [];
+    const erroresValidacion = [];
 
-    for (const registroData of registrosData) {
+    for (let i = 0; i < registrosData.length; i++) {
+      const registroData = registrosData[i];
       const { cantidadHorasExtra: cantidadHorasExtraEntrada, ...otrosDatos } = registroData;
 
-      // Calcular horas extra con sede SIEMPRE (ignorar entrada)
-      const cantidadHorasExtra = calcularHorasExtraSegunSede(otrosDatos.horaSalida, sedeUsuario);
-
-      // Dividir horas extra para campos reportables
-      const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
-
-      // Generar número de registro único
-      const numRegistro = generarNumeroRegistro();
-
-      // Crear registro
-      const nuevoRegistro = await Registro.create({
-        ...otrosDatos,
-        usuarioId,
-        usuario: user.email,
-        numRegistro,
-        cantidadHorasExtra: Number(cantidadHorasExtra),
-        horas_extra_divididas,
-        bono_salarial
-      }, { transaction });
-
-      // Asociar tipos de hora (máx 2 horas reportables) según distribución
       try {
-        if (sedeUsuario && horas_extra_divididas > 0 && cantidadHorasExtra > 0) {
-          const horario = seleccionarHorarioActivoPrincipal(sedeUsuario.horarios || []);
-          if (horario) {
-            const salidaHorMin = timeStringToMinutes(horario.horaSalida);
-            const salidaRegMin = timeStringToMinutes(otrosDatos.horaSalida);
-            const extraStartMin = salidaHorMin;
-            const extraEndMin = salidaRegMin >= salidaHorMin ? salidaRegMin : salidaRegMin + 1440;
-            const { minutosNocturnos, minutosDiurnos } = calcularDistribucionDiurnaNocturna(extraStartMin, extraEndMin);
-
-            const horasNocturnas = parseFloat((minutosNocturnos / 60).toFixed(2));
-            const horasDiurnas = Math.max(0, parseFloat((cantidadHorasExtra - horasNocturnas).toFixed(2)));
-
-            let restante = horas_extra_divididas;
-
-            if (horaNocturna && restante > 0 && horasNocturnas > 0) {
-              const cant = Math.min(restante, horasNocturnas);
-              await nuevoRegistro.addHora(horaNocturna, { through: { cantidad: cant }, transaction });
-              restante = parseFloat((restante - cant).toFixed(2));
-            }
-
-            if (horaDiurna && restante > 0 && horasDiurnas > 0) {
-              const cant = Math.min(restante, horasDiurnas);
-              await nuevoRegistro.addHora(horaDiurna, { through: { cantidad: cant }, transaction });
-            }
+        // Validaciones específicas del registro
+        if (validarHorarios) {
+          if (!otrosDatos.horaIngreso || !otrosDatos.horaSalida) {
+            throw new Error(`Registro ${i + 1}: horaIngreso y horaSalida son requeridas`);
+          }
+          
+          if (!otrosDatos.fecha) {
+            throw new Error(`Registro ${i + 1}: fecha es requerida`);
+          }
+          
+          // Validar formato de horas
+          const ingresoMin = timeStringToMinutes(otrosDatos.horaIngreso);
+          const salidaMin = timeStringToMinutes(otrosDatos.horaSalida);
+          
+          if (ingresoMin === null || salidaMin === null) {
+            throw new Error(`Registro ${i + 1}: formato de hora inválido (use HH:MM)`);
           }
         }
-      } catch (asocErr) {
-        console.warn('Asociación HEN/HED falló en bulk:', asocErr?.message || asocErr);
-      }
 
-      registrosCreados.push(nuevoRegistro);
+        // Calcular horas extra automáticamente si está habilitado
+        let cantidadHorasExtra = 0;
+        if (calcularHorasExtraAutomaticamente && sedeUsuario) {
+          cantidadHorasExtra = calcularHorasExtraSegunSede(otrosDatos.horaSalida, sedeUsuario);
+        } else if (cantidadHorasExtraEntrada !== undefined) {
+          cantidadHorasExtra = Number(cantidadHorasExtraEntrada) || 0;
+        }
+
+        // Dividir horas extra para campos reportables
+        const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
+
+        // Generar número de registro único
+        const numRegistro = otrosDatos.numRegistro || generarNumeroRegistro();
+
+        // Crear registro
+        const nuevoRegistro = await Registro.create({
+          ...otrosDatos,
+          usuarioId,
+          usuario: user.email,
+          numRegistro,
+          cantidadHorasExtra: Number(cantidadHorasExtra),
+          horas_extra_divididas,
+          bono_salarial,
+          estado: otrosDatos.estado || 'pendiente'
+        }, { transaction });
+
+        // Asociar tipos de hora automáticamente usando el nuevo método
+        if (asociarTiposHoraAutomaticamente) {
+          try {
+            const asociaciones = await asociarHorasSegunCondiciones(
+              nuevoRegistro,
+              otrosDatos.horaIngreso,
+              otrosDatos.horaSalida,
+              otrosDatos.fecha,
+              cantidadHorasExtra,
+              horas_extra_divididas,
+              transaction
+            );
+            
+            console.log(`📊 Registro ${i + 1} - Asociaciones creadas:`, asociaciones.length);
+            
+          } catch (asocError) {
+            console.warn(`Advertencia en asociación automática para registro ${i + 1}:`, asocError.message);
+            // No fallar el proceso completo por errores de asociación
+          }
+        }
+
+        registrosCreados.push(nuevoRegistro);
+        
+      } catch (error) {
+        erroresValidacion.push({
+          indice: i + 1,
+          error: error.message,
+          datos: registroData
+        });
+      }
+    }
+
+    // Si hay errores de validación, fallar la transacción
+    if (erroresValidacion.length > 0) {
+      await transaction.rollback();
+      const errorMsg = `Errores de validación en ${erroresValidacion.length} registro(s):\n` +
+                      erroresValidacion.map(e => `- Registro ${e.indice}: ${e.error}`).join('\n');
+      throw new Error(errorMsg);
     }
 
     await transaction.commit();
-    return registrosCreados;
+    
+    // Retornar registros con información completa
+    const registrosCompletos = await Promise.all(
+      registrosCreados.map(registro => 
+        Registro.findByPk(registro.id, {
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'email']
+            },
+            {
+              model: Hora,
+              through: {
+                attributes: ['cantidad']
+              }
+            }
+          ]
+        })
+      )
+    );
+    
+    return {
+      registrosCreados: registrosCompletos,
+      totalCreados: registrosCompletos.length,
+      configuracion: {
+        calcularHorasExtraAutomaticamente,
+        asociarTiposHoraAutomaticamente,
+        validarHorarios,
+        incluirRecargos,
+        sedeEncontrada: !!sedeUsuario,
+        metodosAsignacion: 'HoraLogic.obtenerHoraPorTipo'
+      }
+    };
+    
   } catch (error) {
     await transaction.rollback();
     throw error;
