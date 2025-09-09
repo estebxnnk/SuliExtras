@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const registroController = require('../controllers/registroController');
+const registroController = require('./registroController');
 const { 
   validarCrearRegistrosBulk, 
   validarLogicaNegocio, 
   manejarErroresValidacion 
-} = require('../validators/registroValidator');
+} = require('./validators/registroValidator');
 
 /**
  * @swagger

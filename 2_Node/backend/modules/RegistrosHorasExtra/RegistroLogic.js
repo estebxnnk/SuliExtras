@@ -1,12 +1,12 @@
-const Registro = require('../models/Registro');
-const Hora = require('../models/Hora');
-const User = require('../models/User');
-const sequelize = require('../configDb/db').sequelize;
+const Registro = require('./RegistroModel');
+const Hora = require('../../models/Hora');
+const User = require('../../models/User');
+const sequelize = require('../../configDb/db').sequelize;
 const { Op } = require('sequelize');
-const Persona = require('../models/Persona');
+const Persona = require('../../models/Persona');
 const { startOfISOWeek, endOfISOWeek, parseISO, format, isValid, getISODay } = require('date-fns');
-const SedeLogic = require('./SedeLogic');
-const HoraLogic = require('./HoraLogic');
+const SedeLogic = require('../../logic/SedeLogic');
+const HoraLogic = require('../../logic/HoraLogic');
 
 // Obtener todos los registros con sus horas asociadas
 const obtenerRegistros = async () => {

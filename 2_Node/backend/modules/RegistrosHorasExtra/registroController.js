@@ -1,4 +1,4 @@
-const registroLogic = require('../logic/RegistroLogic');
+const registroLogic = require('./RegistroLogic');
 
 const getAllRegistros = async (req, res) => {
   try {
