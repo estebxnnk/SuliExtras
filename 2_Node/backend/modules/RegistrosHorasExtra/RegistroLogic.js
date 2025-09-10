@@ -978,15 +978,19 @@ const eliminarRegistro = async (id) => {
   return { mensaje: 'Registro eliminado' };
 };
 
-// Crear múltiples registros con validación automática completa de tipos de hora
-const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
-  // Validaciones iniciales
-  if (!usuarioId) {
-    throw new Error('El usuarioId es requerido para crear registros');
-  }
+// Importar utilidades Singleton
+const ValidadorRegistro = require('./utils/ValidadorRegistro');
+const CalculadorHorasExtra = require('./utils/CalculadorHorasExtra');
+const AsignadorTiposHora = require('./utils/AsignadorTiposHora');
+const GeneradorRegistros = require('./utils/GeneradorRegistros');
 
-  if (!Array.isArray(registrosData) || registrosData.length === 0) {
-    throw new Error('Se requiere un array de datos de registros no vacío');
+// Crear múltiples registros con validación automática completa de tipos de hora
+// Refactorizado usando patrón Singleton con separación de responsabilidades
+const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
+  // 1. Validaciones iniciales usando ValidadorRegistro
+  const validacionInicial = ValidadorRegistro.validarDatosIniciales(registrosData, usuarioId);
+  if (!validacionInicial.esValido) {
+    throw new Error(validacionInicial.errores.join('; '));
   }
 
   // Verificar que el usuario existe
@@ -995,25 +999,11 @@ const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
     throw new Error(`No se encontró un usuario con el ID: ${usuarioId}`);
   }
 
-  // Opciones de configuración
-  const {
-    calcularHorasExtraAutomaticamente = true,
-    asociarTiposHoraAutomaticamente = true,
-    validarHorarios = true,
-    incluirRecargos = true
-  } = opciones;
+  // 2. Configurar opciones usando GeneradorRegistros
+  const configuracion = GeneradorRegistros.configurarOpciones(opciones);
 
-  // Obtener sede del usuario una sola vez
-  let sedeUsuario = null;
-  try {
-    const info = await SedeLogic.obtenerSedePorUsuario(usuarioId);
-    sedeUsuario = info?.sede || null;
-  } catch (error) {
-    console.warn('No se pudo obtener la sede del usuario:', error.message);
-    sedeUsuario = null;
-  }
-
-  // Los tipos de hora se obtendrán dinámicamente usando HoraLogic
+  // 3. Obtener sede del usuario usando CalculadorHorasExtra
+  const sedeUsuario = await CalculadorHorasExtra.obtenerSedeUsuario(usuarioId);
 
   const transaction = await sequelize.transaction();
   try {
@@ -1025,55 +1015,41 @@ const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
       const { cantidadHorasExtra: cantidadHorasExtraEntrada, ...otrosDatos } = registroData;
 
       try {
-        // Validaciones específicas del registro
-        if (validarHorarios) {
-          if (!otrosDatos.horaIngreso || !otrosDatos.horaSalida) {
-            throw new Error(`Registro ${i + 1}: horaIngreso y horaSalida son requeridas`);
-          }
-          
-          if (!otrosDatos.fecha) {
-            throw new Error(`Registro ${i + 1}: fecha es requerida`);
-          }
-          
-          // Validar formato de horas
-          const ingresoMin = timeStringToMinutes(otrosDatos.horaIngreso);
-          const salidaMin = timeStringToMinutes(otrosDatos.horaSalida);
-          
-          if (ingresoMin === null || salidaMin === null) {
-            throw new Error(`Registro ${i + 1}: formato de hora inválido (use HH:MM)`);
-          }
+        // 4. Validar registro individual usando ValidadorRegistro
+        const validacionRegistro = ValidadorRegistro.validarRegistroIndividual(
+          otrosDatos, i, configuracion.validarHorarios
+        );
+        if (!validacionRegistro.esValido) {
+          throw new Error(validacionRegistro.errores.join('; '));
         }
 
-        // Calcular horas extra automáticamente si está habilitado
-        let cantidadHorasExtra = 0;
-        if (calcularHorasExtraAutomaticamente && sedeUsuario) {
-          cantidadHorasExtra = calcularHorasExtraSegunSede(otrosDatos.horaSalida, sedeUsuario);
-        } else if (cantidadHorasExtraEntrada !== undefined) {
-          cantidadHorasExtra = Number(cantidadHorasExtraEntrada) || 0;
-        }
+        // 5. Calcular horas extra usando CalculadorHorasExtra
+        const cantidadHorasExtra = CalculadorHorasExtra.calcularHorasExtra(
+          otrosDatos.horaSalida,
+          cantidadHorasExtraEntrada,
+          sedeUsuario,
+          configuracion.calcularHorasExtraAutomaticamente
+        );
 
-        // Dividir horas extra para campos reportables
-        const { horas_extra_divididas, bono_salarial } = dividirHorasExtra(Number(cantidadHorasExtra));
+        // 6. Dividir horas extra usando CalculadorHorasExtra
+        const { horas_extra_divididas, bono_salarial } = CalculadorHorasExtra.dividirHorasExtra(
+          Number(cantidadHorasExtra)
+        );
 
-        // Generar número de registro único
-        const numRegistro = otrosDatos.numRegistro || generarNumeroRegistro();
-
-        // Crear registro
-        const nuevoRegistro = await Registro.create({
-          ...otrosDatos,
-          usuarioId,
-          usuario: user.email,
-          numRegistro,
-          cantidadHorasExtra: Number(cantidadHorasExtra),
+        // 7. Crear registro usando GeneradorRegistros
+        const nuevoRegistro = await GeneradorRegistros.crearRegistro(
+          otrosDatos,
+          user,
+          cantidadHorasExtra,
           horas_extra_divididas,
           bono_salarial,
-          estado: otrosDatos.estado || 'pendiente'
-        }, { transaction });
+          transaction
+        );
 
-        // Asociar tipos de hora automáticamente usando el nuevo método
-        if (asociarTiposHoraAutomaticamente) {
+        // 8. Asociar tipos de hora usando AsignadorTiposHora
+        if (configuracion.asociarTiposHoraAutomaticamente) {
           try {
-            const asociaciones = await asociarHorasSegunCondiciones(
+            const asociaciones = await AsignadorTiposHora.asociarHorasSegunCondiciones(
               nuevoRegistro,
               otrosDatos.horaIngreso,
               otrosDatos.horaSalida,
@@ -1087,7 +1063,6 @@ const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
             
           } catch (asocError) {
             console.warn(`Advertencia en asociación automática para registro ${i + 1}:`, asocError.message);
-            // No fallar el proceso completo por errores de asociación
           }
         }
 
@@ -1102,49 +1077,18 @@ const crearRegistrosBulk = async (registrosData, usuarioId, opciones = {}) => {
       }
     }
 
-    // Si hay errores de validación, fallar la transacción
+    // 9. Validar errores y confirmar transacción
     if (erroresValidacion.length > 0) {
       await transaction.rollback();
-      const errorMsg = `Errores de validación en ${erroresValidacion.length} registro(s):\n` +
-                      erroresValidacion.map(e => `- Registro ${e.indice}: ${e.error}`).join('\n');
+      const errorMsg = ValidadorRegistro.generarMensajeErrores(erroresValidacion);
       throw new Error(errorMsg);
     }
 
     await transaction.commit();
     
-    // Retornar registros con información completa
-    const registrosCompletos = await Promise.all(
-      registrosCreados.map(registro => 
-        Registro.findByPk(registro.id, {
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'email']
-            },
-            {
-              model: Hora,
-              through: {
-                attributes: ['cantidad']
-              }
-            }
-          ]
-        })
-      )
-    );
-    
-    return {
-      registrosCreados: registrosCompletos,
-      totalCreados: registrosCompletos.length,
-      configuracion: {
-        calcularHorasExtraAutomaticamente,
-        asociarTiposHoraAutomaticamente,
-        validarHorarios,
-        incluirRecargos,
-        sedeEncontrada: !!sedeUsuario,
-        metodosAsignacion: 'HoraLogic.obtenerHoraPorTipo'
-      }
-    };
+    // 10. Obtener registros completos y generar respuesta usando GeneradorRegistros
+    const registrosCompletos = await GeneradorRegistros.obtenerRegistrosCompletos(registrosCreados);
+    return GeneradorRegistros.generarRespuestaFinal(registrosCompletos, configuracion, sedeUsuario);
     
   } catch (error) {
     await transaction.rollback();
