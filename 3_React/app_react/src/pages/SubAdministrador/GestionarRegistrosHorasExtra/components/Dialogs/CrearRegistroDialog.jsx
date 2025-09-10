@@ -106,9 +106,9 @@ const CrearRegistroDialog = ({
     setMensaje('');
 
     try {
-      // Validar que todos los campos requeridos estén completos
-      if (!formData.fecha || !formData.usuario || !formData.horaIngreso || !formData.horaSalida || !formData.ubicacion || !formData.tipoHoraId) {
-        setMensaje('Error: Debes completar todos los campos requeridos.');
+      // Validar campos mínimos para auto-horas: fecha, usuario, horaSalida, ubicacion
+      if (!formData.fecha || !formData.usuario || !formData.horaSalida || !formData.ubicacion) {
+        setMensaje('Error: Debes completar fecha, empleado, hora de salida y ubicación.');
         setLoading(false);
         return;
       }
@@ -124,12 +124,7 @@ const CrearRegistroDialog = ({
         return;
       }
 
-      // Validar que se ingresen las horas extra
-      if (!formData.cantidadHorasExtra || parseFloat(formData.cantidadHorasExtra) < 0.5) {
-        setMensaje('Error: Debes ingresar una cantidad válida de horas extra (mínimo 0.5 horas).');
-        setLoading(false);
-        return;
-      }
+      // Eliminado: validación obligatoria de cantidad de horas extra (ahora es opcional)
 
       // Validar que la hora de salida sea mayor que la de ingreso
       if (formData.horaIngreso >= formData.horaSalida) {
@@ -149,17 +144,11 @@ const CrearRegistroDialog = ({
         ubicacion: formData.ubicacion,
         usuario: formData.usuario,
         usuarioId: formData.usuarioSeleccionado?.id,
-        cantidadHorasExtra: parseFloat(formData.cantidadHorasExtra),
         justificacionHoraExtra: formData.justificacionHoraExtra || '',
         numRegistro,
         estado: 'pendiente',
-        tipoHoraId: parseInt(formData.tipoHoraId), // Agregar el ID del tipo de hora directamente
-        horas: [
-          {
-            tipoHoraId: parseInt(formData.tipoHoraId), // Cambiar 'id' por 'tipoHoraId'
-            cantidad: parseFloat(formData.cantidadHorasExtra)
-          }
-        ]
+        // Enviar tipoHoraId como preferencia (opcional). Backend puede usarlo o ignorarlo.
+        tipoHoraId: formData.tipoHoraId ? parseInt(formData.tipoHoraId) : undefined
       };
 
       const resultado = await onCrearRegistro(registroData);
@@ -408,49 +397,7 @@ const CrearRegistroDialog = ({
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                  <TextField
-                    label="Cantidad de Horas Extra"
-                    type="number"
-                    value={formData.cantidadHorasExtra}
-                    onChange={(e) => handleInputChange('cantidadHorasExtra', e.target.value)}
-                    fullWidth
-                    required
-                    inputProps={{ min: 0.5, step: 0.5, max: 24 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <AccessTimeIcon />
-                        </InputAdornment>
-                      ),
-                      endAdornment: <InputAdornment position="end">horas</InputAdornment>,
-                    }}
-                    helperText="Se calcula automáticamente o ingresa manualmente (mínimo 0.5 horas)"
-                  />
-                  <Button
-                    variant="outlined"
-                    onClick={calcularHorasExtra}
-                    disabled={!formData.horaIngreso || !formData.horaSalida}
-                    sx={{ 
-                      minWidth: 'auto', 
-                      px: 2, 
-                      py: 1.5,
-                      height: '56px',
-                      borderColor: '#1976d2',
-                      color: '#1976d2',
-                      '&:hover': {
-                        borderColor: '#1565c0',
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)'
-                      }
-                    }}
-                    title="Calcular horas extra automáticamente"
-                  >
-                    🔄
-                  </Button>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
+                <FormControl fullWidth>
                   <InputLabel>Tipo de Hora Extra</InputLabel>
                   <Select
                     value={formData.tipoHoraId}

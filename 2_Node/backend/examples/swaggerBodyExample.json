@@ -1,0 +1,39 @@
+{
+  "usuarioId": 12,
+  "registros": [
+    {
+      "fecha": "2024-01-15",
+      "horaIngreso": "08:00",
+      "horaSalida": "19:00",
+      "ubicacion": "Sede Principal",
+      "justificacionHoraExtra": "Proyecto urgente - horas extra diurnas"
+    },
+    {
+      "fecha": "2024-01-16", 
+      "horaIngreso": "08:00",
+      "horaSalida": "23:30",
+      "ubicacion": "Sede Principal",
+      "justificacionHoraExtra": "Mantenimiento nocturno - horas extra nocturnas"
+    },
+    {
+      "fecha": "2024-12-25",
+      "horaIngreso": "09:00",
+      "horaSalida": "17:00",
+      "ubicacion": "Sede Norte",
+      "justificacionHoraExtra": "Soporte navidad - horas festivas diurnas"
+    },
+    {
+      "fecha": "2024-01-20",
+      "horaIngreso": "18:00",
+      "horaSalida": "23:00",
+      "ubicacion": "Sede Cali",
+      "justificacionHoraExtra": "Turno nocturno - horas extra nocturnas"
+    }
+  ],
+  "opciones": {
+    "calcularHorasExtraAutomaticamente": true,
+    "asociarTiposHoraAutomaticamente": true,
+    "validarHorarios": false,
+    "incluirRecargos": true
+  }
+}

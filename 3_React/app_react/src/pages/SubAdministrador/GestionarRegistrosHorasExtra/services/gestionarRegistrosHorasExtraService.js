@@ -146,19 +146,32 @@ export const gestionarRegistrosHorasExtraService = {
   // Crear un nuevo registro
   async createRegistro(data) {
     try {
-      const response = await fetch(`${API_BASE_URL}/registros/dividir-horas`, {
+      // Intento 1: /api/auto-horas
+      let url = `${API_BASE_URL}/auto-horas`;
+      let response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       });
-      
+
+      // Fallback: algunos backends exponen /api/registros/auto-horas
+      if (response.status === 404) {
+        url = `${API_BASE_URL}/registros/auto-horas`;
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al crear el registro');
+        const details = errorData.message || `${response.status} ${response.statusText}`;
+        throw new Error(details || 'Error al crear el registro');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error en createRegistro:', error);

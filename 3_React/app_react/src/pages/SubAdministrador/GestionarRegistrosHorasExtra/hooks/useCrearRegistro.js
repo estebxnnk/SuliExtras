@@ -8,11 +8,9 @@ export const useCrearRegistro = (cargarDatos, showSuccess, showError) => {
     setLoading(true);
     
     try {
-      // Validar que el registro tenga todos los campos requeridos
-      if (!nuevoRegistro.fecha || !nuevoRegistro.horaIngreso || !nuevoRegistro.horaSalida || 
-          !nuevoRegistro.ubicacion || !nuevoRegistro.usuario || !nuevoRegistro.cantidadHorasExtra || 
-          !nuevoRegistro.horas || nuevoRegistro.horas.length === 0)  {
-        throw new Error('Todos los campos son obligatorios');
+      // Validación mínima para endpoint /auto-horas
+      if (!nuevoRegistro.fecha || !nuevoRegistro.usuarioId || !nuevoRegistro.horaSalida || !nuevoRegistro.ubicacion) {
+        throw new Error('Fecha, empleado, hora de salida y ubicación son obligatorios');
       }
 
       // Llamada real a la API para crear el registro
@@ -30,7 +28,7 @@ export const useCrearRegistro = (cargarDatos, showSuccess, showError) => {
       
     } catch (error) {
       console.error('Error al crear registro:', error);
-      showError('Error al crear el registro: ' + error.message);
+      showError('Error al crear el registro: ' + (error?.message || 'Error desconocido'));
       return false;
     } finally {
       setLoading(false);
