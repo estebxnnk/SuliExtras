@@ -1,4 +1,4 @@
-const registroLogic = require('../logic/RegistroLogic');
+const registroLogic = require('./RegistroLogic');
 
 const getAllRegistros = async (req, res) => {
   try {
@@ -180,6 +180,17 @@ const createRegistroConDivisionHoras = async (req, res) => {
   }
 };
 
+// Nuevo endpoint: crear registro calculando automáticamente horas extra según sede
+const createRegistroAutoHorasExtra = async (req, res) => {
+  try {
+    const nuevoRegistro = await registroLogic.crearRegistroAutoHorasExtra(req.body);
+    res.status(201).json(nuevoRegistro);
+  } catch (err) {
+    const status = err.message && err.message.includes('requerido') ? 400 : 500;
+    res.status(status).json({ error: err.message || 'Error interno del servidor' });
+  }
+};
+
 const crearRegistrosBulk = async (req, res) => {
   try {
     const { registros, usuarioId } = req.body;
@@ -306,5 +317,6 @@ module.exports = {
   updateRegistro,
   deleteRegistro,
   createRegistroConDivisionHoras,
-  crearRegistrosBulk
+  crearRegistrosBulk,
+  createRegistroAutoHorasExtra
 };

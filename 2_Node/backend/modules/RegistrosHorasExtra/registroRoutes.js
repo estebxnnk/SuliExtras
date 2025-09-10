@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const registroController = require('../controllers/registroController');
+const registroController = require('./registroController');
 const { 
   validarCrearRegistrosBulk, 
   validarLogicaNegocio, 
   manejarErroresValidacion 
-} = require('../validators/registroValidator');
+} = require('./validators/registroValidator');
 
 /**
  * @swagger
@@ -344,6 +344,56 @@ router.get('/debug', registroController.debugRegistros);
  *         description: Error en la solicitud
  */
 router.post('/dividir-horas', registroController.createRegistroConDivisionHoras);
+
+/**
+ * @swagger
+ * /api/registros/auto-horas:
+ *   post:
+ *     summary: Crear registro calculando automáticamente horas extra según horario de la sede del usuario
+ *     description: Calcula cantidadHorasExtra comparando la horaSalida del registro con la horaSalida del horario activo de la sede del usuario. Divide automáticamente en horas_extra_divididas (máx 2) y bono_salarial (excedente), reutilizando la lógica existente.
+ *     tags: [Registros]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fecha
+ *               - horaIngreso
+ *               - horaSalida
+ *               - ubicacion
+ *               - usuarioId
+ *             properties:
+ *               fecha:
+ *                 type: string
+ *                 format: date
+ *                 example: "2025-07-03"
+ *               horaIngreso:
+ *                 type: string
+ *                 example: "18:00"
+ *               horaSalida:
+ *                 type: string
+ *                 example: "22:30"
+ *               ubicacion:
+ *                 type: string
+ *                 example: "Oficina Principal"
+ *               usuarioId:
+ *                 type: integer
+ *                 description: ID del usuario que crea el registro
+ *                 example: 1
+ *               justificacionHoraExtra:
+ *                 type: string
+ *                 example: "Cierre mensual"
+ *     responses:
+ *       201:
+ *         description: Registro creado exitosamente con cálculo automático de horas extra
+ *       400:
+ *         description: Error de validación
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/auto-horas', registroController.createRegistroAutoHorasExtra);
 
 /**
  * @swagger

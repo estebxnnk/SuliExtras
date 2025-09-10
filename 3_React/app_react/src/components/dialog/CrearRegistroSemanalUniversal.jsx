@@ -237,7 +237,6 @@ const CrearRegistroSemanalUniversal = ({
                     <TableCell>Ubicación</TableCell>
                     <TableCell>Tipo Hora</TableCell>
                     <TableCell>Justificación</TableCell>
-                    <TableCell align="right">Horas Extra</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -297,20 +296,6 @@ const CrearRegistroSemanalUniversal = ({
                           fullWidth
                         />
                       </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 140 }}>
-                        <TextField
-                          type="number"
-                          value={r.cantidadHorasExtra}
-                          onChange={(e) => updateWeekCell(i, 'cantidadHorasExtra', e.target.value)}
-                          size="small"
-                          fullWidth
-                          inputProps={{ min: 0.5, step: 0.5, max: 24 }}
-                          InputProps={{
-                            startAdornment: (<InputAdornment position="start"><AccessTimeIcon /></InputAdornment>),
-                            endAdornment: <InputAdornment position="end">h</InputAdornment>
-                          }}
-                        />
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -340,7 +325,6 @@ const CrearRegistroSemanalUniversal = ({
                     <TableCell>Fin</TableCell>
                     <TableCell>Ubicación</TableCell>
                     <TableCell>Tipo Hora</TableCell>
-                    <TableCell align="right">Horas Extra</TableCell>
                     <TableCell>Justificación</TableCell>
                     <TableCell align="center">Acciones</TableCell>
                   </TableRow>
@@ -432,24 +416,7 @@ const CrearRegistroSemanalUniversal = ({
                           </Select>
                         </FormControl>
                       </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 140 }}>
-                        <TextField
-                          type="number"
-                          value={row.cantidadHorasExtra}
-                          onChange={(e) => updateRow(index, 'cantidadHorasExtra', e.target.value)}
-                          inputProps={{ min: 0.5, step: 0.5, max: 24 }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <AccessTimeIcon />
-                              </InputAdornment>
-                            ),
-                            endAdornment: <InputAdornment position="end">horas</InputAdornment>
-                          }}
-                          size="small"
-                          fullWidth
-                        />
-                      </TableCell>
+                      {/* Horas extra eliminadas (backend calcula) */}
                       <TableCell sx={{ minWidth: 220 }}>
                         <TextField
                           value={row.justificacionHoraExtra}
@@ -545,20 +512,7 @@ const CrearRegistroSemanalUniversal = ({
                                             </Select>
                                           </FormControl>
                                         </TableCell>
-                                        <TableCell align="right" sx={{ minWidth: 140 }}>
-                                          <TextField
-                                            type="number"
-                                            value={row.cantidadHorasExtra}
-                                            onChange={(e) => updateRow(index, 'cantidadHorasExtra', e.target.value)}
-                                            inputProps={{ min: 0.5, step: 0.5, max: 24 }}
-                                            InputProps={{
-                                              startAdornment: (<InputAdornment position="start"><AccessTimeIcon /></InputAdornment>),
-                                              endAdornment: <InputAdornment position="end">horas</InputAdornment>
-                                            }}
-                                            size="small"
-                                            fullWidth
-                                          />
-                                        </TableCell>
+                                        {/* Horas extra eliminadas (backend calcula) */}
                                         <TableCell sx={{ minWidth: 220 }}>
                                           <TextField
                                             value={row.justificacionHoraExtra}

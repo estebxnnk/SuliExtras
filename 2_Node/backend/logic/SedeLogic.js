@@ -328,6 +328,58 @@ class SedeLogic {
   }
 
   /**
+   * Obtener sede por ID de usuario
+   * @param {number} usuarioId - ID del usuario
+   * @returns {Object} - Sede del usuario
+   */
+  async obtenerSedePorUsuario(usuarioId) {
+    // Primero verificar que el usuario existe
+    const usuario = await User.findByPk(usuarioId, {
+      include: [
+        { model: Persona, as: 'persona' },
+        { model: Rol, as: 'rol' }
+      ]
+    });
+    
+    if (!usuario) {
+      throw new Error('Usuario no encontrado');
+    }
+    
+    // Si el usuario no tiene sede asignada
+    if (!usuario.sedeId) {
+      throw new Error('El usuario no tiene una sede asignada');
+    }
+    
+    // Obtener la sede del usuario
+    const sede = await Sede.findByPk(usuario.sedeId, {
+      include: [
+        {
+          model: User,
+          as: 'usuarios',
+          include: [
+            { model: Persona, as: 'persona' },
+            { model: Rol, as: 'rol' }
+          ]
+        }
+      ]
+    });
+    
+    if (!sede) {
+      throw new Error('La sede asignada al usuario no existe');
+    }
+    
+    return {
+      usuario: {
+        id: usuario.id,
+        email: usuario.email,
+        persona: usuario.persona,
+        rol: usuario.rol
+      },
+      sede: sede
+    };
+  }
+
+  /**
    * Calcular horas de jornada entre dos horas
    * @param {string} horaEntrada - Hora de entrada (HH:mm)
    * @param {string} horaSalida - Hora de salida (HH:mm)

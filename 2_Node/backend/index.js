@@ -13,7 +13,7 @@ const User = require('./models/User');
 const Persona = require('./models/Persona');
 const Rol = require('./models/Roles');
 const Hora = require('./models/Hora');
-const Registro = require('./models/Registro');
+const Registro = require('./modules/RegistrosHorasExtra/RegistroModel');
 const Sede = require('./models/Sede');
 const Administrador = require('./models/Administrador');
 const Empleado = require('./models/Empleado');
@@ -45,7 +45,7 @@ const rolRoutes = require('./routes/rol');
 const registerRoutes = require('./routes/register');
 const usuariosRoutes = require('./routes/usuarios');
 const horaRoutes = require('./routes/hora');
-const registroRoutes = require('./routes/registro');
+const registroRoutes = require('./modules/RegistrosHorasExtra/registroRoutes');
 const sedeRoutes = require('./routes/sede');
 
 // Configurar asociaciones después de cargar todos los modelos

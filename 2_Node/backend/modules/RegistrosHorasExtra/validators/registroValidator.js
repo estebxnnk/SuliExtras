@@ -7,7 +7,7 @@ const validarCrearRegistro = [
     .withMessage('La fecha es requerida')
     .isISO8601()
     .withMessage('Formato de fecha inválido. Use YYYY-MM-DD'),
-  
+    
   body('horaIngreso')
     .notEmpty()
     .withMessage('La hora de ingreso es requerida')
@@ -83,10 +83,9 @@ const validarCrearRegistrosBulk = [
     .withMessage('La ubicación debe tener entre 2 y 100 caracteres'),
   
   body('registros.*.cantidadHorasExtra')
-    .notEmpty()
-    .withMessage('La cantidad de horas extra es requerida para cada registro')
-    .isFloat({ min: 0.1 })
-    .withMessage('La cantidad de horas extra debe ser mayor a 0'),
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('La cantidad de horas extra debe ser un número válido'),
   
   body('registros.*.justificacionHoraExtra')
     .optional()

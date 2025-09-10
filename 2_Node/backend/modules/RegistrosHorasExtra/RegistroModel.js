@@ -1,9 +1,8 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../configDb/db').sequelize;
-
+const sequelize = require('../../configDb/db').sequelize;
 // Importar modelo Hora
-const Hora = require('./Hora');
-const User = require('./User');
+const Hora = require('../../models/Hora')
+const User = require('../../models/User');
 
 // Tabla principal
 const Registro = sequelize.define('Registro', {
